@@ -1,0 +1,1284 @@
+/* Base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: #f9f8f5;
+  color: #0b051d;
+  font-family: "Klarna Text", system-ui, sans-serif;
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+h3 {
+  font-size: 16px;
+  margin: 12px 0 6px;
+  font-weight: 700;
+}
+
+/* Info Banner */
+.info-banner {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+  font-size: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.info-banner .info-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.info-banner .info-content {
+  flex: 1;
+}
+
+.info-banner strong {
+  color: #0b051d;
+}
+
+.info-banner a {
+  color: #0b051d;
+  font-weight: 600;
+}
+
+.info-banner a:hover {
+  opacity: 0.7;
+}
+
+.info-banner code {
+  background: #e6e2da;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  word-break: break-all;
+  white-space: normal;
+}
+
+/* Backend mode indicator */
+.mode-banner {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-banner .icon {
+  font-size: 20px;
+}
+
+.mode-banner-content {
+  flex: 1;
+}
+
+.mode-banner strong {
+  color: #1565c0;
+}
+
+/* Auth Mode Toggle */
+.auth-mode-toggle {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.auth-mode-toggle .toggle-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
+}
+
+.auth-mode-toggle .toggle-option input {
+  display: none;
+}
+
+.auth-mode-toggle .toggle-label {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.auth-mode-toggle .toggle-option input:checked + .toggle-label {
+  background: #2196f3;
+  color: white;
+}
+
+.auth-mode-toggle .toggle-option:hover .toggle-label:not(:has(input:checked)) {
+  background: rgba(33, 150, 243, 0.1);
+}
+
+.auth-mode-toggle .toggle-option input:disabled + .toggle-label {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.auth-mode-badge {
+  background: #9c27b0;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 12px;
+}
+
+.auth-mode-badge.sub-partner {
+  background: #ff9800;
+}
+
+.auth-mode-badge.acquiring-partner {
+  background: #9c27b0;
+}
+
+/* Error Banner */
+.error-banner {
+  background: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c62828;
+}
+
+.error-banner strong {
+  color: #b71c1c;
+}
+
+/* ==========================================================================
+   LAYOUT
+   ========================================================================== */
+
+/* Main row: Config + Payment Method side by side */
+.main-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Logs row: SDK Events + Backend Logs side by side */
+.logs-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Panel base styles */
+.panel {
+  background: #fff;
+  border: 1px solid #ddd9d2;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 100%;
+}
+
+/* Config panel - left side */
+.config-panel {
+  flex: 1 1 400px;
+  min-width: 0;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Selector panel - right side */
+.selector-panel {
+  flex: 1 1 360px;
+  min-width: 0;
+  max-width: 360px;
+  width: 100%;
+}
+
+/* Presentation Info panel below selector */
+.presentation-info {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.presentation-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.presentation-info-row:last-child {
+  margin-bottom: 0;
+}
+
+.presentation-info-label {
+  color: #6f6b7a;
+  font-weight: 500;
+}
+
+.presentation-info-value {
+  color: #0b051d;
+  font-weight: 600;
+}
+
+.presentation-info-value.monospace {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.presentation-info-value.copyable {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e9e9e9;
+  transition: background 0.2s;
+}
+
+.presentation-info-value.copyable:hover {
+  background: #ddd;
+}
+
+.presentation-info-value.copyable:active {
+  background: #ccc;
+}
+
+.presentation-info-value.copyable.copied {
+  background: #d4edda;
+}
+
+.presentation-info-value.copyable::after {
+  content: " 📋";
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* Log panels - equal width */
+.log-panel {
+  flex: 1 1 300px;
+  min-width: 0;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ==========================================================================
+   CONFIG PANEL
+   ========================================================================== */
+
+.config {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.config-collapsible {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.config-collapsible.collapsed {
+  max-height: 0;
+  padding: 0;
+  opacity: 0;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+label {
+  font-size: 12px;
+  color: #6f6b7a;
+  font-weight: 500;
+}
+
+select,
+input[type="number"],
+input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ddd9d2;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fcfbf8;
+  font: inherit;
+}
+
+/* Locked input field style (e.g., for Express Checkout fixed amount) */
+input.locked {
+  background: #e8e8e8;
+  color: #666;
+  cursor: not-allowed;
+  border-color: #ccc;
+}
+
+.status {
+  font-size: 12px;
+  color: #6f6b7a;
+  overflow-wrap: break-word;
+}
+
+/* Collapsible sections */
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+}
+
+.collapsible-header:hover {
+  opacity: 0.8;
+}
+
+.collapse-icon {
+  transition: transform 0.3s;
+  font-size: 14px;
+  color: #6f6b7a;
+}
+
+.collapse-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collapsible-content {
+  overflow: visible;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.collapsible-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Intent chips (available intents to add) */
+.intent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.intent-chip {
+  background: #fcfbf8;
+  border: 1px solid #ddd9d2;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b051d;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.intent-chip:hover:not(.disabled):not(.added) {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.intent-chip.added {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1565c0;
+  cursor: default;
+}
+
+.intent-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+/* Selected intents label */
+.selected-intents-label {
+  font-size: 11px;
+  color: #6f6b7a;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+/* Selected intents list (reorderable) */
+.selected-intents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 40px;
+  padding: 8px;
+  background: #fcfbf8;
+  border: 1px solid #ddd9d2;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.selected-intents-list.drag-over {
+  border-color: #2196f3;
+  background: #e3f2fd;
+}
+
+.selected-intents-empty {
+  padding: 12px;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+  background: #fcfbf8;
+  border: 1px dashed #ddd9d2;
+  border-radius: 8px;
+}
+
+/* Individual intent item */
+.intent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: white;
+  border: 1px solid #e6e2da;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0b051d;
+  cursor: grab;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.intent-item:hover {
+  border-color: #2196f3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.intent-item.dragging {
+  opacity: 0.5;
+  border-color: #2196f3;
+  background: #e3f2fd;
+}
+
+.intent-item .drag-handle {
+  color: #999;
+  font-size: 14px;
+  cursor: grab;
+  padding: 0 4px;
+}
+
+.intent-item .intent-name {
+  flex: 1;
+}
+
+.intent-item .intent-remove {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.intent-item .intent-remove:hover {
+  color: #f44336;
+}
+
+/* Drop indicator */
+.intent-item.drop-above {
+  border-top: 2px solid #2196f3;
+  margin-top: -2px;
+}
+
+.intent-item.drop-below {
+  border-bottom: 2px solid #2196f3;
+  margin-bottom: -2px;
+}
+
+.intent-warning {
+  background: #fff4e5;
+  border: 1px solid #ffcc80;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #e65100;
+  margin-top: 8px;
+  display: none;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.intent-warning.show {
+  display: block;
+}
+
+.pill {
+  display: inline-block;
+  background: #e4e3df;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 6px;
+  max-width: 100%;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.pill.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* ==========================================================================
+   PAYMENT SELECTOR
+   ========================================================================== */
+
+.selector {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.selector-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e6e2da;
+  border-radius: 8px;
+  background: #fcfbf8;
+  position: relative;
+  cursor: pointer;
+}
+
+.selector-option + .selector-option {
+  margin-top: 10px;
+}
+
+.selector-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.selector-option.selected {
+  border-color: #0b051d;
+  box-shadow: 0 0 0 2px #0b051d11 inset;
+}
+
+.selector-option.hidden {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.option-body {
+  flex: 1;
+}
+
+.inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* Klarna payment option styles */
+#opt1-header,
+#opt2-header {
+  font-weight: 700;
+  font-size: 16px;
+  color: #0b051d;
+}
+
+#opt1-subheader,
+#opt2-subheader {
+  color: #6f6b7a;
+  font-size: 14px;
+}
+
+#opt1-message,
+#opt2-message {
+  color: #0b051d;
+  font-size: 14px;
+}
+
+/* Panel badges for SDK vs API */
+.panel-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.sdk-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.api-badge {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* Loading placeholder styles */
+.loading-placeholder {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e6e2da;
+  border-radius: 8px;
+  background: #fcfbf8;
+  margin-top: 10px;
+}
+
+.loading-placeholder .loading-body {
+  flex: 1;
+}
+
+.loading-placeholder .loading-icon {
+  width: 72px;
+  height: 30px;
+  background: linear-gradient(90deg, #e6e2da 25%, #f0ede8 50%, #e6e2da 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #e6e2da 25%, #f0ede8 50%, #e6e2da 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-header {
+  height: 16px;
+  width: 120px;
+  margin-bottom: 6px;
+}
+
+.skeleton-subheader {
+  height: 14px;
+  width: 180px;
+}
+
+.skeleton-button {
+  height: 48px;
+  width: 100%;
+  margin-top: 16px;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-placeholder.hidden,
+.skeleton-button.hidden {
+  display: none;
+}
+
+/* Initially visible - will be hidden by JS after load */
+#sdk-loading-placeholder,
+#sdk-loading-button,
+#api-loading-placeholder,
+#api-loading-button {
+  /* Shown by default, hidden after content loads */
+}
+
+/* API-based payment selector styles */
+.api-text-header {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 19px;
+  color: #0b051d;
+}
+
+.api-text-subheader {
+  color: #6f6b7a;
+  font-size: 14px;
+}
+
+.api-text-message {
+  color: #0b051d;
+  font-size: 14px;
+  line-height: 16.5px;
+}
+
+.api-text-message p {
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+}
+
+.api-badge-text {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  background: #e4e3df;
+  color: #0b051d;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.api-icon {
+  width: 72px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* API Message Link Styling - matches SDK link style */
+.api-message-link {
+  color: rgb(0, 0, 238);
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.api-message-link:hover {
+  color: rgb(0, 0, 238);
+  text-decoration: underline;
+}
+
+/* API Payment Button */
+.api-payment-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #0b051d;
+  border: none;
+  color: #f9f8f5;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: "Klarna Title", "Klarna Text", system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.api-payment-button:hover {
+  background: #b798be;
+  color: #0b051d;
+  border: 2px solid #0b051d;
+}
+
+.api-payment-button img {
+  height: 20px;
+  width: auto;
+}
+
+.api-payment-button.image-left {
+  flex-direction: row;
+}
+
+.api-payment-button.image-right {
+  flex-direction: row-reverse;
+}
+
+/* Klarna SDK Button overrides for API-built button */
+#api-action-button .klarna-sdk-button__badge {
+  height: 28px;
+  width: auto;
+}
+
+#api-action-button .klarna-sdk-button__text {
+  font-weight: 400;
+}
+
+.message {
+  margin-top: 6px;
+  display: none;
+}
+
+#opt2-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  background: #e4e3df;
+  color: #0b051d;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* Payment buttons */
+button {
+  background: #0b051d;
+  border: none;
+  color: #f9f8f5;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3d3948;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+#action-button button {
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  font-family: "Klarna Title";
+  padding: 12px 16px;
+}
+
+#action-button button:hover {
+  background: #b798be;
+  color: #0b051d;
+  border: 2px solid #0b051d;
+}
+
+#action-button > * {
+  width: 100%;
+  display: block;
+}
+
+/* ==========================================================================
+   LOG PANELS
+   ========================================================================== */
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e6e2da;
+}
+
+.log-header h3 {
+  margin: 0;
+}
+
+.clear-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.log-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+.log-placeholder {
+  color: #6f6b7a;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Log panel info display */
+.log-info-label {
+  font-size: 12px;
+  color: #6f6b7a;
+  margin-bottom: 4px;
+}
+
+.log-info-value {
+  display: block;
+  background: #fcfbf8;
+  border: 1px solid #e6e2da;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #0b051d;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.log-info-value.monospace {
+  font-family: monospace;
+  font-size: 11px;
+}
+
+/* Log entry styles */
+.log-entry {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e6e2da;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.log-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px -8px 0 -8px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.log-entry-header:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.log-entry-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.log-entry-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #0b051d;
+}
+
+.log-entry-time {
+  font-size: 11px;
+  color: #6f6b7a;
+}
+
+.log-entry-collapse-icon {
+  font-size: 10px;
+  color: #6f6b7a;
+  transition: transform 0.2s ease;
+}
+
+.log-entry-collapse-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.log-entry-body {
+  margin-top: 8px;
+}
+
+.log-entry-body.collapsed {
+  display: none;
+}
+
+/* Log entry type badges */
+.log-entry-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.log-entry-badge.sdk {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.log-entry-badge.backend {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.log-entry pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 11px;
+  overflow-x: auto;
+  margin: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* JSON syntax highlighting for dark theme */
+.log-entry pre .json-key {
+  color: #9cdcfe;
+}
+
+.log-entry pre .json-string {
+  color: #ce9178;
+}
+
+.log-entry pre .json-number {
+  color: #b5cea8;
+}
+
+.log-entry pre .json-boolean {
+  color: #569cd6;
+}
+
+.log-entry pre .json-null {
+  color: #569cd6;
+}
+
+/* SDK event types */
+.log-entry.error .log-entry-title {
+  color: #c62828;
+}
+
+.log-entry.error {
+  border-left: 3px solid #f44336;
+  padding-left: 10px;
+}
+
+/* Backend log sections */
+.backend-log-section {
+  margin-bottom: 16px;
+}
+
+.backend-log-section:last-child {
+  margin-bottom: 0;
+}
+
+.backend-log-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6f6b7a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-mode-indicator {
+  font-size: 10px;
+  background: #e6e2da;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.mtls-indicator {
+  font-size: 10px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.backend-log-url {
+  font-family: monospace;
+  font-size: 12px;
+  background: #fcfbf8;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e6e2da;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.backend-log-header {
+  display: inline-block;
+  background: #e3f2fd;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #1565c0;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.backend-log-header.customer-token {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.backend-log-header.interop-token {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.backend-log-correlation {
+  display: inline-block;
+  background: #fff3e0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #e65100;
+}
+
+.token-indicator {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .main-row,
+  .logs-row {
+    flex-direction: column;
+  }
+
+  .config-panel,
+  .selector-panel,
+  .log-panel {
+    flex: none;
+    max-width: 100%;
+  }
+
+  .info-banner {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .info-banner code {
+    font-size: 11px;
+  }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 600px) {
+  /* Mode banner - stack vertically on mobile */
+  .mode-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .mode-banner .icon {
+    display: none;
+  }
+
+  .mode-banner-content {
+    width: 100%;
+  }
+
+  .auth-mode-badge {
+    display: block;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .auth-mode-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .auth-mode-toggle .toggle-label {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  /* Info banner - better text flow on mobile */
+  .info-banner {
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .info-banner .info-icon {
+    align-self: flex-start;
+  }
+
+  .info-banner .info-content {
+    width: 100%;
+  }
+
+  .info-banner strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .info-banner code {
+    font-size: 11px;
+    word-break: break-word;
+  }
+
+  /* Intent chips - larger touch targets on mobile */
+  .intent-chips {
+    gap: 8px;
+  }
+
+  .intent-chip {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .intent-item {
+    padding: 12px;
+    touch-action: none;
+  }
+
+  .intent-item .drag-handle {
+    font-size: 16px;
+    padding: 0 8px;
+  }
+}

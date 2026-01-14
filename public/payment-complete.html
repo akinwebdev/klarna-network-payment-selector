@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment Complete</title>
+    <link rel="preconnect" href="https://x.klarnacdn.net" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://x.klarnacdn.net/ui/fonts/v1.5/fonts.css"
+    >
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Klarna Text", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: #f9f8f5;
+        padding: 20px;
+        gap: 24px;
+      }
+
+      .container {
+        text-align: center;
+        padding: 48px 40px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        max-width: 440px;
+        width: 100%;
+      }
+
+      .success-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      }
+
+      .success-icon svg {
+        width: 40px;
+        height: 40px;
+        stroke: white;
+        stroke-width: 3;
+        fill: none;
+      }
+
+      h1 {
+        color: #0b051d;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 12px;
+        font-family: "Klarna Title", "Klarna Text", system-ui, sans-serif;
+      }
+
+      .message {
+        color: #6f6b7a;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 0 32px;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: #0b051d;
+        color: #f9f8f5;
+      }
+
+      .btn-primary:hover {
+        background: #3d3948;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: #0b051d;
+        border: 1px solid #ddd9d2;
+      }
+
+      .btn-secondary:hover {
+        background: #f5f4f0;
+      }
+
+      .divider {
+        height: 1px;
+        background: #e6e2da;
+        margin: 24px 0;
+      }
+
+      .order-info {
+        text-align: left;
+        background: #fcfbf8;
+        border: 1px solid #e6e2da;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+
+      .order-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+      }
+
+      .order-info-row:not(:last-child) {
+        border-bottom: 1px solid #e6e2da;
+      }
+
+      .order-info-label {
+        color: #6f6b7a;
+        font-size: 13px;
+      }
+
+      .order-info-value {
+        color: #0b051d;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: monospace;
+        word-break: break-all;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 32px 24px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+      }
+
+      /* Backend Log Panel Styles */
+      .backend-log-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        max-width: 700px;
+        width: 100%;
+        padding: 24px;
+        text-align: left;
+        display: none;
+      }
+
+      .backend-log-panel h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 16px;
+        color: #0b051d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .backend-log-section {
+        margin-bottom: 16px;
+      }
+
+      .backend-log-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6f6b7a;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .backend-log-url {
+        font-family: monospace;
+        font-size: 12px;
+        background: #fcfbf8;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #e6e2da;
+        margin-bottom: 8px;
+        word-break: break-all;
+      }
+
+      .backend-log-header {
+        display: inline-block;
+        background: #e3f2fd;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 10px;
+        color: #1565c0;
+        margin-bottom: 4px;
+        word-break: break-all;
+      }
+
+      .backend-log-header.customer-token {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .backend-log-header.interop-token {
+        background: #fce4ec;
+        color: #c2185b;
+      }
+
+      .backend-log-panel pre {
+        font-family: monospace;
+        font-size: 11px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      /* JSON syntax highlighting for dark theme */
+      .backend-log-panel pre .json-key {
+        color: #9cdcfe;
+      }
+
+      .backend-log-panel pre .json-string {
+        color: #ce9178;
+      }
+
+      .backend-log-panel pre .json-number {
+        color: #b5cea8;
+      }
+
+      .backend-log-panel pre .json-boolean {
+        color: #569cd6;
+      }
+
+      .backend-log-panel pre .json-null {
+        color: #569cd6;
+      }
+
+      .auth-mode-indicator {
+        font-size: 10px;
+        background: #e6e2da;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      .mtls-indicator {
+        font-size: 10px;
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      .status-badge {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+
+      .status-badge.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      /* Collapsible header */
+      .backend-log-header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e6e2da;
+        margin-bottom: 16px;
+      }
+
+      .backend-log-header-bar h2 {
+        margin: 0;
+      }
+
+      .collapse-icon {
+        font-size: 12px;
+        color: #6f6b7a;
+        transition: transform 0.2s ease;
+      }
+
+      .collapse-icon.collapsed {
+        transform: rotate(-90deg);
+      }
+
+      .backend-log-body {
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+
+      .backend-log-body.collapsed {
+        display: none;
+      }
+
+      /* Log entry header (endpoint + timestamp) */
+      .log-entry-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .log-entry-title {
+        font-family: monospace;
+        font-size: 13px;
+        font-weight: 700;
+        color: #0b051d;
+      }
+
+      .log-entry-time {
+        font-size: 12px;
+        color: #6f6b7a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h1>Payment Complete</h1>
+      <p class="message">
+        Thank you for your purchase! Your payment has been successfully
+        processed.
+      </p>
+
+      <div class="order-info" id="order-info" style="display: none">
+        <div class="order-info-row">
+          <span class="order-info-label">Transaction ID</span>
+          <span class="order-info-value" id="transaction-id">—</span>
+        </div>
+        <div class="order-info-row">
+          <span class="order-info-label">Status</span>
+          <span class="order-info-value" id="payment-status">Completed</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a href="/" class="btn btn-primary">Return to Demo</a>
+      </div>
+    </div>
+
+    <!-- Backend Log Panel (Collapsible) -->
+    <div class="backend-log-panel" id="backend-log-panel">
+      <div class="backend-log-header-bar" id="backend-log-toggle">
+        <h2>
+          🔌 Backend Log <span
+            class="status-badge success"
+            id="log-status-badge"
+          >APPROVED</span>
+        </h2>
+        <span class="collapse-icon collapsed">▼</span>
+      </div>
+      <div class="backend-log-body collapsed" id="backend-log-body">
+        <div class="log-entry-header">
+          <span class="log-entry-title" id="log-endpoint"
+          >payment/authorize</span>
+          <span class="log-entry-time" id="log-timestamp">—</span>
+        </div>
+        <div id="backend-log-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // Parse URL parameters to display transaction info
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        const transactionId = params.get("transaction_id") ||
+          params.get("payment_request_id");
+        const status = params.get("status");
+
+        if (transactionId) {
+          document.getElementById("order-info").style.display = "block";
+          document.getElementById("transaction-id").textContent =
+            transactionId;
+        }
+
+        if (status) {
+          document.getElementById("payment-status").textContent =
+            status.charAt(0).toUpperCase() +
+            status.slice(1).toLowerCase();
+        }
+
+        // Display backend log if available from sessionStorage
+        displayBackendLog();
+      })();
+
+      // Syntax highlight JSON for dark theme display
+      function syntaxHighlightJson(json) {
+        if (typeof json !== "string") {
+          json = JSON.stringify(json, null, 2);
+        }
+        // Escape HTML entities
+        json = json.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        // Apply syntax highlighting with colors optimized for dark background
+        return json.replace(
+          /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+          function (match) {
+            let cls = "json-number"; // numbers
+            if (/^"/.test(match)) {
+              if (/:$/.test(match)) {
+                cls = "json-key"; // keys
+              } else {
+                cls = "json-string"; // string values
+              }
+            } else if (/true|false/.test(match)) {
+              cls = "json-boolean"; // booleans
+            } else if (/null/.test(match)) {
+              cls = "json-null"; // null
+            }
+            return '<span class="' + cls + '">' + match + "</span>";
+          },
+        );
+      }
+
+      // Setup collapse toggle for backend log panel
+      function setupCollapseToggle() {
+        const toggle = document.getElementById("backend-log-toggle");
+        const body = document.getElementById("backend-log-body");
+        const icon = toggle?.querySelector(".collapse-icon");
+
+        if (toggle && body && icon) {
+          toggle.addEventListener("click", () => {
+            body.classList.toggle("collapsed");
+            icon.classList.toggle("collapsed");
+          });
+        }
+      }
+
+      function displayBackendLog() {
+        const logData = sessionStorage.getItem("approvedPaymentLog");
+        if (!logData) return;
+
+        try {
+          const { request, response, status, endpoint, timestamp } =
+            JSON.parse(logData);
+          const panel = document.getElementById("backend-log-panel");
+          const content = document.getElementById(
+            "backend-log-content",
+          );
+          const endpointEl = document.getElementById("log-endpoint");
+          const timestampEl = document.getElementById("log-timestamp");
+          const statusBadge = document.getElementById(
+            "log-status-badge",
+          );
+
+          // Set endpoint and timestamp
+          if (endpointEl) {
+            endpointEl.textContent = endpoint || "payment/authorize";
+          }
+          if (timestampEl) {
+            timestampEl.textContent = timestamp ||
+              new Date().toLocaleTimeString();
+          }
+          // Set status badge text
+          if (statusBadge) {
+            statusBadge.textContent = status || "APPROVED";
+          }
+
+          // Build request section
+          const method = request.method || "POST";
+          const authModeLabel = request.authMode === "SUB_PARTNER"
+            ? "👤 Sub Partner"
+            : "🏢 Acquiring Partner";
+
+          let requestHtml = `
+          <div class="backend-log-section">
+            <div class="backend-log-label">Request <span class="auth-mode-indicator">${authModeLabel}</span></div>
+            <div class="backend-log-url">${method} ${request.url}</div>
+        `;
+
+          // Show headers if present
+          if (request.klarnaNetworkSessionToken) {
+            requestHtml +=
+              `<div class="backend-log-header">Klarna-Network-Session-Token: ${request.klarnaNetworkSessionToken}</div>`;
+          }
+          if (request.klarnaCustomerToken) {
+            requestHtml +=
+              `<div class="backend-log-header customer-token">Klarna-Customer-Token: ${request.klarnaCustomerToken}</div>`;
+          }
+          if (request.klarnaInteroperabilityToken) {
+            requestHtml +=
+              `<div class="backend-log-header interop-token">Klarna-Interoperability-Token: ${request.klarnaInteroperabilityToken}</div>`;
+          }
+
+          // Show request body
+          if (
+            request.requestBody &&
+            Object.keys(request.requestBody).length > 0
+          ) {
+            requestHtml += `<pre>${
+              syntaxHighlightJson(request.requestBody)
+            }</pre>`;
+          }
+          requestHtml += `</div>`;
+
+          // Build response section
+          const mtlsStatus = response.mtlsVerificationStatus?.split(
+            ",",
+          )[0]?.trim().toUpperCase();
+          const mtlsVerified = mtlsStatus === "VALID";
+
+          let responseHtml = `
+          <div class="backend-log-section">
+            <div class="backend-log-label">Response (${status})${
+            mtlsVerified
+              ? ' <span class="mtls-indicator">🔐 mTLS Verified</span>'
+              : ""
+          }</div>
+        `;
+
+          if (response.correlationId) {
+            responseHtml +=
+              `<div class="backend-log-header">klarna-correlation-id: ${response.correlationId}</div>`;
+          }
+
+          responseHtml += `<pre>${
+            syntaxHighlightJson(response.responseBody)
+          }</pre></div>`;
+
+          content.innerHTML = requestHtml + responseHtml;
+          panel.style.display = "block";
+
+          // Setup collapse toggle
+          setupCollapseToggle();
+
+          // Clear the stored data after displaying
+          sessionStorage.removeItem("approvedPaymentLog");
+        } catch (error) {
+          console.error("Error displaying backend log:", error);
+        }
+      }
+    </script>
+  </body>
+</html>

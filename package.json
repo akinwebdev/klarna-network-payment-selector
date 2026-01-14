@@ -1,0 +1,18 @@
+{
+  "name": "klarna-network-payment-selector",
+  "version": "1.0.0",
+  "description": "Klarna Payment Selector Demo - Vercel Deployment",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vercel": "^34.0.0"
+  }
+}
