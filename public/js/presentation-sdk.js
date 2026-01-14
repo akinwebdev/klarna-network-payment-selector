@@ -3,7 +3,7 @@
  */
 
 import { COUNTRY_MAPPING } from "./constants.js";
-import { currentPresentation, setCurrentPresentation } from "./state.js";
+import { currentPresentation, klarna, setCurrentPresentation } from "./state.js";
 import {
   $,
   amountInput,
@@ -223,7 +223,7 @@ export function setupSelectionHandlers() {
   optKlarnaSaved.onclick = () => setSelected("KLARNA_SAVED");
 }
 
-export function setSelected(which) {
+export async function setSelected(which) {
   const isCard = which === "CARD";
   const isKlarna = which === "KLARNA";
   const isKlarnaSaved = which === "KLARNA_SAVED";
@@ -245,14 +245,14 @@ export function setSelected(which) {
       currentPresentation.savedPaymentOption.paymentOptionId || "—";
   }
 
-  renderPaymentButton(which);
+  await renderPaymentButton(which);
 }
 
 // ============================================================================
 // PAYMENT BUTTON RENDERING
 // ============================================================================
 
-function renderPaymentButton(which) {
+async function renderPaymentButton(which) {
   const container = $("#action-button");
   container.innerHTML = "";
 
@@ -262,20 +262,26 @@ function renderPaymentButton(which) {
     button.onclick = () => alert("Payment processing with card...");
     container.appendChild(button);
   } else {
+    // Ensure SDK is initialized
+    const klarnaInstance = klarna || await ensureSDK();
+    
+    if (!klarnaInstance) {
+      console.error("Klarna SDK not available");
+      container.innerHTML = "<p>Error: SDK not initialized</p>";
+      return;
+    }
+
     // Get paymentOptionId from the presentation - this is determined by which button the user clicked
     const selectedPaymentOptionId = (which === "KLARNA")
       ? currentPresentation.paymentOption.paymentOptionId
       : currentPresentation.savedPaymentOption.paymentOptionId;
 
-    const buttonComponent = (which === "KLARNA_SAVED")
-      ? currentPresentation.savedPaymentOption.paymentButton.component
-      : currentPresentation.paymentOption.paymentButton.component;
-
+    // Use Klarna.Payment.button() directly
     // The initiate handler receives an object from the SDK containing:
     // - klarnaNetworkSessionToken: the session token string (optional)
     // - paymentOptionId: the payment option ID
     // We extract just the token and use the selectedPaymentOptionId from the presentation
-    buttonComponent({
+    klarnaInstance.Payment.button({
       shape: "default",
       theme: "default",
       initiationMode: "DEVICE_BEST",
@@ -289,5 +295,11 @@ function renderPaymentButton(which) {
         return initiateKlarnaPayment(token, selectedPaymentOptionId);
       },
     }).mount("#action-button");
+    
+    logSdkEvent("Payment Button Rendered", {
+      paymentOptionId: selectedPaymentOptionId,
+      method: "Klarna.Payment.button()",
+      which,
+    });
   }
 }
