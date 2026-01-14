@@ -276,17 +276,35 @@ async function renderPaymentButton(which) {
       ? currentPresentation.paymentOption.paymentOptionId
       : currentPresentation.savedPaymentOption.paymentOptionId;
 
-    // Use Klarna.Payment.button() directly
-    // The initiate handler receives an object from the SDK containing:
-    // - klarnaNetworkSessionToken: the session token string (optional)
-    // - paymentOptionId: the payment option ID
-    // We extract just the token and use the selectedPaymentOptionId from the presentation
-    klarnaInstance.Payment.button({
+    // Create a wrapper div to hold both buttons
+    const wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.gap = "12px";
+
+    // Method 1: Use the button component from presentation (original method)
+    const buttonComponent = (which === "KLARNA_SAVED")
+      ? currentPresentation.savedPaymentOption.paymentButton.component
+      : currentPresentation.paymentOption.paymentButton.component;
+
+    const presentationButtonContainer = document.createElement("div");
+    presentationButtonContainer.id = "presentation-button-container";
+    wrapper.appendChild(presentationButtonContainer);
+
+    // Method 2: Use Klarna.Payment.button() directly (new method)
+    const directButtonContainer = document.createElement("div");
+    directButtonContainer.id = "direct-button-container";
+    wrapper.appendChild(directButtonContainer);
+
+    container.appendChild(wrapper);
+
+    // Render button from presentation (original method)
+    buttonComponent({
       shape: "default",
       theme: "default",
       initiationMode: "DEVICE_BEST",
       initiate: (initiateData) => {
-        console.log("SDK initiate callback received:", initiateData);
+        console.log("SDK initiate callback received (from presentation):", initiateData);
         const token = initiateData?.klarnaNetworkSessionToken || null;
         console.log(
           "Klarna Network Session Token:",
@@ -294,11 +312,27 @@ async function renderPaymentButton(which) {
         );
         return initiateKlarnaPayment(token, selectedPaymentOptionId);
       },
-    }).mount("#action-button");
+    }).mount("#presentation-button-container");
+
+    // Render button using Klarna.Payment.button() directly (new method)
+    klarnaInstance.Payment.button({
+      shape: "default",
+      theme: "default",
+      initiationMode: "DEVICE_BEST",
+      initiate: (initiateData) => {
+        console.log("SDK initiate callback received (from Klarna.Payment.button()):", initiateData);
+        const token = initiateData?.klarnaNetworkSessionToken || null;
+        console.log(
+          "Klarna Network Session Token:",
+          token ? token : "(not provided)",
+        );
+        return initiateKlarnaPayment(token, selectedPaymentOptionId);
+      },
+    }).mount("#direct-button-container");
     
-    logSdkEvent("Payment Button Rendered", {
+    logSdkEvent("Payment Buttons Rendered", {
       paymentOptionId: selectedPaymentOptionId,
-      method: "Klarna.Payment.button()",
+      methods: ["presentation.paymentButton.component", "Klarna.Payment.button()"],
       which,
     });
   }
