@@ -287,11 +287,30 @@ async function renderPaymentButton(which) {
       ? currentPresentation.savedPaymentOption.paymentButton.component
       : currentPresentation.paymentOption.paymentButton.component;
 
+    // Add label for presentation button
+    const presentationLabel = document.createElement("div");
+    presentationLabel.textContent = "Method 1: presentation.paymentButton.component()";
+    presentationLabel.style.fontSize = "12px";
+    presentationLabel.style.fontWeight = "600";
+    presentationLabel.style.color = "#666";
+    presentationLabel.style.marginBottom = "4px";
+    wrapper.appendChild(presentationLabel);
+
     const presentationButtonContainer = document.createElement("div");
     presentationButtonContainer.id = "presentation-button-container";
     wrapper.appendChild(presentationButtonContainer);
 
     // Method 2: Use Klarna.Payment.button() directly (new method)
+    // Add label for direct button
+    const directLabel = document.createElement("div");
+    directLabel.textContent = "Method 2: Klarna.Payment.button()";
+    directLabel.style.fontSize = "12px";
+    directLabel.style.fontWeight = "600";
+    directLabel.style.color = "#666";
+    directLabel.style.marginTop = "8px";
+    directLabel.style.marginBottom = "4px";
+    wrapper.appendChild(directLabel);
+
     const directButtonContainer = document.createElement("div");
     directButtonContainer.id = "direct-button-container";
     wrapper.appendChild(directButtonContainer);
