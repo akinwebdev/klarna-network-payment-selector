@@ -462,7 +462,7 @@ export function handleExpressCheckoutAmountLock() {
  * Unlock the amount field
  */
 export function unlockAmountField() {
-  if (amountInput.disabled) {
+  if (amountInput && amountInput.disabled) {
     amountInput.disabled = false;
     amountInput.classList.remove("locked");
   }
