@@ -309,10 +309,6 @@ async function initializePaymentButton() {
         const stamp = `stamp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const reference = `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Generate item stamp and reference (required by Paytrail)
-        const itemStamp = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const itemReference = `item_ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
         // Map locale to Paytrail language code (must be uppercase: FI, SV, or EN)
         const localeCode = productLocaleSel.value.split('-')[0] || 'en';
         const languageMap = {
