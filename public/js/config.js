@@ -45,7 +45,9 @@ export async function loadConfig() {
     }
 
     setSdkConfig(data);
-    configError.style.display = "none";
+    if (configError) {
+      configError.style.display = "none";
+    }
 
     // Store available modes and set current mode
     setAvailableAuthModes(data.availableModes || []);
@@ -54,11 +56,15 @@ export async function loadConfig() {
     // Update sdkConfig.authMode to reflect current selection
     data.authMode = currentAuthMode;
 
-    // Set up auth mode toggle
-    setupAuthModeToggle();
+    // Set up auth mode toggle (only if elements exist)
+    if (authModeToggle) {
+      setupAuthModeToggle();
+    }
 
-    // Update UI for current auth mode
-    updateAuthModeUI();
+    // Update UI for current auth mode (only if elements exist)
+    if (authModeBadge) {
+      updateAuthModeUI();
+    }
 
     // Show customer token status if configured
     if (
@@ -67,16 +73,22 @@ export async function loadConfig() {
     ) {
       customerTokenStatus.style.display = "block";
       const countries = data.customerTokenCountries.join(", ");
-      customerTokenPill.textContent = `${countries}`;
-      customerTokenPill.classList.add("success");
-      customerTokenPill.title = `Customer tokens configured for: ${countries}`;
+      if (customerTokenPill) {
+        customerTokenPill.textContent = `${countries}`;
+        customerTokenPill.classList.add("success");
+        customerTokenPill.title = `Customer tokens configured for: ${countries}`;
+      }
     }
 
     return true;
   } catch (error) {
     console.error("Failed to load configuration:", error);
-    configErrorMessage.textContent = error.message;
-    configError.style.display = "flex";
+    if (configErrorMessage) {
+      configErrorMessage.textContent = error.message;
+    }
+    if (configError) {
+      configError.style.display = "flex";
+    }
     return false;
   }
 }
@@ -170,7 +182,7 @@ export function updateAuthModeUI() {
     authModeBadge.style.display = "inline-block";
   }
 
-  // Update info banners
+  // Update info banners (only if they exist)
   const subPartnerBanner = $("#info-banner-sub-partner");
   const acquiringPartnerBanner = $("#info-banner-acquiring-partner");
   if (subPartnerBanner) {
@@ -182,8 +194,10 @@ export function updateAuthModeUI() {
     acquiringPartnerBanner.style.display = isSubPartner ? "none" : "flex";
   }
 
-  // Update interoperability options visibility
-  updateInteroperabilityOptionsVisibility();
+  // Update interoperability options visibility (only if element exists)
+  if (advancedFlowSel) {
+    updateInteroperabilityOptionsVisibility();
+  }
 }
 
 // ============================================================================
