@@ -421,6 +421,9 @@ import { currentAuthMode } from "./state.js";
  * Interoperability flows are only available for Acquiring Partners AND US market
  */
 export function updateInteroperabilityOptionsVisibility() {
+  // Only run if advancedFlowSel exists (not on product page)
+  if (!advancedFlowSel) return;
+
   const isUS = countrySel?.value?.toUpperCase() === "US";
   const isAcquiringPartner = currentAuthMode === "ACQUIRING_PARTNER";
   const shouldShow = isUS && isAcquiringPartner;
