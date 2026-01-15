@@ -6,7 +6,7 @@
       "destination": "/api/[...]"
     },
     {
-      "source": "/product",
+      "source": "/product$",
       "destination": "/public/product.html"
     },
     {
