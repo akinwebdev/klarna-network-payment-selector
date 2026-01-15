@@ -315,7 +315,8 @@ async function initializePaymentButton() {
       try {
         // Get current product page values
         const country = productCountrySel.value;
-        const currency = COUNTRY_MAPPING[country].currency;
+        // Paytrail only supports EUR, so force EUR for Paytrail payments
+        const currency = 'EUR';
         const amount = parseInt(productAmountInput.value, 10) || 15900;
         
         // Generate unique references
