@@ -15,6 +15,7 @@ let productLocaleSel;
 let productAmountInput;
 let productCurrencyPill;
 let productPriceDisplay;
+let paymentAccountSel;
 
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
@@ -478,6 +479,7 @@ async function initializeProductPage() {
   productAmountInput = document.getElementById("product-amount");
   productCurrencyPill = document.getElementById("product-currency-pill");
   productPriceDisplay = document.getElementById("product-price");
+  paymentAccountSel = document.getElementById("payment-account");
 
   // Check if all required elements exist
   if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill || !productPriceDisplay) {
