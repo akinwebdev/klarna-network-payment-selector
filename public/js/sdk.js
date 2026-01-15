@@ -93,8 +93,13 @@ export async function ensureSDK() {
   // ACQUIRING_PARTNER: CLIENT_ID + PARTNER_ACCOUNT_ID needed
   const initConfig = {
     clientId: sdkConfig.clientId,
-    products: ["PAYMENT"],
+    products: ["PAYMENT", "MESSAGING"],
   };
+
+  // Include locale if provided in config
+  if (sdkConfig.locale) {
+    initConfig.locale = sdkConfig.locale;
+  }
 
   // Only include partnerAccountId for Acquiring Partner mode
   if (sdkConfig.partnerAccountId) {

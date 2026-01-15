@@ -7,7 +7,7 @@
 import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
 import { ensureSDK } from "./sdk.js";
 import { loadConfig } from "./config.js";
-import { currentAuthMode } from "./state.js";
+import { currentAuthMode, sdkConfig } from "./state.js";
 
 // Product page specific DOM elements (will be set in initialization)
 let productCountrySel;
@@ -141,7 +141,15 @@ async function initializePaymentButton() {
       return;
     }
 
-    // Initialize SDK
+    // Get locale from settings before initializing SDK
+    const locale = productLocaleSel.value; // en-FI
+    
+    // Set locale in SDK config so it's used during initialization
+    if (sdkConfig) {
+      sdkConfig.locale = locale;
+    }
+
+    // Initialize SDK (will use locale from sdkConfig)
     const klarnaInstance = await ensureSDK();
     if (!klarnaInstance) {
       console.error("Klarna SDK not available");
@@ -150,7 +158,6 @@ async function initializePaymentButton() {
 
     // Get pre-selected values
     const country = productCountrySel.value; // FI
-    const locale = productLocaleSel.value; // en-FI
     const currency = COUNTRY_MAPPING[country].currency; // EUR
     const amount = parseInt(productAmountInput.value, 10) || 15900;
     const intents = getProductSelectedIntents(); // ["PAY"]
@@ -182,6 +189,21 @@ async function initializePaymentButton() {
     }
 
     buttonContainer.innerHTML = "";
+
+    // Mount on-site messaging placement above the payment button
+    const osmContainer = document.getElementById("osm-placement");
+    if (osmContainer && klarnaInstance.Messaging?.placement) {
+      try {
+        klarnaInstance.Messaging.placement({
+          key: 'credit-promotion-badge',
+          locale: locale,
+          amount: amount,
+        }).mount('#osm-placement');
+        console.log("On-site messaging placement mounted successfully");
+      } catch (error) {
+        console.warn("Error mounting messaging placement:", error);
+      }
+    }
 
     klarnaInstance.Payment.button({
       shape: "default",
@@ -287,18 +309,22 @@ async function initializeProductPage() {
     const defaultLocale = productCountrySel.value === "FI" ? "en-FI" : null;
     populateProductLocales(productCountrySel.value, defaultLocale);
     reflectProductCurrency(productCountrySel.value);
-    // Re-initialize payment button when country changes
+    // Re-initialize payment button and messaging when country changes
+    initializePaymentButton();
+  });
+
+  // Re-initialize when locale changes
+  productLocaleSel.addEventListener("change", () => {
+    updateProductPriceDisplay();
+    // Re-initialize payment button and messaging when locale changes
     initializePaymentButton();
   });
 
   // Update price display when amount changes
   productAmountInput.addEventListener("input", () => {
     updateProductPriceDisplay();
-  });
-
-  // Update price display when locale changes (for currency formatting)
-  productLocaleSel.addEventListener("change", () => {
-    updateProductPriceDisplay();
+    // Re-initialize messaging when amount changes (to update the amount in OSM)
+    initializePaymentButton();
   });
 
   // Initial price display update
