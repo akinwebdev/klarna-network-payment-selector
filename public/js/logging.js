@@ -50,6 +50,9 @@ export function syntaxHighlightJson(json) {
  * Log an SDK event to the SDK selector log panel
  */
 export function logSdkEvent(title, data, type = "") {
+  // Skip logging if log panel doesn't exist (e.g., on product page)
+  if (!sdkLogContent) return;
+
   const placeholder = sdkLogContent.querySelector(".log-placeholder");
   if (placeholder) placeholder.remove();
 
@@ -82,11 +85,13 @@ export function logSdkEvent(title, data, type = "") {
 }
 
 export function clearSdkLog() {
+  if (!sdkLogContent) return;
   sdkLogContent.innerHTML =
     '<p class="log-placeholder">SDK events and backend calls will appear here...</p>';
 }
 
 export function clearApiLog() {
+  if (!apiLogContent) return;
   apiLogContent.innerHTML =
     '<p class="log-placeholder">Backend calls will appear here...</p>';
 }
@@ -111,6 +116,9 @@ export function logBackendCall(
   target = "sdk",
 ) {
   const logContent = target === "api" ? apiLogContent : sdkLogContent;
+  // Skip logging if log panel doesn't exist (e.g., on product page)
+  if (!logContent) return;
+
   const placeholder = logContent.querySelector(".log-placeholder");
   if (placeholder) placeholder.remove();
 
@@ -224,6 +232,9 @@ export function logBackendCall(
  */
 export function logBackendError(message, target = "sdk") {
   const logContent = target === "api" ? apiLogContent : sdkLogContent;
+  // Skip logging if log panel doesn't exist (e.g., on product page)
+  if (!logContent) return;
+
   const placeholder = logContent.querySelector(".log-placeholder");
   if (placeholder) placeholder.remove();
 
