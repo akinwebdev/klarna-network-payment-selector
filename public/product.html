@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product Page - Klarna Payment Selector</title>
+    <link rel="preconnect" href="https://x.klarnacdn.net" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://x.klarnacdn.net/ui/fonts/v1.5/fonts.css"
+    >
+    <link
+      rel="stylesheet"
+      href="https://js.klarna.com/web-sdk/buttons/payment-button.css"
+    >
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <!-- Mode Banner -->
+    <div class="mode-banner">
+      <span class="icon">🛍️</span>
+      <div class="mode-banner-content">
+        <strong>Product Page</strong> — Klarna Payment Integration
+      </div>
+    </div>
+
+    <!-- Main Content: Payment Presentation Config -->
+    <div class="main-row">
+      <!-- Payment Presentation Config -->
+      <div class="panel config-panel">
+        <div class="config">
+          <div class="collapsible-header" id="product-payment-config-collapse-header">
+            <h3 style="margin: 0; cursor: pointer">
+              Payment Presentation Config
+            </h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="config-collapsible" id="product-payment-config-collapse-content">
+            <div class="field">
+              <label for="product-country">Purchase country (sets currency)</label>
+              <select id="product-country"></select>
+            </div>
+            <div class="field">
+              <label for="product-locale">Locale</label>
+              <select id="product-locale"></select>
+            </div>
+            <div class="field">
+              <div class="collapsible-header" id="product-intents-collapse-header">
+                <label style="margin: 0; cursor: pointer"
+                >Intents (optional)</label>
+                <span class="collapse-icon collapsed">▼</span>
+              </div>
+              <div
+                class="collapsible-content collapsed"
+                id="product-intents-collapse-content"
+              >
+                <!-- Available intents to add -->
+                <div class="intent-chips" id="product-available-intents">
+                  <button type="button" class="intent-chip" data-intent="PAY">
+                    + PAY
+                  </button>
+                  <button
+                    type="button"
+                    class="intent-chip"
+                    data-intent="SUBSCRIBE"
+                  >
+                    + SUBSCRIBE
+                  </button>
+                  <button
+                    type="button"
+                    class="intent-chip disabled"
+                    data-intent="SIGNUP"
+                    disabled
+                  >
+                    SIGNUP
+                  </button>
+                  <button
+                    type="button"
+                    class="intent-chip disabled"
+                    data-intent="SIGNIN"
+                    disabled
+                  >
+                    SIGNIN
+                  </button>
+                  <button
+                    type="button"
+                    class="intent-chip"
+                    data-intent="DONATE"
+                  >
+                    + DONATE
+                  </button>
+                  <button
+                    type="button"
+                    class="intent-chip"
+                    data-intent="ADD_TO_WALLET"
+                  >
+                    + ADD_TO_WALLET
+                  </button>
+                </div>
+
+                <!-- Selected intents (reorderable) -->
+                <div class="selected-intents-label">
+                  Selected (drag to reorder):
+                </div>
+                <div class="selected-intents-list" id="product-selected-intents">
+                  <div class="intent-item" data-intent="PAY" draggable="true">
+                    <span class="drag-handle">⋮⋮</span>
+                    <span class="intent-name">PAY</span>
+                    <button
+                      type="button"
+                      class="intent-remove"
+                      data-intent="PAY"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="selected-intents-empty"
+                  id="product-intents-empty"
+                  style="display: none"
+                >
+                  Click an intent above to add it
+                </div>
+
+                <div class="intent-warning" id="product-intent-warning">
+                  ⚠️ Invalid intent combination. Valid: PAY, DONATE, SUBSCRIBE,
+                  SIGNUP, SIGNIN, ADD_TO_WALLET, PAY+ADD_TO_WALLET, PAY+SIGNIN,
+                  PAY+SUBSCRIBE, DONATE+SIGNIN.
+                </div>
+              </div>
+            </div>
+            <div class="field" id="product-amount-field">
+              <label for="product-amount">Amount (minor units)</label>
+              <input id="product-amount" type="number" min="0" step="1" value="2000" />
+            </div>
+            <div class="field" id="product-subscription-billing-interval-field">
+              <label for="product-subscription-billing-interval"
+              >Subscription Billing Interval (optional)</label>
+              <select id="product-subscription-billing-interval">
+                <option value="">None</option>
+                <option value="DAY">DAY</option>
+                <option value="WEEK">WEEK</option>
+                <option value="MONTH">MONTH</option>
+                <option value="YEAR">YEAR</option>
+              </select>
+            </div>
+            <div
+              class="field"
+              id="product-subscription-billing-interval-frequency-field"
+            >
+              <label for="product-subscription-billing-interval-frequency"
+              >Subscription Billing Interval Frequency (optional)</label>
+              <input
+                id="product-subscription-billing-interval-frequency"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g., 1, 2, 3..."
+              />
+            </div>
+            <div class="status">
+              Currency: <span id="product-currency-pill" class="pill">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Checkout Flows -->
+        <div class="config" style="margin-top: 16px">
+          <div class="collapsible-header" id="product-advanced-flows-collapse-header">
+            <h3 style="margin: 0; cursor: pointer">Advanced Checkout Flows</h3>
+            <span class="collapse-icon collapsed">▼</span>
+          </div>
+          <div
+            class="config-collapsible collapsed"
+            id="product-advanced-flows-collapse-content"
+          >
+            <div class="field">
+              <label for="product-advanced-flow">Flow Type</label>
+              <select id="product-advanced-flow">
+                <option value="">None (Standard checkout)</option>
+                <option value="TOKENIZED_PAYMENTS">Tokenized payments</option>
+                <option
+                  value="KLARNA_EXPRESS_CHECKOUT"
+                  class="acquiring-partner-only"
+                >
+                  Interoperability - KLARNA_EXPRESS_CHECKOUT
+                </option>
+                <option
+                  value="SIGN_IN_WITH_KLARNA"
+                  class="acquiring-partner-only"
+                >
+                  Interoperability - SIGN_IN_WITH_KLARNA
+                </option>
+                <option
+                  value="KLARNA_PRE_QUALIFICATION"
+                  class="acquiring-partner-only"
+                >
+                  Interoperability - KLARNA_PRE_QUALIFICATION
+                </option>
+                <option
+                  value="KLARNA_ACCOUNT_LINKING"
+                  class="acquiring-partner-only"
+                >
+                  Interoperability - KLARNA_ACCOUNT_LINKING
+                </option>
+              </select>
+            </div>
+            <div
+              class="status"
+              id="product-customer-token-status"
+              style="display: none"
+            >
+              Customer Token: <span id="product-customer-token-pill" class="pill"
+              >configured</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/js/product.js"></script>
+  </body>
+</html>
