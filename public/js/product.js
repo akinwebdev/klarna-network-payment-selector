@@ -366,7 +366,7 @@ async function initializePaymentButton() {
         // Find Klarna provider URL in the response
         // The response should have a providers array with Klarna provider
         const providers = data.providers || [];
-        const klarnaProvider = providers.find((provider: { id?: string; name?: string; url?: string }) => 
+        const klarnaProvider = providers.find((provider) => 
           provider.id?.toLowerCase() === 'klarna' || 
           provider.name?.toLowerCase() === 'klarna' ||
           provider.url?.includes('klarna')
