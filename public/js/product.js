@@ -315,6 +315,14 @@ async function initializePaymentButton() {
 
       console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
 
+      // Check if user wants to skip Paytrail payment request (for testing)
+      const skipPaytrailCheckbox = document.getElementById('skip-paytrail-request');
+      if (skipPaytrailCheckbox && skipPaytrailCheckbox.checked) {
+        console.log("⚠️ Skipping Paytrail payment request (testing mode enabled)");
+        alert("Payment completed! Paytrail request skipped (testing mode).");
+        return false;
+      }
+
       try {
         // Get current product page values
         const country = productCountrySel.value;
