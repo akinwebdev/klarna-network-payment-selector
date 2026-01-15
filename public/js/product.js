@@ -288,6 +288,111 @@ async function initializePaymentButton() {
       },
     }).mount("#product-payment-button-container");
 
+    // Add product-page-specific complete event handler
+    klarnaInstance.Payment.on("complete", async (paymentRequest) => {
+      console.log("Payment complete event received on product page:", paymentRequest);
+      
+      // Extract Klarna Network Session Token from stateContext
+      const klarnaNetworkSessionToken = paymentRequest?.stateContext?.klarnaNetworkSessionToken || 
+                                        paymentRequest?.stateContext?.interoperabilityToken ||
+                                        null;
+      
+      if (!klarnaNetworkSessionToken) {
+        console.error("No Klarna Network Session Token found in paymentRequest");
+        alert("Payment completed but no session token found. Please try again.");
+        return false;
+      }
+
+      console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
+
+      try {
+        // Get current product page values
+        const country = productCountrySel.value;
+        const currency = COUNTRY_MAPPING[country].currency;
+        const amount = parseInt(productAmountInput.value, 10) || 15900;
+        
+        // Generate unique references
+        const stamp = `stamp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const reference = `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Build Paytrail payment request
+        const paymentData = {
+          stamp: stamp,
+          reference: reference,
+          amount: amount,
+          currency: currency,
+          language: productLocaleSel.value.split('-')[0] || 'EN',
+          items: [{
+            unitPrice: amount,
+            units: 1,
+            vatPercentage: 0,
+            productCode: 'demo-product',
+            description: 'Demo Product',
+            category: 'default'
+          }],
+          customer: {
+            email: 'customer@example.com'
+          },
+          redirectUrls: {
+            success: `${API_BASE}/payment-complete`,
+            cancel: `${API_BASE}/product`
+          },
+          providerDetails: {
+            klarna: {
+              networkSessionToken: klarnaNetworkSessionToken
+            }
+          }
+        };
+
+        console.log("Calling Paytrail /api/payments with:", JSON.stringify(paymentData, null, 2));
+
+        // Call Paytrail payment endpoint
+        const response = await fetch(`${API_BASE}/api/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(paymentData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || data.error || 'Payment creation failed');
+        }
+
+        console.log("Paytrail payment response:", data);
+
+        // Find Klarna provider URL in the response
+        // The response should have a providers array with Klarna provider
+        const providers = data.providers || [];
+        const klarnaProvider = providers.find((provider: { id?: string; name?: string; url?: string }) => 
+          provider.id?.toLowerCase() === 'klarna' || 
+          provider.name?.toLowerCase() === 'klarna' ||
+          provider.url?.includes('klarna')
+        );
+
+        if (klarnaProvider && klarnaProvider.url) {
+          console.log("Redirecting to Klarna provider URL:", klarnaProvider.url);
+          // Redirect to Klarna provider URL
+          window.location.href = klarnaProvider.url;
+        } else if (data.href) {
+          // Fallback to main href if no specific Klarna provider found
+          console.log("Redirecting to payment href:", data.href);
+          window.location.href = data.href;
+        } else {
+          throw new Error("No redirect URL found in Paytrail response");
+        }
+
+        // Return false to prevent default SDK behavior
+        return false;
+      } catch (error) {
+        console.error("Error creating Paytrail payment:", error);
+        alert(`Error processing payment: ${error instanceof Error ? error.message : String(error)}`);
+        return false;
+      }
+    });
+
     console.log("Payment button initialized successfully");
   } catch (error) {
     console.error("Error initializing payment button:", error);
