@@ -4,8 +4,12 @@
  * Initializes the payment configuration section on the product page
  */
 
-import { COUNTRY_MAPPING } from "./constants.js";
+import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
 import { setupCollapsible } from "./ui.js";
+import { ensureSDK } from "./sdk.js";
+import { loadConfig } from "./config.js";
+import { initiateKlarnaPayment } from "./payment.js";
+import { currentAuthMode } from "./state.js";
 
 // Product page specific DOM elements
 const productCountrySel = document.getElementById("product-country");
@@ -60,10 +64,173 @@ export function getProductSelectedIntents() {
 }
 
 // ============================================================================
+// PAYMENT REQUEST DATA BUILDING (Product Page)
+// ============================================================================
+
+function buildProductPaymentRequestData(paymentOptionId) {
+  const country = productCountrySel.value;
+  const currency = COUNTRY_MAPPING[country].currency;
+  const amount = parseInt(productAmountInput.value, 10) || 15900;
+  const intents = getProductSelectedIntents(); // ["PAY"]
+
+  const paymentRequestData = {
+    currency,
+    paymentOptionId,
+    paymentRequestReference: `pay_req_ref_Product_${Date.now()}`,
+    intents: intents || undefined,
+    amount,
+    supplementaryPurchaseData: {
+      purchaseReference: `purchase_ref_Product_${Date.now()}`,
+      lineItems: [{
+        name: "Test Item",
+        quantity: 1,
+        totalAmount: amount,
+        unitPrice: amount,
+      }],
+    },
+  };
+
+  return paymentRequestData;
+}
+
+// ============================================================================
+// PAYMENT BUTTON INITIALIZATION
+// ============================================================================
+
+async function initializePaymentButton() {
+  try {
+    // Load config first
+    const configLoaded = await loadConfig();
+    if (!configLoaded) {
+      console.error("Failed to load configuration");
+      return;
+    }
+
+    // Initialize SDK
+    const klarnaInstance = await ensureSDK();
+    if (!klarnaInstance) {
+      console.error("Klarna SDK not available");
+      return;
+    }
+
+    // Get pre-selected values
+    const country = productCountrySel.value; // FI
+    const locale = productLocaleSel.value; // en-FI
+    const currency = COUNTRY_MAPPING[country].currency; // EUR
+    const amount = parseInt(productAmountInput.value, 10) || 15900;
+    const intents = getProductSelectedIntents(); // ["PAY"]
+
+    // Fetch presentation to get payment options
+    const presentationConfig = {
+      currency,
+      locale,
+      amount,
+      intents,
+    };
+
+    console.log("Fetching presentation with config:", presentationConfig);
+    const presentation = await klarnaInstance.Payment.presentation(presentationConfig);
+    console.log("Presentation received:", presentation);
+
+    // Get payment option ID from presentation
+    const paymentOptionId = presentation.paymentOption?.paymentOptionId;
+    if (!paymentOptionId) {
+      console.error("No payment option ID in presentation");
+      return;
+    }
+
+    // Create payment button using Klarna.Payment.button()
+    const buttonContainer = document.getElementById("product-payment-button-container");
+    if (!buttonContainer) {
+      console.error("Payment button container not found");
+      return;
+    }
+
+    buttonContainer.innerHTML = "";
+
+    klarnaInstance.Payment.button({
+      shape: "default",
+      theme: "default",
+      initiationMode: "DEVICE_BEST",
+      initiate: async (initiateData) => {
+        console.log("Payment button initiated:", initiateData);
+        const token = initiateData?.klarnaNetworkSessionToken || null;
+        console.log("Klarna Network Session Token:", token || "(not provided)");
+        
+        // Build payment request data with product page values
+        const paymentRequestData = buildProductPaymentRequestData(paymentOptionId);
+        
+        const requestBody = {
+          klarnaNetworkSessionToken: token,
+          paymentOptionId,
+          paymentRequestData,
+          returnUrl: `${API_BASE}/payment-complete`,
+          appReturnUrl: null,
+          authMode: currentAuthMode,
+        };
+
+        // Use different endpoint based on auth mode
+        const endpoint = currentAuthMode === "SUB_PARTNER"
+          ? "/api/payment-request"
+          : "/api/authorize-payment";
+
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+
+        const res = await response.json();
+
+        if (!response.ok) {
+          throw new Error(res.message || "Payment request failed");
+        }
+
+        // Handle response based on the endpoint used
+        if (currentAuthMode === "SUB_PARTNER") {
+          switch (res.status) {
+            case "CREATED":
+              return { paymentRequestId: res.paymentRequestId };
+            case "COMPLETED":
+              return { returnUrl: res.successUrl };
+            case "ERROR":
+              throw new Error(res.message || "Payment request error");
+            default:
+              throw new Error(`Unexpected payment request status: ${res.status}`);
+          }
+        } else {
+          switch (res.status) {
+            case "STEP_UP_REQUIRED":
+              return { paymentRequestId: res.paymentRequestId };
+            case "APPROVED":
+              return { returnUrl: res.successUrl };
+            case "DECLINED":
+              alert(res.message || "Your payment was declined. Please try another method.");
+              return null;
+            case "ERROR":
+              throw new Error(res.message || "Payment authorization error");
+            default:
+              throw new Error(`Unexpected payment status: ${res.status}`);
+          }
+        }
+      },
+    }).mount("#product-payment-button-container");
+
+    console.log("Payment button initialized successfully");
+  } catch (error) {
+    console.error("Error initializing payment button:", error);
+    const buttonContainer = document.getElementById("product-payment-button-container");
+    if (buttonContainer) {
+      buttonContainer.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+  }
+}
+
+// ============================================================================
 // INITIALIZATION
 // ============================================================================
 
-function initializeProductPage() {
+async function initializeProductPage() {
   // Setup collapsible sections
   setupCollapsible();
 
@@ -75,7 +242,12 @@ function initializeProductPage() {
     const defaultLocale = productCountrySel.value === "FI" ? "en-FI" : null;
     populateProductLocales(productCountrySel.value, defaultLocale);
     reflectProductCurrency(productCountrySel.value);
+    // Re-initialize payment button when country changes
+    initializePaymentButton();
   });
+
+  // Initialize payment button after page loads
+  await initializePaymentButton();
 
   console.log("Product page initialized");
 }
