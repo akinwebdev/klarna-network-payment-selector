@@ -106,12 +106,23 @@ function buildProductPaymentRequestData(paymentOptionId) {
   const country = productCountrySel.value;
   const currency = COUNTRY_MAPPING[country].currency;
   const amount = parseInt(productAmountInput.value, 10) || 15900;
+  const intents = getProductSelectedIntents(); // ["PAY"]
 
   const paymentRequestData = {
     currency,
     paymentOptionId,
     paymentRequestReference: `pay_req_ref_Product_${Date.now()}`,
+    intents: intents || undefined,
     amount,
+    supplementaryPurchaseData: {
+      purchaseReference: `purchase_ref_Product_${Date.now()}`,
+      lineItems: [{
+        name: "Test Item",
+        quantity: 1,
+        totalAmount: amount,
+        unitPrice: amount,
+      }],
+    },
   };
 
   return paymentRequestData;
@@ -159,11 +170,14 @@ async function initializePaymentButton() {
     const country = productCountrySel.value; // FI
     const currency = COUNTRY_MAPPING[country].currency; // EUR
     const amount = parseInt(productAmountInput.value, 10) || 15900;
+    const intents = getProductSelectedIntents(); // ["PAY"]
 
-    // Fetch presentation to get payment options (only currency and amount)
+    // Fetch presentation to get payment options
+    // Only set currency, amount, and intents (locale removed per user request)
     const presentationConfig = {
       currency,
       amount,
+      intents,
     };
 
     console.log("Fetching presentation with config:", presentationConfig);
@@ -318,7 +332,8 @@ async function initializePaymentButton() {
         };
         const language = languageMap[localeCode.toLowerCase()] || 'EN';
 
-        // Build Paytrail payment request (without items and customer)
+        // Build Paytrail payment request
+        // Removed items and customer per user request
         const paymentData = {
           stamp: stamp,
           reference: reference,

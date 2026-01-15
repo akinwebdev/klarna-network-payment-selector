@@ -1390,7 +1390,7 @@ app.post("/api/payments", async (c: Context) => {
     );
 
     // Validate required fields for Paytrail API
-    // Note: items and customer are optional when using providerDetails.klarna.networkSessionToken
+    // Note: items and customer are optional when providerDetails.klarna.networkSessionToken is provided
     const requiredFields = [
       "stamp",
       "reference",
