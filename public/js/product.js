@@ -194,6 +194,9 @@ async function initializePaymentButton() {
     const osmContainer = document.getElementById("osm-placement");
     if (osmContainer && klarnaInstance.Messaging?.placement) {
       try {
+        // Clear existing placement before mounting a new one
+        osmContainer.innerHTML = "";
+        
         klarnaInstance.Messaging.placement({
           key: 'credit-promotion-badge',
           locale: locale,
