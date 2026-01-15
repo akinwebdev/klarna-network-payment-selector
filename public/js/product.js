@@ -10,11 +10,11 @@ import { ensureSDK } from "./sdk.js";
 import { loadConfig } from "./config.js";
 import { currentAuthMode } from "./state.js";
 
-// Product page specific DOM elements
-const productCountrySel = document.getElementById("product-country");
-const productLocaleSel = document.getElementById("product-locale");
-const productAmountInput = document.getElementById("product-amount");
-const productCurrencyPill = document.getElementById("product-currency-pill");
+// Product page specific DOM elements (will be set in initialization)
+let productCountrySel;
+let productLocaleSel;
+let productAmountInput;
+let productCurrencyPill;
 
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
@@ -50,7 +50,9 @@ function populateProductLocales(countryCode, defaultLocale = null) {
 }
 
 function reflectProductCurrency(countryCode) {
-  productCurrencyPill.textContent = COUNTRY_MAPPING[countryCode].currency;
+  if (productCurrencyPill) {
+    productCurrencyPill.textContent = COUNTRY_MAPPING[countryCode].currency;
+  }
 }
 
 // ============================================================================
@@ -230,6 +232,18 @@ async function initializePaymentButton() {
 // ============================================================================
 
 async function initializeProductPage() {
+  // Get DOM elements
+  productCountrySel = document.getElementById("product-country");
+  productLocaleSel = document.getElementById("product-locale");
+  productAmountInput = document.getElementById("product-amount");
+  productCurrencyPill = document.getElementById("product-currency-pill");
+
+  // Check if all required elements exist
+  if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill) {
+    console.error("Required DOM elements not found");
+    return;
+  }
+
   // Setup collapsible sections
   setupCollapsible();
 
