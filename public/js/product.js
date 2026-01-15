@@ -14,7 +14,6 @@ const productAmountInput = document.getElementById("product-amount");
 const productCurrencyPill = document.getElementById("product-currency-pill");
 const productSubscriptionBillingIntervalSel = document.getElementById("product-subscription-billing-interval");
 const productSubscriptionBillingIntervalFrequencyInput = document.getElementById("product-subscription-billing-interval-frequency");
-const productAdvancedFlowSel = document.getElementById("product-advanced-flow");
 const productAvailableIntents = document.getElementById("product-available-intents");
 const productSelectedIntents = document.getElementById("product-selected-intents");
 const productIntentsEmpty = document.getElementById("product-intents-empty");

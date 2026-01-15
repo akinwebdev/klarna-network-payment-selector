@@ -25,7 +25,7 @@
     </div>
 
     <!-- Main Content: Payment Presentation Config -->
-    <div class="main-row">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
       <!-- Payment Presentation Config -->
       <div class="panel config-panel">
         <div class="config">
@@ -161,58 +161,6 @@
             </div>
             <div class="status">
               Currency: <span id="product-currency-pill" class="pill">—</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Advanced Checkout Flows -->
-        <div class="config" style="margin-top: 16px">
-          <div class="collapsible-header" id="product-advanced-flows-collapse-header">
-            <h3 style="margin: 0; cursor: pointer">Advanced Checkout Flows</h3>
-            <span class="collapse-icon collapsed">▼</span>
-          </div>
-          <div
-            class="config-collapsible collapsed"
-            id="product-advanced-flows-collapse-content"
-          >
-            <div class="field">
-              <label for="product-advanced-flow">Flow Type</label>
-              <select id="product-advanced-flow">
-                <option value="">None (Standard checkout)</option>
-                <option value="TOKENIZED_PAYMENTS">Tokenized payments</option>
-                <option
-                  value="KLARNA_EXPRESS_CHECKOUT"
-                  class="acquiring-partner-only"
-                >
-                  Interoperability - KLARNA_EXPRESS_CHECKOUT
-                </option>
-                <option
-                  value="SIGN_IN_WITH_KLARNA"
-                  class="acquiring-partner-only"
-                >
-                  Interoperability - SIGN_IN_WITH_KLARNA
-                </option>
-                <option
-                  value="KLARNA_PRE_QUALIFICATION"
-                  class="acquiring-partner-only"
-                >
-                  Interoperability - KLARNA_PRE_QUALIFICATION
-                </option>
-                <option
-                  value="KLARNA_ACCOUNT_LINKING"
-                  class="acquiring-partner-only"
-                >
-                  Interoperability - KLARNA_ACCOUNT_LINKING
-                </option>
-              </select>
-            </div>
-            <div
-              class="status"
-              id="product-customer-token-status"
-              style="display: none"
-            >
-              Customer Token: <span id="product-customer-token-pill" class="pill"
-              >configured</span>
             </div>
           </div>
         </div>
