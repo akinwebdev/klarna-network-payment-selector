@@ -396,13 +396,57 @@ async function initializePaymentButton() {
         );
 
         if (klarnaProvider && klarnaProvider.url) {
-          console.log("Redirecting to Klarna provider URL:", klarnaProvider.url);
-          // Redirect to Klarna provider URL
-          window.location.href = klarnaProvider.url;
+          console.log("Klarna provider found:", klarnaProvider);
+          console.log("Provider URL:", klarnaProvider.url);
+          console.log("Provider parameters:", klarnaProvider.parameters);
+
+          // Create a form to POST to the provider URL with all parameters
+          // This matches how the homepage handles provider redirects
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = klarnaProvider.url;
+          form.style.display = 'none';
+
+          // Add hidden inputs for all provider parameters
+          if (klarnaProvider.parameters && Array.isArray(klarnaProvider.parameters)) {
+            klarnaProvider.parameters.forEach(param => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = param.name;
+              input.value = param.value || '';
+              form.appendChild(input);
+            });
+          }
+
+          // Append form to body and submit
+          document.body.appendChild(form);
+          form.submit();
         } else if (data.href) {
-          // Fallback to main href if no specific Klarna provider found
-          console.log("Redirecting to payment href:", data.href);
-          window.location.href = data.href;
+          // Fallback: if no specific Klarna provider found but we have a main href,
+          // we still need to check if there are any providers with parameters
+          const firstProvider = providers.find(p => p.url && p.parameters);
+          if (firstProvider && firstProvider.parameters) {
+            // Use the first provider with parameters
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = firstProvider.url;
+            form.style.display = 'none';
+
+            firstProvider.parameters.forEach(param => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = param.name;
+              input.value = param.value || '';
+              form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+          } else {
+            // Last resort: redirect to href (though this shouldn't happen for Klarna)
+            console.warn("No provider with parameters found, redirecting to href:", data.href);
+            window.location.href = data.href;
+          }
         } else {
           throw new Error("No redirect URL found in Paytrail response");
         }
