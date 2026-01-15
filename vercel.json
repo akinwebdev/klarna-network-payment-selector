@@ -10,11 +10,7 @@
       "destination": "/public/product.html"
     },
     {
-      "source": "/product.html",
-      "destination": "/public/product.html"
-    },
-    {
-      "source": "/payment-complete",
+      "source": "/payment-complete$",
       "destination": "/public/payment-complete.html"
     },
     {
