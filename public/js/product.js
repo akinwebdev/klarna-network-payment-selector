@@ -122,6 +122,9 @@ function buildProductPaymentRequestData(paymentOptionId) {
         totalAmount: amount,
         unitPrice: amount,
       }],
+      customer: {
+        email: 'customer@example.com'
+      },
     },
   };
 
@@ -333,13 +336,15 @@ async function initializePaymentButton() {
         const language = languageMap[localeCode.toLowerCase()] || 'EN';
 
         // Build Paytrail payment request
-        // Removed items and customer per user request
         const paymentData = {
           stamp: stamp,
           reference: reference,
           amount: amount,
           currency: currency,
           language: language,
+          customer: {
+            email: 'customer@example.com'
+          },
           redirectUrls: {
             success: `${API_BASE}/payment-complete`,
             cancel: `${API_BASE}/product`
