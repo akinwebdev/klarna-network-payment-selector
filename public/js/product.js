@@ -322,6 +322,10 @@ async function initializePaymentButton() {
         const stamp = `stamp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const reference = `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+        // Generate item stamp and reference (required by Paytrail)
+        const itemStamp = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const itemReference = `item_ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         // Build Paytrail payment request
         const paymentData = {
           stamp: stamp,
@@ -335,7 +339,9 @@ async function initializePaymentButton() {
             vatPercentage: 0,
             productCode: 'demo-product',
             description: 'Demo Product',
-            category: 'default'
+            category: 'default',
+            stamp: itemStamp,
+            reference: itemReference
           }],
           customer: {
             email: 'customer@example.com'
