@@ -72,7 +72,8 @@ function initializeProductPage() {
 
   // Reflect currency when country changes
   productCountrySel.addEventListener("change", () => {
-    populateProductLocales(productCountrySel.value, "en-FI");
+    const defaultLocale = productCountrySel.value === "FI" ? "en-FI" : null;
+    populateProductLocales(productCountrySel.value, defaultLocale);
     reflectProductCurrency(productCountrySel.value);
   });
 
