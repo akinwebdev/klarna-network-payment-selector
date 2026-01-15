@@ -291,15 +291,22 @@ async function initializePaymentButton() {
     // Add product-page-specific complete event handler
     klarnaInstance.Payment.on("complete", async (paymentRequest) => {
       console.log("Payment complete event received on product page:", paymentRequest);
+      console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
+      console.log("paymentRequest.stateContext:", paymentRequest?.stateContext);
       
       // Extract Klarna Network Session Token from stateContext
-      const klarnaNetworkSessionToken = paymentRequest?.stateContext?.klarnaNetworkSessionToken || 
-                                        paymentRequest?.stateContext?.interoperabilityToken ||
+      // Based on Paytrail project, the token is in stateContext.interoperabilityToken
+      // But we check multiple possible locations
+      const klarnaNetworkSessionToken = paymentRequest?.stateContext?.interoperabilityToken ||
+                                        paymentRequest?.stateContext?.klarnaNetworkSessionToken ||
+                                        paymentRequest?.klarnaNetworkSessionToken ||
                                         null;
       
       if (!klarnaNetworkSessionToken) {
         console.error("No Klarna Network Session Token found in paymentRequest");
-        alert("Payment completed but no session token found. Please try again.");
+        console.error("Available paymentRequest keys:", Object.keys(paymentRequest || {}));
+        console.error("Available stateContext keys:", Object.keys(paymentRequest?.stateContext || {}));
+        alert("Payment completed but no session token found. Please check console for details.");
         return false;
       }
 
