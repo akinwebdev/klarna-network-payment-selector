@@ -5,7 +5,7 @@
  */
 
 import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
-import { ensureSDK } from "./sdk.js";
+import { ensureSDK, resetSDKState } from "./sdk.js";
 import { loadConfig } from "./config.js";
 import { currentAuthMode, sdkConfig } from "./state.js";
 
@@ -132,6 +132,9 @@ function buildProductPaymentRequestData(paymentOptionId) {
 // PAYMENT BUTTON INITIALIZATION
 // ============================================================================
 
+// Track current locale to detect changes
+let currentSDKLocale = null;
+
 async function initializePaymentButton() {
   try {
     // Load config first
@@ -143,6 +146,13 @@ async function initializePaymentButton() {
 
     // Get locale from settings before initializing SDK
     const locale = productLocaleSel.value; // en-FI
+    
+    // If locale changed, reset SDK state to force re-initialization with new locale
+    if (currentSDKLocale !== null && currentSDKLocale !== locale) {
+      console.log(`Locale changed from ${currentSDKLocale} to ${locale}, resetting SDK...`);
+      resetSDKState();
+    }
+    currentSDKLocale = locale;
     
     // Set locale in SDK config so it's used during initialization
     if (sdkConfig) {
@@ -190,21 +200,23 @@ async function initializePaymentButton() {
 
     buttonContainer.innerHTML = "";
 
-    // Mount on-site messaging placement above the payment button
+    // Clear and mount on-site messaging placement above the payment button
     const osmContainer = document.getElementById("osm-placement");
-    if (osmContainer && klarnaInstance.Messaging?.placement) {
-      try {
-        // Clear existing placement before mounting a new one
-        osmContainer.innerHTML = "";
-        
-        klarnaInstance.Messaging.placement({
-          key: 'credit-promotion-badge',
-          locale: locale,
-          amount: amount,
-        }).mount('#osm-placement');
-        console.log("On-site messaging placement mounted successfully");
-      } catch (error) {
-        console.warn("Error mounting messaging placement:", error);
+    if (osmContainer) {
+      // Clear existing placement before mounting a new one
+      osmContainer.innerHTML = "";
+      
+      if (klarnaInstance.Messaging?.placement) {
+        try {
+          klarnaInstance.Messaging.placement({
+            key: 'credit-promotion-badge',
+            locale: locale,
+            amount: amount,
+          }).mount('#osm-placement');
+          console.log("On-site messaging placement mounted successfully");
+        } catch (error) {
+          console.warn("Error mounting messaging placement:", error);
+        }
       }
     }
 
