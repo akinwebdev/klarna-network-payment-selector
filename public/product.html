@@ -23,7 +23,7 @@
         <div class="config">
           <div class="collapsible-header" id="product-payment-config-collapse-header">
             <h3 style="margin: 0; cursor: pointer">
-              Payment Presentation Config
+              Settings
             </h3>
             <span class="collapse-icon">▼</span>
           </div>
@@ -36,120 +36,9 @@
               <label for="product-locale">Locale</label>
               <select id="product-locale"></select>
             </div>
-            <div class="field">
-              <div class="collapsible-header" id="product-intents-collapse-header">
-                <label style="margin: 0; cursor: pointer"
-                >Intents (optional)</label>
-                <span class="collapse-icon collapsed">▼</span>
-              </div>
-              <div
-                class="collapsible-content collapsed"
-                id="product-intents-collapse-content"
-              >
-                <!-- Available intents to add -->
-                <div class="intent-chips" id="product-available-intents">
-                  <button type="button" class="intent-chip" data-intent="PAY">
-                    + PAY
-                  </button>
-                  <button
-                    type="button"
-                    class="intent-chip"
-                    data-intent="SUBSCRIBE"
-                  >
-                    + SUBSCRIBE
-                  </button>
-                  <button
-                    type="button"
-                    class="intent-chip disabled"
-                    data-intent="SIGNUP"
-                    disabled
-                  >
-                    SIGNUP
-                  </button>
-                  <button
-                    type="button"
-                    class="intent-chip disabled"
-                    data-intent="SIGNIN"
-                    disabled
-                  >
-                    SIGNIN
-                  </button>
-                  <button
-                    type="button"
-                    class="intent-chip"
-                    data-intent="DONATE"
-                  >
-                    + DONATE
-                  </button>
-                  <button
-                    type="button"
-                    class="intent-chip"
-                    data-intent="ADD_TO_WALLET"
-                  >
-                    + ADD_TO_WALLET
-                  </button>
-                </div>
-
-                <!-- Selected intents (reorderable) -->
-                <div class="selected-intents-label">
-                  Selected (drag to reorder):
-                </div>
-                <div class="selected-intents-list" id="product-selected-intents">
-                  <div class="intent-item" data-intent="PAY" draggable="true">
-                    <span class="drag-handle">⋮⋮</span>
-                    <span class="intent-name">PAY</span>
-                    <button
-                      type="button"
-                      class="intent-remove"
-                      data-intent="PAY"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div
-                  class="selected-intents-empty"
-                  id="product-intents-empty"
-                  style="display: none"
-                >
-                  Click an intent above to add it
-                </div>
-
-                <div class="intent-warning" id="product-intent-warning">
-                  ⚠️ Invalid intent combination. Valid: PAY, DONATE, SUBSCRIBE,
-                  SIGNUP, SIGNIN, ADD_TO_WALLET, PAY+ADD_TO_WALLET, PAY+SIGNIN,
-                  PAY+SUBSCRIBE, DONATE+SIGNIN.
-                </div>
-              </div>
-            </div>
             <div class="field" id="product-amount-field">
               <label for="product-amount">Amount (minor units)</label>
-              <input id="product-amount" type="number" min="0" step="1" value="2000" />
-            </div>
-            <div class="field" id="product-subscription-billing-interval-field">
-              <label for="product-subscription-billing-interval"
-              >Subscription Billing Interval (optional)</label>
-              <select id="product-subscription-billing-interval">
-                <option value="">None</option>
-                <option value="DAY">DAY</option>
-                <option value="WEEK">WEEK</option>
-                <option value="MONTH">MONTH</option>
-                <option value="YEAR">YEAR</option>
-              </select>
-            </div>
-            <div
-              class="field"
-              id="product-subscription-billing-interval-frequency-field"
-            >
-              <label for="product-subscription-billing-interval-frequency"
-              >Subscription Billing Interval Frequency (optional)</label>
-              <input
-                id="product-subscription-billing-interval-frequency"
-                type="number"
-                min="1"
-                step="1"
-                placeholder="e.g., 1, 2, 3..."
-              />
+              <input id="product-amount" type="number" min="0" step="1" value="15900" />
             </div>
             <div class="status">
               Currency: <span id="product-currency-pill" class="pill">—</span>
