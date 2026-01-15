@@ -1,21 +1,3319 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Klarna Payment Selector</title>
-    <link rel="preconnect" href="https://x.klarnacdn.net" crossorigin>
-    <link
-      rel="stylesheet"
-      href="https://x.klarnacdn.net/ui/fonts/v1.5/fonts.css"
-    >
-    <link
-      rel="stylesheet"
-      href="https://js.klarna.com/web-sdk/buttons/payment-button.css"
-    >
-    <link rel="stylesheet" href="/styles.css">
-  </head>
-  <body>
-    <!-- Homepage content will be added here -->
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paytrail API Demo</title>
+    <!-- Favicon for different browsers and devices -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?t=1753910000">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?t=1753910000">
+    <link rel="shortcut icon" href="/favicon.png?t=1753910000">
+    <!-- Apple touch icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png?t=1753910000">
+    <!-- Meta theme color -->
+    <meta name="theme-color" content="#0066cc">
+    <!-- Klarna Fonts -->
+    <link rel="stylesheet" href="/fonts/klarna-fonts.css">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            font-family: 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #0B051D;
+            background: #F9F8F5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0;
+            padding: 0 20px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0B051D;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #E4E3DF;
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        /* Header styles */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            background: #F9F8F5;
+            color: #0B051D;
+            margin-bottom: 1rem;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(11, 5, 29, 0.1);
+        }
+
+        .button-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .api-button {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-providers {
+            background: #FFA8CD;
+            color: #0B051D;
+            border: 2px solid #FFA8CD;
+        }
+
+        .btn-providers:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(255, 168, 205, 0.4);
+            background: #FF8FB8;
+        }
+
+        .btn-grouped {
+            background: #E4E3DF;
+            color: #0B051D;
+            border: 2px solid #E4E3DF;
+        }
+
+        .btn-grouped:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(44, 34, 66, 0.2);
+            background: #B798BE;
+        }
+
+        .btn-payment {
+            background: #E6FFA9;
+            color: #0B051D;
+            border: 2px solid #E6FFA9;
+        }
+
+        .btn-payment:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(230, 255, 169, 0.4);
+            background: #D4F595;
+        }
+
+        .api-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results-section {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-title {
+            font-size: 1.25rem;
+            color: #0B051D;
+            font-weight: 700;
+        }
+
+        .clear-btn {
+            padding: 0.5rem 1rem;
+            background: #E4E3DF;
+            color: #0B051D;
+            border: 2px solid #E4E3DF;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #B798BE;
+            border-color: #B798BE;
+        }
+
+        .result-item {
+            background: #F9F8F5;
+            border: 1px solid #E4E3DF;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .result-item.success {
+            border-left: 4px solid #E6FFA9;
+        }
+
+        .result-item.error {
+            border-left: 4px solid #FEE2E2;
+        }
+
+        .result-item.loading {
+            border-left: 4px solid #FEF3C7;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .result-method {
+            font-weight: 600;
+            color: #0B051D;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        .result-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .result-status.success {
+            background: #4A5568;
+            color: #FFFFFF;
+        }
+
+        .result-status.error {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .result-status.loading {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .result-body {
+            background: #fff;
+            border: 1px solid #E4E3DF;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Klarna Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #2C2242;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #f39c12;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .api-info {
+            background: #F9F8F5;
+            border: 1px solid #E4E3DF;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(11, 5, 29, 0.1);
+        }
+
+        .api-info h3 {
+            margin-top: 0;
+            color: #0B051D;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .endpoint-list li {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            background: #fff;
+            border: 1px solid #E4E3DF;
+            border-radius: 8px;
+            font-family: 'Klarna Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8rem;
+            color: #2C2242;
+        }
+
+        .summary-box {
+            background: #F9F8F5;
+            border: 1px solid #E4E3DF;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #FFA8CD;
+        }
+
+        .summary-box h4 {
+            margin: 0 0 0.5rem 0;
+            color: #0B051D;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .summary-item {
+            margin: 0.25rem 0;
+            font-size: 0.8rem;
+            color: #2C2242;
+        }
+
+        .summary-item strong {
+            color: #0B051D;
+        }
+        
+        /* Payment Flow Styles */
+        .payment-flow-section {
+            background: #F9F8F5;
+            border: 1px solid #E4E3DF;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 8px rgba(11, 5, 29, 0.1);
+        }
+
+        .payment-flow-section h2 {
+            color: #0B051D;
+            text-align: center;
+            margin-bottom: 1rem;
+            border: none;
+            padding: 0;
+        }
+
+        .description {
+            text-align: center;
+            color: #2C2242;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group small {
+            font-size: 0.75rem;
+            margin-top: -0.25rem;
+        }
+
+        #payment-form h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            color: #0B051D;
+            border-top: 1px solid #E4E3DF;
+            padding-top: 1rem;
+        }
+
+        #payment-form h3:first-of-type {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.76rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #FFA8CD;
+            box-shadow: 0 0 0 3px rgba(255, 168, 205, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-create {
+            background: #E6FFA9;
+            color: #0B051D;
+            border: 2px solid #E6FFA9;
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-create:hover {
+            background: #D4F595;
+            box-shadow: 0 8px 20px rgba(230, 255, 169, 0.4);
+        }
+
+        .payment-info {
+            background: #E6FFA9;
+            border: 1px solid #D4F595;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #0B051D;
+        }
+        /* Payment Selection UI Styles */
+        .payment-selection-ui {
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .payment-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem 0 1.5rem;
+            background: white;
+        }
+
+        .api-response-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: #0B051D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .api-response-btn:hover {
+            background: #F9F8F5;
+            color: #4A5568;
+        }
+
+        /* Modal Styles */
+        .payment-response-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .payment-response-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #E4E3DF;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0B051D;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #0B051D;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            background: #F9F8F5;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-json {
+            background: #F9F8F5;
+            border: 1px solid #E4E3DF;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Klarna Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #0B051D;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .payment-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-square {
+            width: 40px;
+            height: 40px;
+            background: #E60094;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-square svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #0B051D;
+            line-height: 1.2;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: #2C2242;
+            line-height: 1.2;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            color: #2C2242;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .lang-btn.active {
+            color: #0B051D;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .lang-btn:hover {
+            color: #E60094;
+        }
+
+        .close-payment-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: #2C2242;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .close-payment-btn:hover {
+            background: #F9F8F5;
+            color: #E60094;
+        }
+
+        .close-payment-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .amount-display {
+            padding: 1rem 1.5rem 0 1.5rem;
+            text-align: center;
+            background: white;
+        }
+
+        .amount-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin-bottom: 0.5rem;
+        }
+
+        .merchant-info {
+            font-size: 0.875rem;
+            color: #2C2242;
+            line-height: 1.6;
+        }
+
+        .merchant-info div {
+            margin-bottom: 0.25rem;
+        }
+
+        .payment-heading {
+            padding: 0 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin: 1rem 0;
+            border: none;
+            padding-bottom: 0;
+        }
+
+        /* Payment Category Styles */
+        .payment-category {
+            background: #F5F5F5;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .category-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin: 0;
+        }
+
+        .category-description {
+            font-size: 0.875rem;
+            color: #2C2242;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .category-providers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .category-provider-logo {
+            height: 32px;
+            object-fit: contain;
+            max-width: 80px;
+        }
+
+        .category-provider-card {
+            background: white;
+            border: 1px solid #E4E3DF;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+
+        .category-provider-card:hover {
+            border-color: #E60094;
+            box-shadow: 0 2px 8px rgba(230, 0, 148, 0.1);
+        }
+
+        .category-provider-card img {
+            max-height: 32px;
+            max-width: 100px;
+            object-fit: contain;
+        }
+
+        .payment-providers {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 0 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .provider-form {
+            margin: 0;
+        }
+
+        .provider-card {
+            width: 100%;
+            background: white;
+            border: 1px solid #E4E3DF;
+            border-radius: 12px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+        }
+
+        .provider-card:hover {
+            border-color: #E60094;
+            box-shadow: 0 4px 12px rgba(230, 0, 148, 0.1);
+        }
+
+        .provider-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            color: #0B051D;
+            font-size: 1rem;
+        }
+
+        .provider-description {
+            font-size: 0.875rem;
+            color: #2C2242;
+            line-height: 1.5;
+        }
+
+        .provider-benefits {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .provider-benefits li {
+            font-size: 0.875rem;
+            color: #2C2242;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .provider-benefits li::before {
+            content: '✓';
+            color: #10B981;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .provider-icon {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .payment-footer {
+            padding: 1.5rem;
+            background: #F9F8F5;
+            border-top: 1px solid #E4E3DF;
+            font-size: 0.75rem;
+            color: #2C2242;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .payment-footer a {
+            color: #0B051D;
+            text-decoration: underline;
+        }
+
+        .payment-footer a:hover {
+            color: #E60094;
+        }
+
+        /* Hosted Payment Option */
+        .hosted-payment-option {
+            text-align: center;
+        }
+
+        .hosted-payment-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: #E6FFA9;
+            border: 2px solid #D4F595;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0B051D;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hosted-payment-btn:hover {
+            background: #D4F595;
+            border-color: #C4E585;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(230, 255, 169, 0.4);
+        }
+
+        .hosted-payment-note {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: #2C2242;
+        }
+
+        /* Payment Selector Tabs */
+        .payment-selector-tabs {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #E4E3DF;
+        }
+
+        .selector-tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #2C2242;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .selector-tab:hover {
+            color: #E60094;
+        }
+
+        .selector-tab.active {
+            color: #E60094;
+            border-bottom-color: #E60094;
+        }
+
+        .payment-selector-content {
+            padding: 0 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Payment Selector 2 Styles (Klarna-style) */
+        .payment-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .payment-option-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 2px solid #E4E3DF;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-option-card:hover {
+            border-color: #E60094;
+            background: #FFF5FC;
+        }
+
+        .payment-option-card input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: #E60094;
+            flex-shrink: 0;
+        }
+
+        .payment-option-card input[type="radio"]:checked ~ .payment-option-content {
+            color: #0B051D;
+        }
+
+        .payment-option-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .payment-option-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0B051D;
+        }
+
+        .payment-option-logos {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .payment-option-logos img {
+            height: 24px;
+            max-width: 60px;
+            object-fit: contain;
+        }
+
+        /* Payment Category Sections for Selector 2 */
+        .payment-category-section {
+            margin-bottom: 2rem;
+        }
+
+        .category-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin: 0 0 0.5rem 0;
+            padding: 0;
+        }
+
+        .category-section-description {
+            font-size: 0.875rem;
+            color: #2C2242;
+            margin: 0 0 1rem 0;
+            line-height: 1.5;
+        }
+
+        /* Payment Selector 3 Styles (Collapsible Categories) */
+        .category-box {
+            background: #F5F5F5;
+            border: 2px solid #E4E3DF;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-box:hover {
+            border-color: #E60094;
+            background: #FFF5FC;
+        }
+
+        .category-box.expanded {
+            border-color: #E60094;
+            background: white;
+            box-shadow: 0 4px 12px rgba(230, 0, 148, 0.1);
+        }
+
+        .category-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .category-box-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0B051D;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .category-box-description {
+            font-size: 0.875rem;
+            color: #2C2242;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .category-box-logos {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .category-box-logos img {
+            height: 24px;
+            max-width: 60px;
+            object-fit: contain;
+        }
+
+        .category-box-more-count {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2C2242;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+
+        .category-box-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            margin-top: 1rem;
+        }
+
+        .category-box.expanded .category-box-content {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .category-box-payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .group-section {
+            margin-bottom: 2rem;
+        }
+
+        .group-header {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0B051D;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: #F9F8F5;
+            border-radius: 8px;
+            border-left: 4px solid #FFA8CD;
+        }
+
+        .success {
+            background: #E6FFA9;
+            border: 1px solid #D4F595;
+            color: #0B051D;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .error {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #991B1B;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .loading {
+            background: #FEF3C7;
+            border: 1px solid #FDE68A;
+            color: #92400E;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        /* Main content wrapper */
+        .main-content {
+            background: #F9F8F5;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-section {
+                flex-direction: column;
+            }
+
+            .api-button {
+                width: 100%;
+            }
+
+            .payment-selection-ui {
+                max-width: 90%;
+                margin: 0 auto;
+                border-radius: 16px;
+                min-height: auto;
+            }
+
+            #payment-response-section {
+                padding: 1rem 0;
+            }
+
+            .payment-selector-tabs {
+                padding: 0 1rem;
+            }
+
+            .selector-tab {
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .payment-selector-content {
+                padding: 0 1rem;
+            }
+
+            .payment-header {
+                padding: 1rem;
+            }
+
+            .amount-display {
+                padding: 1.25rem 1rem;
+            }
+
+            .amount-value {
+                font-size: 1.75rem;
+            }
+
+            .payment-heading {
+                padding: 0 1rem;
+                font-size: 1.125rem;
+            }
+
+            .payment-providers {
+                padding: 0 1rem;
+            }
+
+            .payment-category {
+                padding: 1rem;
+            }
+
+            .category-providers {
+                gap: 0.5rem;
+            }
+
+            .category-provider-card {
+                min-width: 80px;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .provider-card {
+                padding: 1rem;
+            }
+
+            .provider-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .payment-footer {
+                padding: 1.25rem 1rem;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <main class="main-content">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1.25rem; flex-wrap: wrap;">
+                    <img src="/images/paytrail-logo.svg" alt="Paytrail" style="height: 65px; max-width: 300px; object-fit: contain; display: block;">
+                    <span style="font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 2rem; color: #0B051D; font-weight: 300; margin: 0;">×</span>
+                    <img src="/images/klarna-logo.svg" alt="Klarna" style="height: 50px; max-width: 250px; object-fit: contain; display: block;" onerror="this.onerror=null; this.src='/images/klarna-logo.png'; this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <svg width="120" height="50" viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                        <text x="0" y="35" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="bold" fill="#0B051D" letter-spacing="-1px">Klarna</text>
+                    </svg>
+                </div>
+                <div style="text-align: center;">
+                    <span style="font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 2.5rem; color: #0B051D; font-weight: 700;">Demo Store</span>
+                </div>
+        </div>
+
+        <!-- Presentation Assets Section -->
+        <div class="payment-flow-section">
+            <h2>1. Presentation Assets</h2>
+        <div class="button-section">
+            <button class="api-button btn-providers" onclick="callPaymentProviders()">
+                📋 Get Payment Providers
+            </button>
+            <button class="api-button btn-grouped" onclick="callGroupedProviders()">
+                📊 Get Grouped Providers
+            </button>
+            <button class="api-button btn-payment" onclick="createPayment()">
+                💳 Create Payment
+            </button>
+        </div>
+
+        <div class="results-section">
+            <div class="results-header">
+                <h2 class="results-title">API Results</h2>
+                <button class="clear-btn" onclick="clearResults()">Clear All</button>
+            </div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <!-- Payment Flow Demo Section -->
+    <div class="payment-flow-section" style="margin-top: 2rem;">
+        <h2>2. Payment Flow</h2>
+        <p class="description">
+            Create a payment and test the actual payment flow with Paytrail payment providers
+        </p>
+
+        <!-- Payment Summary Box -->
+        <div id="payment-summary-box" style="background: #ffffff; border: 1px solid #E4E3DF; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: #0B051D; margin: 0;">Payment Summary</h3>
+                <button type="button" id="edit-payload-btn" class="btn" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem; background: white; color: #0B051D; border: 1px solid #0B051D; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#F9F8F5';" onmouseout="this.style.background='white';">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit Payload
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Amount</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-amount">€15.90</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Currency</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-currency">EUR</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Language</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-language">EN</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Reference</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-reference">ref-12345678</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Customer Email</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-email">customer@email.fi</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Customer Name</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-name">Test Person-fi</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Phone</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-phone">+358401234567</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Delivery Address</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #0B051D; font-weight: 500; line-height: 1.4;" id="summary-delivery">Mannerheimintie 34, 00100 Helsinki, FI</p>
+                </div>
+                <div>
+                    <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Invoice Address</strong>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #0B051D; font-weight: 500; line-height: 1.4;" id="summary-invoice">Mannerheimintie 34, 00100 Helsinki, FI</p>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E4E3DF;">
+                <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Klarna Provider Details</strong>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; color: #0B051D; font-weight: 500; line-height: 1.4;" id="summary-klarna">No Klarna Network Session Token or Data provided</p>
+            </div>
+        </div>
+
+        <!-- Payment Creation Form -->
+        <div id="payment-form-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1rem; font-weight: 600; color: #0B051D; margin: 0;">Edit Payment Payload</h3>
+                <button type="button" id="close-form-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #7f8c8d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#95a5a6';" onmouseout="this.style.background='#7f8c8d';">
+                    Close
+                </button>
+            </div>
+            <form id="payment-form">
+                <!-- Basic Payment Information -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Basic Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stamp">Stamp (Merchant unique identifier)</label>
+                        <input type="text" id="stamp" value="" maxlength="200" required>
+                        <small style="color: #7f8c8d;">Max 200 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="reference">Reference (Order reference)</label>
+                        <input type="text" id="reference" value="" maxlength="200" required>
+                        <small style="color: #7f8c8d;">Max 200 characters</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="amount">Amount (cents)</label>
+                        <input type="number" id="amount" value="1590" min="1" max="99999998" required>
+                        <small style="color: #7f8c8d;">€15.90 = 1590 cents</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Currency</label>
+                        <input type="text" id="currency" value="EUR" readonly style="background-color: #f5f5f5; cursor: not-allowed;" title="Paytrail API only supports EUR">
+                        <small style="color: #7f8c8d;">Paytrail API only supports EUR</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <select id="language" required>
+                            <option value="FI">FI (Finnish)</option>
+                            <option value="SV">SV (Swedish)</option>
+                            <option value="EN" selected>EN (English)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Customer Information</h3>
+                <div class="form-group">
+                    <label for="sampleCountry">Country for Sample Data</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="sampleCountry" style="flex: 1;">
+                            <option value="FI" selected>Finland 🇫🇮</option>
+                            <option value="AU">Australia 🇦🇺</option>
+                            <option value="AT">Austria 🇦🇹</option>
+                            <option value="BE">Belgium 🇧🇪</option>
+                            <option value="CA">Canada 🇨🇦</option>
+                            <option value="CZ">Czech Republic 🇨🇿</option>
+                            <option value="DK">Denmark 🇩🇰</option>
+                            <option value="FR">France 🇫🇷</option>
+                            <option value="DE">Germany 🇩🇪</option>
+                            <option value="GR">Greece 🇬🇷</option>
+                            <option value="HU">Hungary 🇭🇺</option>
+                            <option value="IE">Ireland 🇮🇪</option>
+                            <option value="IT">Italy 🇮🇹</option>
+                            <option value="MX">Mexico 🇲🇽</option>
+                            <option value="NL">Netherlands 🇳🇱</option>
+                            <option value="NZ">New Zealand 🇳🇿</option>
+                            <option value="NO">Norway 🇳🇴</option>
+                            <option value="PL">Poland 🇵🇱</option>
+                            <option value="PT">Portugal 🇵🇹</option>
+                            <option value="RO">Romania 🇷🇴</option>
+                            <option value="SK">Slovakia 🇸🇰</option>
+                            <option value="ES">Spain 🇪🇸</option>
+                            <option value="SE">Sweden 🇸🇪</option>
+                            <option value="CH">Switzerland 🇨🇭</option>
+                            <option value="GB">United Kingdom 🇬🇧</option>
+                            <option value="US">United States of America 🇺🇸</option>
+                        </select>
+                        <button type="button" id="loadSampleDataBtn" style="padding: 10px 20px; background-color: #0B051D; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0;">Load Sample Data</button>
+                    </div>
+                    <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                        ℹ️ Currency will remain EUR for all countries. Klarna handles currency conversion on their payment screen.
+                    </small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email <span style="color: #e74c3c;">*</span></label>
+                        <input type="email" id="email" value="customer@email.fi" maxlength="200" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" value="+358401234567">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" value="Test" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" value="Person-fi" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                <div class="form-group">
+                        <label for="vatId">VAT ID</label>
+                        <input type="text" id="vatId" value="" placeholder="FI02454583">
+                    </div>
+                    <div class="form-group">
+                        <label for="companyName">Company Name</label>
+                        <input type="text" id="companyName" value="" maxlength="100" placeholder="Example company">
+                    </div>
+                </div>
+
+                <!-- Delivery Address -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Delivery Address</h3>
+                <div class="form-group">
+                    <label for="deliveryStreetAddress">Street Address</label>
+                    <input type="text" id="deliveryStreetAddress" value="Mannerheimintie 34" maxlength="50" placeholder="Fake Street 123">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deliveryPostalCode">Postal Code</label>
+                        <input type="text" id="deliveryPostalCode" value="00100" maxlength="15" placeholder="00100">
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryCity">City</label>
+                        <input type="text" id="deliveryCity" value="Helsinki" maxlength="30" placeholder="Helsinki">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deliveryCounty">County/State</label>
+                        <input type="text" id="deliveryCounty" value="Uusimaa" maxlength="200" placeholder="Uusimaa">
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryCountry">Country (Alpha-2)</label>
+                        <input type="text" id="deliveryCountry" value="FI" maxlength="2" placeholder="FI">
+                    </div>
+                </div>
+
+                <!-- Invoicing Address -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Invoicing Address</h3>
+                <div class="form-group">
+                    <label for="invoicingStreetAddress">Street Address</label>
+                    <input type="text" id="invoicingStreetAddress" value="Mannerheimintie 34" maxlength="50" placeholder="Testikatu 1">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="invoicingPostalCode">Postal Code</label>
+                        <input type="text" id="invoicingPostalCode" value="00100" maxlength="15" placeholder="00510">
+                    </div>
+                    <div class="form-group">
+                        <label for="invoicingCity">City</label>
+                        <input type="text" id="invoicingCity" value="Helsinki" maxlength="30" placeholder="Helsinki">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="invoicingCounty">County/State</label>
+                        <input type="text" id="invoicingCounty" value="Uusimaa" maxlength="200" placeholder="Uusimaa">
+                    </div>
+                    <div class="form-group">
+                        <label for="invoicingCountry">Country (Alpha-2)</label>
+                        <input type="text" id="invoicingCountry" value="FI" maxlength="2" placeholder="FI">
+                    </div>
+                </div>
+
+                <!-- Item Information -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Item Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemUnitPrice">Unit Price (cents) <span style="color: #e74c3c;">*</span></label>
+                        <input type="number" id="itemUnitPrice" value="1590" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemUnits">Units (Quantity) <span style="color: #e74c3c;">*</span></label>
+                        <input type="number" id="itemUnits" value="1" min="1" max="99999998" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemVatPercentage">VAT Percentage <span style="color: #e74c3c;">*</span></label>
+                        <input type="number" id="itemVatPercentage" value="24" min="0" max="100" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemProductCode">Product Code <span style="color: #e74c3c;">*</span></label>
+                        <input type="text" id="itemProductCode" value="demo-product" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="itemDescription">Description</label>
+                        <input type="text" id="itemDescription" value="Demo Product" maxlength="1000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="itemCategory">Category</label>
+                        <input type="text" id="itemCategory" value="" maxlength="100" placeholder="Pet supplies">
+                    </div>
+                    <div class="form-group">
+                        <label for="itemStamp">Item Stamp (Unique identifier)</label>
+                        <input type="text" id="itemStamp" value="" maxlength="200" placeholder="d4aca017-f1e7-4fa5-bfb5-2906e141ebac">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="itemReference">Item Reference</label>
+                    <input type="text" id="itemReference" value="" placeholder="fur-suits-5">
+                </div>
+
+                <!-- Redirect URLs -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Redirect URLs <span style="color: #e74c3c;">*</span></h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="redirectSuccess">Success URL</label>
+                        <input type="url" id="redirectSuccess" value="" placeholder="https://example.org/success" maxlength="300">
+                        <small style="color: #7f8c8d;">Auto-filled if empty</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="redirectCancel">Cancel URL</label>
+                        <input type="url" id="redirectCancel" value="" placeholder="https://example.org/cancel" maxlength="300">
+                        <small style="color: #7f8c8d;">Auto-filled if empty</small>
+                    </div>
+                </div>
+
+                <!-- Callback URLs (Optional) -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Callback URLs (Optional)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="callbackSuccess">Callback Success URL</label>
+                        <input type="url" id="callbackSuccess" value="" placeholder="https://example.org/callback/success" maxlength="3000">
+                    </div>
+                    <div class="form-group">
+                        <label for="callbackCancel">Callback Cancel URL</label>
+                        <input type="url" id="callbackCancel" value="" placeholder="https://example.org/callback/cancel" maxlength="3000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="callbackDelay">Callback Delay (seconds, 0-900)</label>
+                    <input type="number" id="callbackDelay" value="0" min="0" max="900">
+                    <small style="color: #7f8c8d;">Delay before calling callback URLs</small>
+                </div>
+
+                <!-- Advanced Options -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Advanced Options</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="orderId">Order ID (Deprecated)</label>
+                        <input type="text" id="orderId" value="" maxlength="60" placeholder="Order ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="manualInvoiceActivation">Manual Invoice Activation</label>
+                        <select id="manualInvoiceActivation">
+                            <option value="false">False (Default)</option>
+                            <option value="true">True</option>
+                        </select>
+                        <small style="color: #7f8c8d;">For Walley and Klarna</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="usePricesWithoutVat">Use Prices Without VAT</label>
+                        <select id="usePricesWithoutVat">
+                            <option value="false">False (Default)</option>
+                            <option value="true">True</option>
+                        </select>
+                        <small style="color: #7f8c8d;">If true, amount should exclude VAT</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="groups">Payment Method Groups (comma-separated)</label>
+                        <input type="text" id="groups" value="" placeholder="mobile,bank,creditcard,credit,other">
+                        <small style="color: #7f8c8d;">Filter payment methods by groups</small>
+                    </div>
+                </div>
+
+                <!-- Klarna Provider Details -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Klarna Provider Details (Optional)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="klarnaSessionToken">Klarna Network Session Token</label>
+                        <input type="text" id="klarnaSessionToken" value="" maxlength="8192" placeholder="Klarna Network session token (1-8192 characters)">
+                        <small style="color: #7f8c8d;">Min: 1, Max: 8192 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="klarnaData">Klarna Network Data</label>
+                        <textarea id="klarnaData" rows="3" maxlength="10240" placeholder="Klarna Network data (1-10240 characters)" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; font-family: inherit; resize: vertical;"></textarea>
+                        <small style="color: #7f8c8d;">Min: 1, Max: 10240 characters</small>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Manual Capture Toggle and Create Payment Button -->
+        <div style="margin-top: 1.5rem;">
+            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="enableManualCapture" style="width: 18px; height: 18px; cursor: pointer;">
+                <label for="enableManualCapture" style="font-size: 0.9rem; color: #0B051D; cursor: pointer; user-select: none;">
+                    Enable manual capture
+                </label>
+            </div>
+            <div style="text-align: center;">
+                <button type="button" class="btn btn-create" id="create-btn" onclick="createPaymentFlow()">
+                    💳 Create Paytrail Payment Session
+                </button>
+            </div>
+        </div>
+
+        <!-- Payment Response Section -->
+        <div id="payment-response-section" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; background: #F9F8F5; overflow-y: auto; padding: 2rem 0;">
+            <!-- Payment Selection UI -->
+            <div class="payment-selection-ui">
+                <!-- Header with close button and API response icon -->
+                <div class="payment-header">
+                    <button class="api-response-btn" onclick="showPaymentResponseModal()" title="View API Response">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </button>
+                    <button class="close-payment-btn" onclick="createNewPayment()" title="Close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Amount Display -->
+                <div class="amount-display">
+                    <div class="amount-value" id="payment-amount">€15.90</div>
+            </div>
+
+                <!-- Choose Payment Heading -->
+                <h2 class="payment-heading">Choose how you want to pay</h2>
+
+                <!-- Hosted Payment Page Alternative -->
+                <div class="hosted-payment-option" style="padding: 0 1.5rem; margin-bottom: 1.5rem;">
+                    <button id="hosted-payment-btn" class="hosted-payment-btn" onclick="openHostedPaymentPage()">
+                        Use Paytrail Hosted Payment Page
+                    </button>
+                    <p class="hosted-payment-note">Or select a payment method below</p>
+                </div>
+
+                <!-- Payment Selector Tabs -->
+                <div class="payment-selector-tabs">
+                    <button class="selector-tab active" data-selector="1" onclick="switchPaymentSelector(1)">
+                        Payment Selector 1
+                    </button>
+                    <button class="selector-tab" data-selector="2" onclick="switchPaymentSelector(2)">
+                        Payment Selector 2
+                    </button>
+                    <button class="selector-tab" data-selector="3" onclick="switchPaymentSelector(3)">
+                        Payment Selector 3
+                    </button>
+                </div>
+
+                <!-- Payment Methods Container - Selector 1 (Categories) -->
+                <div id="providers-container" class="payment-selector-content" data-selector="1">
+                <div class="loading">Loading payment providers...</div>
+            </div>
+
+                <!-- Payment Methods Container - Selector 2 (Klarna-style) -->
+                <div id="providers-container-2" class="payment-selector-content" data-selector="2" style="display: none;">
+                    <div class="loading">Loading payment providers...</div>
+                </div>
+
+                <!-- Payment Methods Container - Selector 3 (Collapsible Categories) -->
+                <div id="providers-container-3" class="payment-selector-content" data-selector="3" style="display: none;">
+                    <div class="loading">Loading payment providers...</div>
+                </div>
+
+                <!-- Footer with Terms -->
+                <div class="payment-footer">
+                    <p>By selecting a payment method, you agree to our <a href="#" target="_blank">payment service terms & conditions</a>. Payment service provider: <a href="#" target="_blank">Paytrail Oyj</a>.</p>
+                </div>
+
+                <!-- Hidden transaction info -->
+                <div style="display: none;">
+                    <strong>Transaction ID:</strong> <span id="transaction-id"></span>
+                </div>
+
+                <button class="btn" onclick="createNewPayment()" style="margin-top: 20px; display: none;">
+                🔄 Create New Payment
+            </button>
+            </div>
+        </div>
+
+        <!-- Payment Response Modal -->
+        <div id="payment-response-modal" class="payment-response-modal" onclick="if(event.target === this) closePaymentResponseModal()">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Paytrail /payments API Response</h3>
+                    <button class="modal-close-btn" onclick="closePaymentResponseModal()" title="Close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-json-content" class="modal-json">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversion Boosters Section -->
+    <div class="payment-flow-section" style="margin-top: 2rem;">
+        <h2>3. Conversion Boosters</h2>
+        
+        <div class="button-section">
+            <button class="api-button btn-providers" onclick="window.location.href='/product'">
+                Klarna Express Checkout
+            </button>
+            <button class="api-button btn-grouped" onclick="alert('On-site Messaging - Coming soon')" style="opacity: 0.6; cursor: not-allowed;">
+                On-site Messaging (coming soon)
+            </button>
+            <button class="api-button btn-payment" onclick="alert('Sign-in with Klarna - Coming soon')" style="opacity: 0.6; cursor: not-allowed;">
+                Sign-in with Klarna (coming soon)
+            </button>
+        </div>
+    </div>
+
+    <!-- Payment Transaction Management Section -->
+    <div class="payment-flow-section" style="margin-top: 2rem;">
+        <h2>4. Payment Transaction Management</h2>
+        <p style="text-align: center; color: #7f8c8d; margin: 2rem 0;">Coming soon</p>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="payment-flow-section" style="margin-top: 2rem;">
+        <h2>5. API documentation</h2>
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="/documentation" style="display: inline-block; padding: 0.75rem 1.5rem; background: #FFA8CD; color: #0B051D; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border: 2px solid #FFA8CD; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 8px 20px rgba(255, 168, 205, 0.4)'; this.style.background='#FF8FB8';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'; this.style.background='#FFA8CD';">
+                📚 View API Documentation
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let resultCounter = 0;
+        let currentPaymentData = null;
+        let currentPaymentUrl = null;
+        let allProviders = []; // Store all providers for filtering
+
+        function addResult(method, endpoint, status, data) {
+            const resultsDiv = document.getElementById('results');
+            const resultsSection = document.querySelector('.results-section');
+            const resultId = `result-${++resultCounter}`;
+            
+            // Show the results section when adding the first result
+            resultsSection.style.display = 'block';
+            
+            const statusClass = status === 'loading' ? 'loading' : (status >= 200 && status < 300 ? 'success' : 'error');
+            const statusText = status === 'loading' ? 'loading' : (status >= 200 && status < 300 ? 'success' : 'error');
+            
+            const resultHTML = `
+                <div class="result-item ${statusClass}" id="${resultId}">
+                    <div class="result-header">
+                        <span class="result-method">${method} ${endpoint}</span>
+                        <span class="result-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="result-body" id="${resultId}-body">
+                        ${status === 'loading' ? '<div class="loading-spinner"></div>Loading...' : ''}
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.insertAdjacentHTML('afterbegin', resultHTML);
+            
+            if (status !== 'loading') {
+                updateResult(resultId, data);
+            }
+            
+            return resultId;
+        }
+
+        function updateResult(resultId, data) {
+            const bodyElement = document.getElementById(`${resultId}-body`);
+            if (bodyElement) {
+                let displayData = data;
+                
+                // Special handling for grouped providers response
+                if (data && data.terms && data.providers && data.groups) {
+                    const summaryHTML = `
+                        <div class="summary-box">
+                            <h4>📊 Grouped Providers Summary</h4>
+                            <div class="summary-item"><strong>Terms:</strong> Available</div>
+                            <div class="summary-item"><strong>Providers:</strong> ${data.providers.length} payment methods</div>
+                            <div class="summary-item"><strong>Groups:</strong> ${data.groups.length} categories</div>
+                            ${data.groups.map(group => 
+                                `<div class="summary-item" style="margin-left: 15px;">• ${group.name}: ${group.providers.length} providers</div>`
+                            ).join('')}
+                        </div>
+                    `;
+                    bodyElement.innerHTML = summaryHTML + JSON.stringify(displayData, null, 2);
+                } else {
+                    bodyElement.textContent = JSON.stringify(displayData, null, 2);
+                }
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            resultCounter = 0;
+            // Hide the results section when no results are displayed
+            document.querySelector('.results-section').style.display = 'none';
+        }
+
+        async function callPaymentProviders() {
+            const resultId = addResult('GET', '/api/merchants/payment-providers', 'loading');
+            
+            try {
+                const response = await fetch('/api/merchants/payment-providers');
+                const data = await response.json();
+                
+                document.getElementById(resultId).className = `result-item ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).className = `result-status ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).textContent = response.ok ? 'success' : 'error';
+                
+                updateResult(resultId, data);
+            } catch (error) {
+                document.getElementById(resultId).className = 'result-item error';
+                document.querySelector(`#${resultId} .result-status`).className = 'result-status error';
+                document.querySelector(`#${resultId} .result-status`).textContent = 'error';
+                updateResult(resultId, { error: error.message });
+            }
+        }
+
+        async function callGroupedProviders() {
+            const resultId = addResult('GET', '/api/merchants/grouped-payment-providers', 'loading');
+            
+            try {
+                const response = await fetch('/api/merchants/grouped-payment-providers');
+                const data = await response.json();
+                
+                document.getElementById(resultId).className = `result-item ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).className = `result-status ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).textContent = response.ok ? 'success' : 'error';
+                
+                updateResult(resultId, data);
+            } catch (error) {
+                document.getElementById(resultId).className = 'result-item error';
+                document.querySelector(`#${resultId} .result-status`).className = 'result-status error';
+                document.querySelector(`#${resultId} .result-status`).textContent = 'error';
+                updateResult(resultId, { error: error.message });
+            }
+        }
+
+        async function createPayment() {
+            const resultId = addResult('POST', '/api/payments', 'loading');
+            
+            const paymentData = {
+                stamp: `test-payment-${Date.now()}`,
+                reference: `ref-${Date.now()}`,
+                amount: 1590,
+                currency: 'EUR',
+                language: 'FI',
+                // groups: ['bank'], // Removed to show all payment providers including Klarna
+                items: [{
+                    unitPrice: 1590,
+                    units: 1,
+                    vatPercentage: 24,
+                    productCode: 'test-product',
+                    description: 'Test Product'
+                }],
+                customer: {
+                    email: 'test@example.com',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    phone: '+358441234567'
+                },
+                redirectUrls: {
+                    success: 'https://example.com/success',
+                    cancel: 'https://example.com/cancel'
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById(resultId).className = `result-item ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).className = `result-status ${response.ok ? 'success' : 'error'}`;
+                document.querySelector(`#${resultId} .result-status`).textContent = response.ok ? 'success' : 'error';
+                
+                // Show both request payload and response
+                const resultData = {
+                    requestPayload: paymentData,
+                    response: data
+                };
+                
+                updateResult(resultId, resultData);
+            } catch (error) {
+                document.getElementById(resultId).className = 'result-item error';
+                document.querySelector(`#${resultId} .result-status`).className = 'result-status error';
+                document.querySelector(`#${resultId} .result-status`).textContent = 'error';
+                updateResult(resultId, { error: error.message });
+            }
+        }
+
+        // Generate UUID function
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Klarna sample customer data (all countries)
+        const sampleCustomerData = {
+            'FI': {
+                email: 'customer@email.fi',
+                phone: '+358401234567',
+                firstName: 'Test',
+                lastName: 'Person-fi',
+                deliveryStreetAddress: 'Mannerheimintie 34',
+                deliveryPostalCode: '00100',
+                deliveryCity: 'Helsinki',
+                deliveryCounty: 'Uusimaa',
+                deliveryCountry: 'FI',
+                invoicingStreetAddress: 'Mannerheimintie 34',
+                invoicingPostalCode: '00100',
+                invoicingCity: 'Helsinki',
+                invoicingCounty: 'Uusimaa',
+                invoicingCountry: 'FI'
+            },
+            'AU': {
+                email: 'customer@email.au',
+                phone: '+61473752244',
+                firstName: 'Test',
+                lastName: 'Person-au',
+                deliveryStreetAddress: '4 Wharf St',
+                deliveryPostalCode: '4877',
+                deliveryCity: 'Port Douglas',
+                deliveryCounty: 'QLD',
+                deliveryCountry: 'AU',
+                invoicingStreetAddress: '4 Wharf St',
+                invoicingPostalCode: '4877',
+                invoicingCity: 'Port Douglas',
+                invoicingCounty: 'QLD',
+                invoicingCountry: 'AU'
+            },
+            'AT': {
+                email: 'customer@email.at',
+                phone: '+4306762600456',
+                firstName: 'Test',
+                lastName: 'Person-at',
+                deliveryStreetAddress: 'Kärntner Straße 1',
+                deliveryPostalCode: '1010',
+                deliveryCity: 'Vienna',
+                deliveryCounty: 'Vienna',
+                deliveryCountry: 'AT',
+                invoicingStreetAddress: 'Kärntner Straße 1',
+                invoicingPostalCode: '1010',
+                invoicingCity: 'Vienna',
+                invoicingCounty: 'Vienna',
+                invoicingCountry: 'AT'
+            },
+            'BE': {
+                email: 'customer@email.be',
+                phone: '+32485121291',
+                firstName: 'Test',
+                lastName: 'Person-be',
+                deliveryStreetAddress: 'Rue Neuve 1',
+                deliveryPostalCode: '1000',
+                deliveryCity: 'Brussels',
+                deliveryCounty: 'Brussels Capital',
+                deliveryCountry: 'BE',
+                invoicingStreetAddress: 'Rue Neuve 1',
+                invoicingPostalCode: '1000',
+                invoicingCity: 'Brussels',
+                invoicingCounty: 'Brussels Capital',
+                invoicingCountry: 'BE'
+            },
+            'CA': {
+                email: 'customer@email.ca',
+                phone: '+15197438620',
+                firstName: 'Test',
+                lastName: 'Person-ca',
+                deliveryStreetAddress: '1 Yonge St',
+                deliveryPostalCode: 'M5E 1E5',
+                deliveryCity: 'Toronto',
+                deliveryCounty: 'ON',
+                deliveryCountry: 'CA',
+                invoicingStreetAddress: '1 Yonge St',
+                invoicingPostalCode: 'M5E 1E5',
+                invoicingCity: 'Toronto',
+                invoicingCounty: 'ON',
+                invoicingCountry: 'CA'
+            },
+            'CZ': {
+                email: 'customer@email.cz',
+                phone: '+420771613715',
+                firstName: 'Test',
+                lastName: 'Person-cz',
+                deliveryStreetAddress: 'Václavské náměstí 1',
+                deliveryPostalCode: '110 00',
+                deliveryCity: 'Prague',
+                deliveryCounty: 'Prague',
+                deliveryCountry: 'CZ',
+                invoicingStreetAddress: 'Václavské náměstí 1',
+                invoicingPostalCode: '110 00',
+                invoicingCity: 'Prague',
+                invoicingCounty: 'Prague',
+                invoicingCountry: 'CZ'
+            },
+            'DK': {
+                email: 'customer@email.dk',
+                phone: '+4542555628',
+                firstName: 'Test',
+                lastName: 'Person-dk',
+                deliveryStreetAddress: 'Strøget 1',
+                deliveryPostalCode: '1160',
+                deliveryCity: 'Copenhagen',
+                deliveryCounty: 'Capital Region',
+                deliveryCountry: 'DK',
+                invoicingStreetAddress: 'Strøget 1',
+                invoicingPostalCode: '1160',
+                invoicingCity: 'Copenhagen',
+                invoicingCounty: 'Capital Region',
+                invoicingCountry: 'DK'
+            },
+            'FR': {
+                email: 'customer@email.fr',
+                phone: '+33689854321',
+                firstName: 'Test',
+                lastName: 'Person-fr',
+                deliveryStreetAddress: '123 Avenue des Champs-Élysées',
+                deliveryPostalCode: '75008',
+                deliveryCity: 'Paris',
+                deliveryCounty: 'Île-de-France',
+                deliveryCountry: 'FR',
+                invoicingStreetAddress: '123 Avenue des Champs-Élysées',
+                invoicingPostalCode: '75008',
+                invoicingCity: 'Paris',
+                invoicingCounty: 'Île-de-France',
+                invoicingCountry: 'FR'
+            },
+            'DE': {
+                email: 'customer@email.de',
+                phone: '+49017614284340',
+                firstName: 'Test',
+                lastName: 'Person-de',
+                deliveryStreetAddress: 'Kurfürstendamm 1',
+                deliveryPostalCode: '10719',
+                deliveryCity: 'Berlin',
+                deliveryCounty: 'Berlin',
+                deliveryCountry: 'DE',
+                invoicingStreetAddress: 'Kurfürstendamm 1',
+                invoicingPostalCode: '10719',
+                invoicingCity: 'Berlin',
+                invoicingCounty: 'Berlin',
+                invoicingCountry: 'DE'
+            },
+            'GR': {
+                email: 'customer@email.gr',
+                phone: '+306945553624',
+                firstName: 'Test',
+                lastName: 'Person-gr',
+                deliveryStreetAddress: 'Ermou 1',
+                deliveryPostalCode: '105 63',
+                deliveryCity: 'Athens',
+                deliveryCounty: 'Attica',
+                deliveryCountry: 'GR',
+                invoicingStreetAddress: 'Ermou 1',
+                invoicingPostalCode: '105 63',
+                invoicingCity: 'Athens',
+                invoicingCounty: 'Attica',
+                invoicingCountry: 'GR'
+            },
+            'HU': {
+                email: 'customer@email.hu',
+                phone: '+36300102692',
+                firstName: 'Test',
+                lastName: 'Person-hu',
+                deliveryStreetAddress: 'Váci utca 1',
+                deliveryPostalCode: '1052',
+                deliveryCity: 'Budapest',
+                deliveryCounty: 'Budapest',
+                deliveryCountry: 'HU',
+                invoicingStreetAddress: 'Váci utca 1',
+                invoicingPostalCode: '1052',
+                invoicingCity: 'Budapest',
+                invoicingCounty: 'Budapest',
+                invoicingCountry: 'HU'
+            },
+            'IE': {
+                email: 'customer@email.ie',
+                phone: '+353855351400',
+                firstName: 'Test',
+                lastName: 'Person-ie',
+                deliveryStreetAddress: 'Grafton Street 1',
+                deliveryPostalCode: 'D02 VF65',
+                deliveryCity: 'Dublin',
+                deliveryCounty: 'Dublin',
+                deliveryCountry: 'IE',
+                invoicingStreetAddress: 'Grafton Street 1',
+                invoicingPostalCode: 'D02 VF65',
+                invoicingCity: 'Dublin',
+                invoicingCounty: 'Dublin',
+                invoicingCountry: 'IE'
+            },
+            'IT': {
+                email: 'customer@email.it',
+                phone: '+393339741231',
+                firstName: 'Test',
+                lastName: 'Person-it',
+                deliveryStreetAddress: 'Via Montenapoleone 1',
+                deliveryPostalCode: '20121',
+                deliveryCity: 'Milan',
+                deliveryCounty: 'Lombardy',
+                deliveryCountry: 'IT',
+                invoicingStreetAddress: 'Via Montenapoleone 1',
+                invoicingPostalCode: '20121',
+                invoicingCity: 'Milan',
+                invoicingCounty: 'Lombardy',
+                invoicingCountry: 'IT'
+            },
+            'MX': {
+                email: 'customer@email.mx',
+                phone: '+525593747739',
+                firstName: 'Test',
+                lastName: 'Person-mx',
+                deliveryStreetAddress: 'Paseo de la Reforma 1',
+                deliveryPostalCode: '06000',
+                deliveryCity: 'Mexico City',
+                deliveryCounty: 'CDMX',
+                deliveryCountry: 'MX',
+                invoicingStreetAddress: 'Paseo de la Reforma 1',
+                invoicingPostalCode: '06000',
+                invoicingCity: 'Mexico City',
+                invoicingCounty: 'CDMX',
+                invoicingCountry: 'MX'
+            },
+            'NL': {
+                email: 'customer@email.nl',
+                phone: '+31689124321',
+                firstName: 'Test',
+                lastName: 'Person-nl',
+                deliveryStreetAddress: 'Dam 1',
+                deliveryPostalCode: '1012 JS',
+                deliveryCity: 'Amsterdam',
+                deliveryCounty: 'North Holland',
+                deliveryCountry: 'NL',
+                invoicingStreetAddress: 'Dam 1',
+                invoicingPostalCode: '1012 JS',
+                invoicingCity: 'Amsterdam',
+                invoicingCounty: 'North Holland',
+                invoicingCountry: 'NL'
+            },
+            'NZ': {
+                email: 'customer@email.nz',
+                phone: '+6427555290',
+                firstName: 'Test',
+                lastName: 'Person-nz',
+                deliveryStreetAddress: '286 Mount Wellington Highway',
+                deliveryPostalCode: '6011',
+                deliveryCity: 'Auckland',
+                deliveryCounty: 'Auckland',
+                deliveryCountry: 'NZ',
+                invoicingStreetAddress: '286 Mount Wellington Highway',
+                invoicingPostalCode: '6011',
+                invoicingCity: 'Auckland',
+                invoicingCounty: 'Auckland',
+                invoicingCountry: 'NZ'
+            },
+            'NO': {
+                email: 'customer@email.no',
+                phone: '+4740123456',
+                firstName: 'Test',
+                lastName: 'Person-no',
+                deliveryStreetAddress: 'Karl Johans gate 1',
+                deliveryPostalCode: '0154',
+                deliveryCity: 'Oslo',
+                deliveryCounty: 'Oslo',
+                deliveryCountry: 'NO',
+                invoicingStreetAddress: 'Karl Johans gate 1',
+                invoicingPostalCode: '0154',
+                invoicingCity: 'Oslo',
+                invoicingCounty: 'Oslo',
+                invoicingCountry: 'NO'
+            },
+            'PL': {
+                email: 'customer@email.pl',
+                phone: '+48795222223',
+                firstName: 'Test',
+                lastName: 'Person-pl',
+                deliveryStreetAddress: 'Nowy Świat 1',
+                deliveryPostalCode: '00-001',
+                deliveryCity: 'Warsaw',
+                deliveryCounty: 'Masovian',
+                deliveryCountry: 'PL',
+                invoicingStreetAddress: 'Nowy Świat 1',
+                invoicingPostalCode: '00-001',
+                invoicingCity: 'Warsaw',
+                invoicingCounty: 'Masovian',
+                invoicingCountry: 'PL'
+            },
+            'PT': {
+                email: 'customer@email.pt',
+                phone: '+351935556731',
+                firstName: 'Test',
+                lastName: 'Person-pt',
+                deliveryStreetAddress: 'Avenida da Liberdade 1',
+                deliveryPostalCode: '1250-096',
+                deliveryCity: 'Lisbon',
+                deliveryCounty: 'Lisbon',
+                deliveryCountry: 'PT',
+                invoicingStreetAddress: 'Avenida da Liberdade 1',
+                invoicingPostalCode: '1250-096',
+                invoicingCity: 'Lisbon',
+                invoicingCounty: 'Lisbon',
+                invoicingCountry: 'PT'
+            },
+            'RO': {
+                email: 'customer@email.ro',
+                phone: '+40741209876',
+                firstName: 'Test',
+                lastName: 'Person-ro',
+                deliveryStreetAddress: 'Calea Victoriei 1',
+                deliveryPostalCode: '010061',
+                deliveryCity: 'Bucharest',
+                deliveryCounty: 'Bucharest',
+                deliveryCountry: 'RO',
+                invoicingStreetAddress: 'Calea Victoriei 1',
+                invoicingPostalCode: '010061',
+                invoicingCity: 'Bucharest',
+                invoicingCounty: 'Bucharest',
+                invoicingCountry: 'RO'
+            },
+            'SK': {
+                email: 'customer@email.sk',
+                phone: '+421905123456',
+                firstName: 'Test',
+                lastName: 'Person-sk',
+                deliveryStreetAddress: 'Hlavná 1',
+                deliveryPostalCode: '811 01',
+                deliveryCity: 'Bratislava',
+                deliveryCounty: 'Bratislava',
+                deliveryCountry: 'SK',
+                invoicingStreetAddress: 'Hlavná 1',
+                invoicingPostalCode: '811 01',
+                invoicingCity: 'Bratislava',
+                invoicingCounty: 'Bratislava',
+                invoicingCountry: 'SK'
+            },
+            'ES': {
+                email: 'customer@email.es',
+                phone: '+34672563009',
+                firstName: 'Test',
+                lastName: 'Person-es',
+                deliveryStreetAddress: 'Gran Vía 1',
+                deliveryPostalCode: '28013',
+                deliveryCity: 'Madrid',
+                deliveryCounty: 'Madrid',
+                deliveryCountry: 'ES',
+                invoicingStreetAddress: 'Gran Vía 1',
+                invoicingPostalCode: '28013',
+                invoicingCity: 'Madrid',
+                invoicingCounty: 'Madrid',
+                invoicingCountry: 'ES'
+            },
+            'SE': {
+                email: 'customer@email.se',
+                phone: '+46701740615',
+                firstName: 'Test',
+                lastName: 'Person-se',
+                deliveryStreetAddress: 'Drottninggatan 1',
+                deliveryPostalCode: '111 51',
+                deliveryCity: 'Stockholm',
+                deliveryCounty: 'Stockholm',
+                deliveryCountry: 'SE',
+                invoicingStreetAddress: 'Drottninggatan 1',
+                invoicingPostalCode: '111 51',
+                invoicingCity: 'Stockholm',
+                invoicingCounty: 'Stockholm',
+                invoicingCountry: 'SE'
+            },
+            'CH': {
+                email: 'customer@email.ch',
+                phone: '+41758680000',
+                firstName: 'Test',
+                lastName: 'Person-ch',
+                deliveryStreetAddress: 'Bahnhofstrasse 1',
+                deliveryPostalCode: '8001',
+                deliveryCity: 'Zurich',
+                deliveryCounty: 'Zurich',
+                deliveryCountry: 'CH',
+                invoicingStreetAddress: 'Bahnhofstrasse 1',
+                invoicingPostalCode: '8001',
+                invoicingCity: 'Zurich',
+                invoicingCounty: 'Zurich',
+                invoicingCountry: 'CH'
+            },
+            'GB': {
+                email: 'customer@email.uk',
+                phone: '+447755564318',
+                firstName: 'Test',
+                lastName: 'Person-gb',
+                deliveryStreetAddress: '123 Oxford Street',
+                deliveryPostalCode: 'W1D 2HG',
+                deliveryCity: 'London',
+                deliveryCounty: 'Greater London',
+                deliveryCountry: 'GB',
+                invoicingStreetAddress: '123 Oxford Street',
+                invoicingPostalCode: 'W1D 2HG',
+                invoicingCity: 'London',
+                invoicingCounty: 'Greater London',
+                invoicingCountry: 'GB'
+            },
+            'US': {
+                email: 'customer@email.us',
+                phone: '+13106683312',
+                firstName: 'Test',
+                lastName: 'Person-us',
+                deliveryStreetAddress: '509 Amsterdam Ave',
+                deliveryPostalCode: '10024-3941',
+                deliveryCity: 'New York',
+                deliveryCounty: 'NY',
+                deliveryCountry: 'US',
+                invoicingStreetAddress: '509 Amsterdam Ave',
+                invoicingPostalCode: '10024-3941',
+                invoicingCity: 'New York',
+                invoicingCounty: 'NY',
+                invoicingCountry: 'US'
+            }
+        };
+
+        // Load sample data function
+        function loadSampleData() {
+            const country = document.getElementById('sampleCountry').value;
+            const sample = sampleCustomerData[country];
+            
+            if (!sample) {
+                console.warn('No sample data found for country:', country);
+                return;
+            }
+            
+            // Populate customer fields
+            document.getElementById('email').value = sample.email;
+            document.getElementById('phone').value = sample.phone;
+            document.getElementById('firstName').value = sample.firstName;
+            document.getElementById('lastName').value = sample.lastName;
+            
+            // Populate delivery address
+            document.getElementById('deliveryStreetAddress').value = sample.deliveryStreetAddress;
+            document.getElementById('deliveryPostalCode').value = sample.deliveryPostalCode;
+            document.getElementById('deliveryCity').value = sample.deliveryCity;
+            document.getElementById('deliveryCounty').value = sample.deliveryCounty;
+            document.getElementById('deliveryCountry').value = sample.deliveryCountry;
+            
+            // Populate invoicing address
+            document.getElementById('invoicingStreetAddress').value = sample.invoicingStreetAddress;
+            document.getElementById('invoicingPostalCode').value = sample.invoicingPostalCode;
+            document.getElementById('invoicingCity').value = sample.invoicingCity;
+            document.getElementById('invoicingCounty').value = sample.invoicingCounty;
+            document.getElementById('invoicingCountry').value = sample.invoicingCountry;
+            
+            // Update payment summary
+            updatePaymentSummary();
+            
+            console.log('Sample data loaded for country:', country);
+        }
+
+        // Set default values with UUIDs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const uuid = generateUUID();
+            const shortUuid = uuid.substring(0, 8);
+            
+            // Set stamp and reference with UUIDs appended
+            const stampField = document.getElementById('stamp');
+            const referenceField = document.getElementById('reference');
+            if (stampField) {
+                const baseValue = stampField.value || 'payment-flow';
+                stampField.value = `${baseValue}-${shortUuid}`;
+            }
+            if (referenceField) {
+                const baseValue = referenceField.value || 'ref';
+                referenceField.value = `${baseValue}-${shortUuid}`;
+            }
+            
+            // Set item stamp and reference with UUIDs appended
+            const itemStampField = document.getElementById('itemStamp');
+            const itemReferenceField = document.getElementById('itemReference');
+            if (itemStampField && !itemStampField.value) {
+                itemStampField.value = uuid;
+            }
+            if (itemReferenceField) {
+                const baseValue = itemReferenceField.value || 'item-ref';
+                itemReferenceField.value = `${baseValue}-${shortUuid}`;
+            }
+        });
+
+        // Payment Flow Demo JavaScript
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await createPaymentFlow();
+        });
+
+        // Load Sample Data button event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadSampleBtn = document.getElementById('loadSampleDataBtn');
+            if (loadSampleBtn) {
+                loadSampleBtn.addEventListener('click', loadSampleData);
+            }
+        });
+
+        async function createPaymentFlow() {
+            const createBtn = document.getElementById('create-btn');
+            createBtn.disabled = true;
+            createBtn.textContent = '⏳ Creating Payment...';
+
+            try {
+                // Build customer object
+                const customer = {
+                    email: document.getElementById('email').value
+                };
+                if (document.getElementById('firstName').value) customer.firstName = document.getElementById('firstName').value;
+                if (document.getElementById('lastName').value) customer.lastName = document.getElementById('lastName').value;
+                if (document.getElementById('phone').value) customer.phone = document.getElementById('phone').value;
+                if (document.getElementById('vatId').value) customer.vatId = document.getElementById('vatId').value;
+                if (document.getElementById('companyName').value) customer.companyName = document.getElementById('companyName').value;
+
+                // Build delivery address if provided
+                let deliveryAddress = null;
+                if (document.getElementById('deliveryStreetAddress').value) {
+                    deliveryAddress = {
+                        streetAddress: document.getElementById('deliveryStreetAddress').value,
+                        postalCode: document.getElementById('deliveryPostalCode').value,
+                        city: document.getElementById('deliveryCity').value,
+                        country: document.getElementById('deliveryCountry').value || 'FI'
+                    };
+                    if (document.getElementById('deliveryCounty').value) {
+                        deliveryAddress.county = document.getElementById('deliveryCounty').value;
+                    }
+                }
+
+                // Build invoicing address if provided
+                let invoicingAddress = null;
+                if (document.getElementById('invoicingStreetAddress').value) {
+                    invoicingAddress = {
+                        streetAddress: document.getElementById('invoicingStreetAddress').value,
+                        postalCode: document.getElementById('invoicingPostalCode').value,
+                        city: document.getElementById('invoicingCity').value,
+                        country: document.getElementById('invoicingCountry').value || 'FI'
+                    };
+                    if (document.getElementById('invoicingCounty').value) {
+                        invoicingAddress.county = document.getElementById('invoicingCounty').value;
+                    }
+                }
+
+                // Build item object
+                const item = {
+                    unitPrice: parseInt(document.getElementById('itemUnitPrice').value),
+                    units: parseInt(document.getElementById('itemUnits').value),
+                    vatPercentage: parseFloat(document.getElementById('itemVatPercentage').value),
+                    productCode: document.getElementById('itemProductCode').value
+                };
+                if (document.getElementById('itemDescription').value) item.description = document.getElementById('itemDescription').value;
+                if (document.getElementById('itemCategory').value) item.category = document.getElementById('itemCategory').value;
+                if (document.getElementById('itemStamp').value) item.stamp = document.getElementById('itemStamp').value;
+                if (document.getElementById('itemReference').value) item.reference = document.getElementById('itemReference').value;
+
+                // Build redirect URLs
+                const redirectSuccess = document.getElementById('redirectSuccess').value || window.location.origin + '/payment-success.html';
+                const redirectCancel = document.getElementById('redirectCancel').value || window.location.origin + '/payment-cancel.html';
+
+                // Use stamp and reference values directly from form (already have UUIDs from page load)
+                const stamp = document.getElementById('stamp').value || `payment-flow-${Date.now()}`;
+                const reference = document.getElementById('reference').value || `ref-${Date.now()}`;
+                
+                // Use item stamp and reference from form or generate if missing
+                if (!item.stamp) {
+                    item.stamp = generateUUID();
+                }
+                const itemRefValue = document.getElementById('itemReference').value;
+                if (!item.reference) {
+                    item.reference = itemRefValue || `item-ref-${Date.now()}`;
+                }
+
+                // Store reference for comparison in modal
+                requestReference = reference;
+                
+                // Build payment data
+                const paymentData = {
+                    stamp: stamp,
+                    reference: reference,
+                    amount: parseInt(document.getElementById('amount').value),
+                    currency: document.getElementById('currency').value,
+                    language: document.getElementById('language').value,
+                    items: [item],
+                    customer: customer,
+                    redirectUrls: {
+                        success: redirectSuccess,
+                        cancel: redirectCancel
+                    }
+                };
+
+                // Add optional fields
+                if (document.getElementById('orderId').value) {
+                    paymentData.orderId = document.getElementById('orderId').value;
+                }
+                if (deliveryAddress) {
+                    paymentData.deliveryAddress = deliveryAddress;
+                }
+                if (invoicingAddress) {
+                    paymentData.invoicingAddress = invoicingAddress;
+                }
+                // Manual invoice activation - prioritize checkbox above button over form field
+                const manualCaptureCheckbox = document.getElementById('enableManualCapture');
+                const manualInvoiceField = document.getElementById('manualInvoiceActivation');
+                if (manualCaptureCheckbox && manualCaptureCheckbox.checked) {
+                    paymentData.manualInvoiceActivation = true;
+                } else if (manualInvoiceField && manualInvoiceField.value === 'true') {
+                    paymentData.manualInvoiceActivation = true;
+                }
+                if (document.getElementById('callbackSuccess').value || document.getElementById('callbackCancel').value) {
+                    paymentData.callbackUrls = {};
+                    if (document.getElementById('callbackSuccess').value) {
+                        paymentData.callbackUrls.success = document.getElementById('callbackSuccess').value;
+                    }
+                    if (document.getElementById('callbackCancel').value) {
+                        paymentData.callbackUrls.cancel = document.getElementById('callbackCancel').value;
+                    }
+                }
+                if (document.getElementById('callbackDelay').value && parseInt(document.getElementById('callbackDelay').value) > 0) {
+                    paymentData.callbackDelay = parseInt(document.getElementById('callbackDelay').value);
+                }
+                if (document.getElementById('groups').value) {
+                    paymentData.groups = document.getElementById('groups').value.split(',').map(g => g.trim()).filter(g => g);
+                }
+                if (document.getElementById('usePricesWithoutVat').value === 'true') {
+                    paymentData.usePricesWithoutVat = true;
+                }
+                
+                // Check manual capture toggle
+                if (document.getElementById('enableManualCapture').checked) {
+                    paymentData.manualInvoiceActivation = true;
+                }
+
+                // Add Klarna provider details if provided
+                const klarnaSessionToken = document.getElementById('klarnaSessionToken').value.trim();
+                const klarnaData = document.getElementById('klarnaData').value.trim();
+                if (klarnaSessionToken || klarnaData) {
+                    paymentData.providerDetails = {
+                        klarna: {}
+                    };
+                    if (klarnaSessionToken) {
+                        paymentData.providerDetails.klarna.sessionToken = klarnaSessionToken;
+                    }
+                    if (klarnaData) {
+                        paymentData.providerDetails.klarna.data = klarnaData;
+                    }
+                }
+
+                const response = await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                // Log reference comparison
+                console.log('📋 Reference Field Comparison:');
+                console.log('  ⚠️  NOTE: Paytrail returns their checkout reference in the "reference" field, not the merchant reference');
+                console.log('  Merchant reference sent:', reference);
+                console.log('  Paytrail checkout reference (in response.reference):', data.reference);
+                console.log('  Response transactionId:', data.transactionId);
+                if (data.checkoutReference) {
+                    console.log('  Response checkoutReference:', data.checkoutReference);
+                }
+                console.log('  ℹ️  The merchant reference you sent is stored by Paytrail but not returned in the immediate response.');
+                console.log('  ℹ️  You can retrieve it later using the transactionId or by querying payment reports.');
+                console.log('  Full response data:', data);
+                    
+                    currentPaymentData = data;
+                    showPaymentResponse(data);
+                } else {
+                    // Show more detailed error message
+                    let errorMessage = data.error || 'Payment creation failed';
+                    if (data.message) {
+                        errorMessage += ': ' + data.message;
+                    }
+                    if (data.details && typeof data.details === 'object') {
+                        const detailsStr = JSON.stringify(data.details, null, 2);
+                        errorMessage += '\n\nDetails:\n' + detailsStr;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error creating payment:', error);
+                // Show error in a more user-friendly way
+                const errorMsg = error.message || 'Unknown error occurred';
+                alert('Error creating payment:\n\n' + errorMsg);
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = '💳 Create Paytrail Payment Session';
+            }
+        }
+
+        function showPaymentResponse(paymentData) {
+            // Hide form and summary, show response
+            document.getElementById('payment-form-section').style.display = 'none';
+            document.getElementById('payment-summary-box').style.display = 'none';
+            document.getElementById('payment-response-section').style.display = 'block';
+            
+            // Store payment data for modal
+            currentPaymentData = paymentData;
+
+            // Update transaction info
+            document.getElementById('transaction-id').textContent = paymentData.transactionId;
+            
+            // Store the payment URL for later use
+            currentPaymentUrl = paymentData.href;
+
+            // Update amount display
+            const amount = paymentData.amount ? (paymentData.amount / 100).toFixed(2) : '15.90';
+            document.getElementById('payment-amount').textContent = `€${amount}`;
+
+            // Enable/disable hosted payment button
+            const hostedBtn = document.getElementById('hosted-payment-btn');
+            if (hostedBtn) {
+                if (currentPaymentUrl) {
+                    hostedBtn.disabled = false;
+                    hostedBtn.style.opacity = '1';
+                    hostedBtn.style.cursor = 'pointer';
+                } else {
+                    hostedBtn.disabled = true;
+                    hostedBtn.style.opacity = '0.5';
+                    hostedBtn.style.cursor = 'not-allowed';
+                }
+            }
+
+            // Store all providers
+            allProviders = paymentData.providers || [];
+            
+            // Show providers in all selectors
+            displayProviders(allProviders);
+            displayProvidersSelector2(allProviders);
+            displayProvidersSelector3(allProviders);
+        }
+
+        function switchPaymentSelector(selectorNum) {
+            // Update tab states
+            document.querySelectorAll('.selector-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.selector-tab[data-selector="${selectorNum}"]`).classList.add('active');
+
+            // Show/hide content
+            document.querySelectorAll('.payment-selector-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.querySelector(`.payment-selector-content[data-selector="${selectorNum}"]`).style.display = 'block';
+        }
+
+        function displayProviders(providers) {
+            const container = document.getElementById('providers-container');
+            
+            if (!providers || providers.length === 0) {
+                container.innerHTML = '<div class="error">No payment providers available</div>';
+                return;
+            }
+
+            // Group providers by their group field
+            const groupedProviders = providers.reduce((groups, provider) => {
+                const group = provider.group || 'other';
+                if (!groups[group]) {
+                    groups[group] = [];
+                }
+                groups[group].push(provider);
+                return groups;
+            }, {});
+
+            // Category names and descriptions
+            const categoryInfo = {
+                'bank': {
+                    name: 'Bank payment',
+                    description: 'Directly from your bank account'
+                },
+                'mobile': {
+                    name: 'Mobile payment',
+                    description: 'Conveniently with your mobile device'
+                },
+                'creditcard': {
+                    name: 'Card payment',
+                    description: 'Easily with a debit or credit card'
+                },
+                'credit': {
+                    name: 'Invoice & Installment',
+                    description: 'Pay later with flexible payment options'
+                },
+                'other': {
+                    name: 'Other payment methods',
+                    description: 'Additional payment options'
+                }
+            };
+
+            let html = '';
+            
+            // Display categories in order
+            const categoryOrder = ['bank', 'mobile', 'creditcard', 'credit', 'other'];
+            
+            categoryOrder.forEach(categoryId => {
+                const categoryProviders = groupedProviders[categoryId];
+                if (!categoryProviders || categoryProviders.length === 0) {
+                    return;
+                }
+
+                const category = categoryInfo[categoryId] || categoryInfo['other'];
+                
+                html += `
+                    <div class="payment-category">
+                        <div class="category-header">
+                            <h3 class="category-title">${category.name}</h3>
+                        </div>
+                        <p class="category-description">${category.description}</p>
+                        <div class="category-providers">
+                `;
+
+                categoryProviders.forEach(provider => {
+                    // Generate hidden input fields for provider parameters
+                    // For Klarna, these parameters include:
+                    // - checkout-transaction-id: Paytrail transaction ID
+                    // - checkout-account: Merchant ID
+                    // - checkout-method: HTTP method (POST)
+                    // - checkout-algorithm: HMAC algorithm (sha256)
+                    // - checkout-timestamp: ISO 8601 timestamp
+                    // - checkout-nonce: Unique nonce for replay attack prevention
+                    // - signature: HMAC signature for authentication
+                    // These are POST parameters sent to the provider's URL (e.g., Klarna's loading-and-redirect URL)
+                    let hiddenInputs = '';
+                    if (provider.parameters && Array.isArray(provider.parameters)) {
+                        provider.parameters.forEach(param => {
+                            // Escape HTML entities in values to prevent XSS
+                            const escapedValue = String(param.value || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            hiddenInputs += `<input type="hidden" name="${param.name}" value="${escapedValue}">`;
+                        });
+                    }
+                    
+                    // Create a POST form that submits all parameters to the provider's URL
+                    // When user clicks the provider button, the form is submitted with all authentication parameters
+                    // This redirects the user to the provider's payment page (e.g., Klarna checkout)
+                    html += `
+                        <form method="POST" action="${provider.url}" target="_blank" class="provider-form" style="margin: 0;">
+                            ${hiddenInputs}
+                            <button type="submit" class="category-provider-card" onclick="trackProviderClick('${provider.id}', '${provider.name}')">
+                                <img src="${provider.icon || provider.svg}" alt="${provider.name}" class="category-provider-logo" 
+                                     onerror="this.style.display='none'">
+                            </button>
+                        </form>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (html === '') {
+                html = '<div class="error">No payment methods available</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function displayProvidersSelector2(providers) {
+            const container = document.getElementById('providers-container-2');
+            
+            if (!providers || providers.length === 0) {
+                container.innerHTML = '<div class="error">No payment providers available</div>';
+                return;
+            }
+
+            // Group providers by their group field
+            const groupedProviders = providers.reduce((groups, provider) => {
+                const group = provider.group || 'other';
+                if (!groups[group]) {
+                    groups[group] = [];
+                }
+                groups[group].push(provider);
+                return groups;
+            }, {});
+
+            // Category names
+            const categoryInfo = {
+                'bank': {
+                    name: 'Bank payment',
+                    description: 'Directly from your bank account'
+                },
+                'mobile': {
+                    name: 'Mobile payment',
+                    description: 'Conveniently with your mobile device'
+                },
+                'creditcard': {
+                    name: 'Card payment',
+                    description: 'Easily with a debit or credit card'
+                },
+                'credit': {
+                    name: 'Invoice & Installment',
+                    description: 'Pay later with flexible payment options'
+                },
+                'other': {
+                    name: 'Other payment methods',
+                    description: 'Additional payment options'
+                }
+            };
+
+            let html = '';
+            let globalIndex = 0;
+            
+            // Display categories in order
+            const categoryOrder = ['bank', 'mobile', 'creditcard', 'credit', 'other'];
+            
+            categoryOrder.forEach(categoryId => {
+                const categoryProviders = groupedProviders[categoryId];
+                if (!categoryProviders || categoryProviders.length === 0) {
+                    return;
+                }
+
+                const category = categoryInfo[categoryId] || categoryInfo['other'];
+                
+                html += `
+                    <div class="payment-category-section">
+                        <h3 class="category-section-title">${category.name}</h3>
+                        <p class="category-section-description">${category.description}</p>
+                        <div class="payment-options-list">
+                `;
+
+                categoryProviders.forEach(provider => {
+                    // Generate hidden input fields for provider parameters
+                    let hiddenInputs = '';
+                    if (provider.parameters && Array.isArray(provider.parameters)) {
+                        provider.parameters.forEach(param => {
+                            const escapedValue = String(param.value || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            hiddenInputs += `<input type="hidden" name="${param.name}" value="${escapedValue}">`;
+                        });
+                    }
+
+                    const providerId = `provider-${globalIndex}`;
+                    const isChecked = globalIndex === 0 ? 'checked' : '';
+                    globalIndex++;
+
+                    html += `
+                        <form method="POST" action="${provider.url}" target="_blank" class="provider-form" style="margin: 0;">
+                            ${hiddenInputs}
+                            <div class="payment-option-card" onclick="this.querySelector('input[type=radio]').click(); this.closest('form').submit();">
+                                <input type="radio" name="paymentMethod" id="${providerId}" value="${provider.id}" ${isChecked} onclick="event.stopPropagation(); trackProviderClick('${provider.id}', '${provider.name}'); this.closest('form').submit();">
+                                <div class="payment-option-content">
+                                    <label for="${providerId}" class="payment-option-label">
+                                        ${provider.name}
+                                    </label>
+                                    <div class="payment-option-logos">
+                                        <img src="${provider.icon || provider.svg}" alt="${provider.name}" 
+                                             onerror="this.style.display='none'">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (html === '') {
+                html = '<div class="error">No payment methods available</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function displayProvidersSelector3(providers) {
+            const container = document.getElementById('providers-container-3');
+            
+            if (!providers || providers.length === 0) {
+                container.innerHTML = '<div class="error">No payment providers available</div>';
+                return;
+            }
+
+            // Group providers by their group field
+            const groupedProviders = providers.reduce((groups, provider) => {
+                const group = provider.group || 'other';
+                if (!groups[group]) {
+                    groups[group] = [];
+                }
+                groups[group].push(provider);
+                return groups;
+            }, {});
+
+            // Category names
+            const categoryInfo = {
+                'bank': {
+                    name: 'Bank payment',
+                    description: 'Directly from your bank account'
+                },
+                'mobile': {
+                    name: 'Mobile payment',
+                    description: 'Conveniently with your mobile device'
+                },
+                'creditcard': {
+                    name: 'Card payment',
+                    description: 'Easily with a debit or credit card'
+                },
+                'credit': {
+                    name: 'Invoice & Installment',
+                    description: 'Pay later with flexible payment options'
+                },
+                'other': {
+                    name: 'Other payment methods',
+                    description: 'Additional payment options'
+                }
+            };
+
+            let html = '';
+            let globalIndex = 0;
+            
+            // Display categories in order
+            const categoryOrder = ['bank', 'mobile', 'creditcard', 'credit', 'other'];
+            
+            categoryOrder.forEach((categoryId, categoryIndex) => {
+                const categoryProviders = groupedProviders[categoryId];
+                if (!categoryProviders || categoryProviders.length === 0) {
+                    return;
+                }
+
+                const category = categoryInfo[categoryId] || categoryInfo['other'];
+                const categoryBoxId = `category-box-${categoryId}`;
+                
+                // Get first 3 logos for collapsed view
+                const totalCount = categoryProviders.length;
+                const firstThreeLogos = categoryProviders.slice(0, 3).map(provider => 
+                    `<img src="${provider.icon || provider.svg}" alt="${provider.name}" onerror="this.style.display='none'" onclick="event.stopPropagation();">`
+                ).join('');
+                
+                const moreCount = totalCount > 3 ? totalCount - 3 : 0;
+                const moreCountText = moreCount > 0 ? `<span class="category-box-more-count">+${moreCount}</span>` : '';
+
+                html += `
+                    <div class="category-box" id="${categoryBoxId}" onclick="toggleCategoryBox('${categoryBoxId}')">
+                        <div class="category-box-header">
+                            <div style="flex: 1;">
+                                <div class="category-box-title">${category.name}</div>
+                                <div class="category-box-description">${category.description}</div>
+                            </div>
+                            ${firstThreeLogos || moreCountText ? `
+                            <div class="category-box-logos">
+                                ${firstThreeLogos}
+                                ${moreCountText}
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="category-box-content">
+                            <div class="category-box-payment-options">
+                `;
+
+                categoryProviders.forEach(provider => {
+                    // Generate hidden input fields for provider parameters
+                    // For Klarna, these parameters are POST form fields used for authentication:
+                    // - checkout-transaction-id: Paytrail transaction ID
+                    // - checkout-account: Merchant ID
+                    // - checkout-method: HTTP method (POST)
+                    // - checkout-algorithm: HMAC algorithm (sha256)
+                    // - checkout-timestamp: ISO 8601 timestamp
+                    // - checkout-nonce: Unique nonce for replay attack prevention
+                    // - signature: HMAC signature for authentication
+                    // These are submitted via POST to the provider's URL (e.g., Klarna's loading-and-redirect URL)
+                    let hiddenInputs = '';
+                    if (provider.parameters && Array.isArray(provider.parameters)) {
+                        provider.parameters.forEach(param => {
+                            const escapedValue = String(param.value || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            hiddenInputs += `<input type="hidden" name="${param.name}" value="${escapedValue}">`;
+                        });
+                    }
+
+                    const providerId = `provider-3-${globalIndex}`;
+                    const isChecked = globalIndex === 0 ? 'checked' : '';
+                    globalIndex++;
+
+                    html += `
+                        <form method="POST" action="${provider.url}" target="_blank" class="provider-form" style="margin: 0;" onclick="event.stopPropagation();">
+                            ${hiddenInputs}
+                            <div class="payment-option-card" onclick="this.querySelector('input[type=radio]').click(); this.closest('form').submit();">
+                                <input type="radio" name="paymentMethod" id="${providerId}" value="${provider.id}" ${isChecked} onclick="event.stopPropagation(); trackProviderClick('${provider.id}', '${provider.name}'); this.closest('form').submit();">
+                                <div class="payment-option-content">
+                                    <label for="${providerId}" class="payment-option-label">
+                                        ${provider.name}
+                                    </label>
+                                    <div class="payment-option-logos">
+                                        <img src="${provider.icon || provider.svg}" alt="${provider.name}" 
+                                             onerror="this.style.display='none'">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    `;
+                });
+
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (html === '') {
+                html = '<div class="error">No payment methods available</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleCategoryBox(boxId) {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            
+            // Toggle the expanded class
+            box.classList.toggle('expanded');
+        }
+
+        function trackProviderClick(providerId, providerName) {
+            console.log(`🔄 User selected payment provider: ${providerName} (${providerId})`);
+            
+            // Show a brief notification
+            const notification = document.createElement('div');
+            notification.className = 'success';
+            notification.textContent = `Redirecting to ${providerName}...`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '1000';
+            notification.style.minWidth = '300px';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        function openHostedPaymentPage() {
+            if (currentPaymentUrl) {
+                window.open(currentPaymentUrl, '_blank');
+            } else {
+                alert('No payment URL available. Please create a payment first.');
+            }
+        }
+
+        function createNewPayment() {
+            // Reset form
+            document.getElementById('payment-form-section').style.display = 'none';
+            document.getElementById('payment-summary-box').style.display = 'block';
+            document.getElementById('payment-response-section').style.display = 'none';
+            currentPaymentData = null;
+            currentPaymentUrl = null;
+            allProviders = [];
+            updatePaymentSummary();
+        }
+
+        // Store the request reference for comparison
+        let requestReference = null;
+
+        function showPaymentResponseModal() {
+            const modal = document.getElementById('payment-response-modal');
+            const jsonContent = document.getElementById('modal-json-content');
+            
+            if (currentPaymentData) {
+                // Create a comparison object showing request vs response
+                const comparison = {
+                    note: '⚠️ IMPORTANT: Paytrail returns their checkout reference in the "reference" field, NOT your merchant reference',
+                    request: {
+                        merchantReference: requestReference || 'Not available',
+                        note: 'Your merchant reference sent in the /payments request'
+                    },
+                    response: {
+                        reference: currentPaymentData.reference || 'Not in response',
+                        note: '⚠️ This is Paytrail\'s checkout reference (e.g., "8963228992"), NOT your merchant reference',
+                        transactionId: currentPaymentData.transactionId || 'Not in response',
+                        note2: 'Use transactionId to query payment status or reports to retrieve your original merchant reference',
+                        checkoutReference: currentPaymentData.checkoutReference || 'Not in response (if present, this is also Paytrail\'s reference)'
+                    },
+                    fullResponse: currentPaymentData
+                };
+                
+                // Format the comparison with proper indentation
+                jsonContent.textContent = JSON.stringify(comparison, null, 2);
+                modal.classList.add('active');
+            } else {
+                jsonContent.textContent = 'No payment data available. Please create a payment first.';
+                modal.classList.add('active');
+            }
+        }
+
+        function closePaymentResponseModal() {
+            const modal = document.getElementById('payment-response-modal');
+            modal.classList.remove('active');
+        }
+
+        // Function to update payment summary box
+        function updatePaymentSummary() {
+            const amount = document.getElementById('amount').value || 0;
+            const currency = document.getElementById('currency').value || 'EUR';
+            const language = document.getElementById('language').value || 'EN';
+            const reference = document.getElementById('reference').value || '';
+            const email = document.getElementById('email').value || '';
+            const firstName = document.getElementById('firstName').value || '';
+            const lastName = document.getElementById('lastName').value || '';
+            const phone = document.getElementById('phone').value || '';
+            
+            // Delivery address fields
+            const deliveryStreet = document.getElementById('deliveryStreetAddress').value || '';
+            const deliveryPostal = document.getElementById('deliveryPostalCode').value || '';
+            const deliveryCity = document.getElementById('deliveryCity').value || '';
+            const deliveryCountry = document.getElementById('deliveryCountry').value || '';
+            
+            // Invoice address fields
+            const invoiceStreet = document.getElementById('invoicingStreetAddress').value || '';
+            const invoicePostal = document.getElementById('invoicingPostalCode').value || '';
+            const invoiceCity = document.getElementById('invoicingCity').value || '';
+            const invoiceCountry = document.getElementById('invoicingCountry').value || '';
+            
+            // Format amount as currency
+            const amountInEuros = (parseInt(amount) / 100).toFixed(2);
+            
+            // Format delivery address
+            const deliveryParts = [];
+            if (deliveryStreet) deliveryParts.push(deliveryStreet);
+            if (deliveryPostal) deliveryParts.push(deliveryPostal);
+            if (deliveryCity) deliveryParts.push(deliveryCity);
+            if (deliveryCountry) deliveryParts.push(deliveryCountry);
+            const delivery = deliveryParts.length > 0 ? deliveryParts.join(', ') : 'Not set';
+            
+            // Format invoice address
+            const invoiceParts = [];
+            if (invoiceStreet) invoiceParts.push(invoiceStreet);
+            if (invoicePostal) invoiceParts.push(invoicePostal);
+            if (invoiceCity) invoiceParts.push(invoiceCity);
+            if (invoiceCountry) invoiceParts.push(invoiceCountry);
+            const invoice = invoiceParts.length > 0 ? invoiceParts.join(', ') : 'Not set';
+            
+            document.getElementById('summary-amount').textContent = `€${amountInEuros}`;
+            document.getElementById('summary-currency').textContent = currency;
+            document.getElementById('summary-language').textContent = language;
+            document.getElementById('summary-reference').textContent = reference || 'Not set';
+            document.getElementById('summary-email').textContent = email || 'Not set';
+            document.getElementById('summary-name').textContent = `${firstName} ${lastName}`.trim() || 'Not set';
+            document.getElementById('summary-phone').textContent = phone || 'Not set';
+            document.getElementById('summary-delivery').textContent = delivery;
+            document.getElementById('summary-invoice').textContent = invoice;
+            
+            // Klarna Network fields
+            const klarnaSessionToken = document.getElementById('klarnaSessionToken').value.trim();
+            const klarnaData = document.getElementById('klarnaData').value.trim();
+            if (klarnaSessionToken || klarnaData) {
+                let klarnaInfo = [];
+                if (klarnaSessionToken) {
+                    const truncatedToken = klarnaSessionToken.length > 50 ? klarnaSessionToken.substring(0, 50) + '...' : klarnaSessionToken;
+                    klarnaInfo.push(`Klarna Network Session Token: ${truncatedToken}`);
+                }
+                if (klarnaData) {
+                    const truncatedData = klarnaData.length > 50 ? klarnaData.substring(0, 50) + '...' : klarnaData;
+                    klarnaInfo.push(`Klarna Network Data: ${truncatedData}`);
+                }
+                document.getElementById('summary-klarna').innerHTML = klarnaInfo.join('<br>');
+            } else {
+                document.getElementById('summary-klarna').textContent = 'No Klarna Network Session Token or Data provided';
+            }
+        }
+
+        // Toggle form visibility
+        function togglePaymentForm(show) {
+            if (show) {
+                document.getElementById('payment-form-section').style.display = 'block';
+                document.getElementById('payment-summary-box').style.display = 'none';
+            } else {
+                document.getElementById('payment-form-section').style.display = 'none';
+                document.getElementById('payment-summary-box').style.display = 'block';
+                updatePaymentSummary();
+            }
+        }
+
+        // Handle language selector buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Language selector buttons
+            const langButtons = document.querySelectorAll('.lang-btn');
+            langButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    langButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    // You can add language switching logic here
+                    console.log('Language changed to:', this.dataset.lang);
+            });
+            });
+
+            // Initialize payment summary
+            updatePaymentSummary();
+
+            // Edit Payload button
+            const editPayloadBtn = document.getElementById('edit-payload-btn');
+            if (editPayloadBtn) {
+                editPayloadBtn.addEventListener('click', function() {
+                    togglePaymentForm(true);
+                });
+            }
+
+            // Close form button
+            const closeFormBtn = document.getElementById('close-form-btn');
+            if (closeFormBtn) {
+                closeFormBtn.addEventListener('click', function() {
+                    togglePaymentForm(false);
+                });
+            }
+
+            // Update summary when form fields change
+            const formFields = ['amount', 'currency', 'language', 'reference', 'email', 'firstName', 'lastName', 'phone', 'deliveryStreetAddress', 'deliveryPostalCode', 'deliveryCity', 'deliveryCountry', 'invoicingStreetAddress', 'invoicingPostalCode', 'invoicingCity', 'invoicingCountry', 'klarnaSessionToken', 'klarnaData'];
+            formFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', updatePaymentSummary);
+                    field.addEventListener('change', updatePaymentSummary);
+                }
+            });
+        });
+    </script>
+        </main>
+    </div>
+</body>
+</html> 
