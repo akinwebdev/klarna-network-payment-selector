@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Paytrail Payment API Documentation</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="description" content="Paytrail Payment API Documentation" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css" />
+    <style>
+      body {
+        font-family: 'Poppins', Helvetica, Arial, sans-serif;
+        font-size: 15px;
+      }
+      .app-name img {
+        max-width: 100px;
+      }
+      nav {
+        background: white;
+        padding: 15px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      nav a {
+        color: #2c3e50;
+        text-decoration: none;
+        margin-right: 20px;
+        padding: 8px 15px;
+        border-radius: 5px;
+        transition: color 0.3s;
+        font-weight: 500;
+      }
+      nav a:hover {
+        color: #e60094;
+      }
+      nav a:first-child {
+        background: #e60094;
+        color: white;
+        font-weight: bold;
+        padding: 8px 20px;
+      }
+      nav a:first-child:hover {
+        background: #c4007a;
+        color: white;
+      }
+      #app {
+        padding-top: 0;
+      }
+      /* Info banner styles */
+      .info-banner {
+        background: #FEF3C7;
+        border: 1px solid #FDE68A;
+        border-left: 4px solid #F59E0B;
+        color: #92400E;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      /* Ensure banner appears in content area, not behind sidebar */
+      .markdown-section {
+        position: relative;
+      }
+      .markdown-section .info-banner {
+        margin-top: 0;
+      }
+      .info-banner.hidden {
+        display: none;
+      }
+      .info-banner-content {
+        flex: 1;
+      }
+      .info-banner a {
+        color: #92400E;
+        text-decoration: underline;
+        font-weight: 500;
+      }
+      .info-banner a:hover {
+        color: #78350F;
+      }
+      .info-banner-close {
+        background: transparent;
+        border: none;
+        color: #92400E;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+      .info-banner-close:hover {
+        background: rgba(146, 64, 14, 0.1);
+      }
+      .info-banner-close:active {
+        background: rgba(146, 64, 14, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <a href="/">← Back to Demo</a>
+      <a href="#/">Home</a>
+      <a href="#/examples">Examples</a>
+      <a href="#/payment-method-providers">Providers</a>
+      <a href="#/migration-guide">Migration Guide</a>
+    </nav>
+    <div id="app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@9/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-php.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-csharp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-rust.min.js"></script>
+    <script>
+      var num = 0;
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: { primaryColor: '#dadada', noteBkgColor: '#ebf8f2' },
+        sequence: {
+          useMaxWidth: true,
+          fontFamily: '"Poppins", Helvetica, Arial, sans-serif',
+        },
+      });
+
+      window.$docsify = {
+        name: 'Paytrail Payment API',
+        repo: 'paytrail/api-documentation',
+        maxLevel: 3,
+        subMaxLevel: 3,
+        themeColor: '#e60094',
+        logo: 'images/paytrail-logo.svg',
+        basePath: '/api-documentation_rev1/docs/',
+        loadSidebar: false,
+        markdown: {
+          renderer: {
+            code: function (code, lang) {
+              if (lang === 'mermaid') {
+                return '<div class="mermaid">' + mermaid.render('mermaid-svg-' + num++, code) + '</div>';
+              }
+              return this.origin.code.apply(this, arguments);
+            },
+          },
+        },
+        requestHeaders: {
+          'cache-control': 'max-age=600',
+        },
+        hooks: {
+          mounted: function() {
+            // Inject info banner into the content area after Docsify mounts
+            setTimeout(function() {
+              injectInfoBanner();
+            }, 300);
+          },
+          doneEach: function() {
+            // Re-inject banner on each page navigation if it doesn't exist
+            setTimeout(function() {
+              const existingBanner = document.querySelector('.markdown-section .info-banner:not(.hidden)');
+              if (!existingBanner) {
+                injectInfoBanner();
+              }
+            }, 150);
+          }
+        }
+      };
+      
+      // Function to inject info banner into content area
+      function injectInfoBanner() {
+        // Check if banner was previously closed
+        if (localStorage.getItem('infoBannerClosed') === 'true') {
+          return;
+        }
+        
+        // Try multiple selectors to find the content area - Docsify structure
+        let markdownSection = document.querySelector('.markdown-section');
+        if (!markdownSection) {
+          // Try alternative selectors
+          markdownSection = document.querySelector('#app section');
+        }
+        if (!markdownSection) {
+          markdownSection = document.querySelector('#app .content');
+        }
+        if (!markdownSection) {
+          // Last resort: find any section or main content div
+          const app = document.querySelector('#app');
+          if (app) {
+            markdownSection = app.querySelector('section') || app.querySelector('div[class*="section"]') || app;
+          }
+        }
+        
+        if (!markdownSection) {
+          // If markdown section doesn't exist yet, try again after a short delay
+          setTimeout(injectInfoBanner, 300);
+          return;
+        }
+        
+        // Check if banner already exists anywhere in the app
+        const existingBanner = document.querySelector('#infoBanner');
+        if (existingBanner) {
+          // If it exists but is hidden, remove it and recreate
+          if (existingBanner.classList.contains('hidden')) {
+            existingBanner.remove();
+          } else {
+            return;
+          }
+        }
+        
+        // Create banner element
+        const banner = document.createElement('div');
+        banner.className = 'info-banner';
+        banner.id = 'infoBanner';
+        banner.innerHTML = `
+          <div class="info-banner-content">
+            The contents of the Klarna section are not finalized; they are currently being reviewed in this <a href="https://docs.google.com/document/d/1OYcUodcWKHcMkHGot2MsrkVihZHmBJFw32WpDE5pqa8/edit?tab=t.0#heading=h.n186feolxsz2" target="_blank" rel="noopener noreferrer">Google Doc</a>.
+          </div>
+          <button class="info-banner-close" id="closeBanner" aria-label="Close banner" title="Close">×</button>
+        `;
+        
+        // Insert banner at the beginning of the markdown section
+        // Remove any existing hidden banners first
+        const hiddenBanners = markdownSection.querySelectorAll('.info-banner.hidden');
+        hiddenBanners.forEach(function(b) { b.remove(); });
+        
+        if (markdownSection.firstChild) {
+          markdownSection.insertBefore(banner, markdownSection.firstChild);
+        } else {
+          markdownSection.appendChild(banner);
+        }
+        
+        // Attach close button handler
+        const closeButton = banner.querySelector('#closeBanner');
+        if (closeButton) {
+          closeButton.addEventListener('click', function() {
+            banner.classList.add('hidden');
+            localStorage.setItem('infoBannerClosed', 'true');
+          });
+        }
+      }
+      
+      // Fix logo path after Docsify loads to prevent basePath duplication
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          const logoImg = document.querySelector('.app-name img');
+          if (logoImg && logoImg.src.includes('/api-documentation_rev1/docs/api-documentation_rev1')) {
+            logoImg.src = '/api-documentation_rev1/docs/images/paytrail-logo.svg';
+          }
+        }, 100);
+        
+        // Fallback: Try to inject banner after DOM is ready
+        setTimeout(function() {
+          injectInfoBanner();
+        }, 500);
+      });
+      
+      // Also try when window loads completely
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          injectInfoBanner();
+        }, 500);
+      });
+      
+      // Make function globally accessible for debugging
+      window.injectInfoBanner = injectInfoBanner;
+    </script>
+  </body>
+</html>
