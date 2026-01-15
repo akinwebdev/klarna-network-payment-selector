@@ -28,6 +28,19 @@
         margin: 0 auto;
         padding: 2rem;
         position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .product-header {
+        width: 100%;
+        max-width: 100%;
+      }
+      
+      .product-content {
+        width: 100%;
+        max-width: 100%;
       }
       
       .settings-icon {
@@ -220,14 +233,6 @@
         margin-top: 1.5rem;
       }
       
-      .footer {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #E0E0E0;
-        text-align: center;
-        color: #5A5A5A;
-        font-size: 0.875rem;
-      }
       
       @media (max-width: 768px) {
         .product-content {
@@ -306,10 +311,6 @@
           
           <div id="product-payment-button-container"></div>
         </div>
-      </div>
-      
-      <div class="footer">
-        <div>Klarna Network Payment Selector</div>
       </div>
     </div>
 

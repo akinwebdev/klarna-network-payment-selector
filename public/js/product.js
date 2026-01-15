@@ -14,6 +14,7 @@ let productCountrySel;
 let productLocaleSel;
 let productAmountInput;
 let productCurrencyPill;
+let productPriceDisplay;
 
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
@@ -52,6 +53,40 @@ function reflectProductCurrency(countryCode) {
   if (productCurrencyPill) {
     productCurrencyPill.textContent = COUNTRY_MAPPING[countryCode].currency;
   }
+  updateProductPriceDisplay();
+}
+
+// ============================================================================
+// PRICE DISPLAY UPDATE
+// ============================================================================
+
+function updateProductPriceDisplay() {
+  if (!productPriceDisplay || !productCountrySel || !productAmountInput) {
+    return;
+  }
+
+  const country = productCountrySel.value;
+  const currency = COUNTRY_MAPPING[country]?.currency || "EUR";
+  const amount = parseInt(productAmountInput.value, 10) || 0;
+  
+  // Format the price based on currency
+  const formattedPrice = formatPrice(amount, currency);
+  productPriceDisplay.textContent = formattedPrice;
+}
+
+function formatPrice(amountInMinorUnits, currency) {
+  // Convert minor units to major units (e.g., 15900 -> 159.00)
+  const majorUnits = amountInMinorUnits / 100;
+  
+  // Use Intl.NumberFormat for proper currency formatting
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  
+  return formatter.format(majorUnits);
 }
 
 // ============================================================================
@@ -236,9 +271,10 @@ async function initializeProductPage() {
   productLocaleSel = document.getElementById("product-locale");
   productAmountInput = document.getElementById("product-amount");
   productCurrencyPill = document.getElementById("product-currency-pill");
+  productPriceDisplay = document.getElementById("product-price");
 
   // Check if all required elements exist
-  if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill) {
+  if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill || !productPriceDisplay) {
     console.error("Required DOM elements not found");
     return;
   }
@@ -254,6 +290,19 @@ async function initializeProductPage() {
     // Re-initialize payment button when country changes
     initializePaymentButton();
   });
+
+  // Update price display when amount changes
+  productAmountInput.addEventListener("input", () => {
+    updateProductPriceDisplay();
+  });
+
+  // Update price display when locale changes (for currency formatting)
+  productLocaleSel.addEventListener("change", () => {
+    updateProductPriceDisplay();
+  });
+
+  // Initial price display update
+  updateProductPriceDisplay();
 
   // Initialize payment button after page loads
   await initializePaymentButton();
