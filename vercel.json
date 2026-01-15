@@ -6,16 +6,16 @@
       "destination": "/api/[...]"
     },
     {
-      "source": "/",
-      "destination": "/public/index.html"
-    },
-    {
       "source": "/product",
       "destination": "/public/product.html"
     },
     {
       "source": "/payment-complete",
       "destination": "/public/payment-complete.html"
+    },
+    {
+      "source": "/",
+      "destination": "/public/index.html"
     }
   ]
 }
