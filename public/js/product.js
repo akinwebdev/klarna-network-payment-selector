@@ -173,9 +173,9 @@ async function initializePaymentButton() {
     const intents = getProductSelectedIntents(); // ["PAY"]
 
     // Fetch presentation to get payment options
-    // Only set currency, amount, and intents (locale removed per user request)
     const presentationConfig = {
       currency,
+      locale,
       amount,
       intents,
     };
