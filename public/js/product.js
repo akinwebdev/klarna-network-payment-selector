@@ -326,13 +326,22 @@ async function initializePaymentButton() {
         const itemStamp = `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const itemReference = `item_ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+        // Map locale to Paytrail language code (must be uppercase: FI, SV, or EN)
+        const localeCode = productLocaleSel.value.split('-')[0] || 'en';
+        const languageMap = {
+          'fi': 'FI',
+          'sv': 'SV',
+          'en': 'EN'
+        };
+        const language = languageMap[localeCode.toLowerCase()] || 'EN';
+
         // Build Paytrail payment request
         const paymentData = {
           stamp: stamp,
           reference: reference,
           amount: amount,
           currency: currency,
-          language: productLocaleSel.value.split('-')[0] || 'EN',
+          language: language,
           items: [{
             unitPrice: amount,
             units: 1,
