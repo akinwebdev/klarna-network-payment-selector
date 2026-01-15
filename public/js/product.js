@@ -320,7 +320,7 @@ async function initializeProductPage() {
     initializePaymentButton();
   });
 
-  // Update price display when amount changes
+  // Update price display and re-initialize messaging when amount changes
   productAmountInput.addEventListener("input", () => {
     updateProductPriceDisplay();
     // Re-initialize messaging when amount changes (to update the amount in OSM)
