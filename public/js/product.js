@@ -8,7 +8,6 @@ import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
 import { setupCollapsible } from "./ui.js";
 import { ensureSDK } from "./sdk.js";
 import { loadConfig } from "./config.js";
-import { initiateKlarnaPayment } from "./payment.js";
 import { currentAuthMode } from "./state.js";
 
 // Product page specific DOM elements
