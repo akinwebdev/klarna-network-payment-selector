@@ -5,7 +5,6 @@
  */
 
 import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
-import { setupCollapsible } from "./ui.js";
 import { ensureSDK } from "./sdk.js";
 import { loadConfig } from "./config.js";
 import { currentAuthMode } from "./state.js";
@@ -243,9 +242,6 @@ async function initializeProductPage() {
     console.error("Required DOM elements not found");
     return;
   }
-
-  // Setup collapsible sections
-  setupCollapsible();
 
   // Populate country and locale dropdowns
   populateProductCountries();

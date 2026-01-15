@@ -14,45 +14,326 @@
       href="https://js.klarna.com/web-sdk/buttons/payment-button.css"
     >
     <link rel="stylesheet" href="/styles.css">
+    <style>
+      body {
+        font-family: 'Klarna Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #F9F8F5;
+        color: #0B051D;
+      }
+      
+      .product-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+      }
+      
+      .settings-icon {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 1px solid #E0E0E0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        transition: all 0.2s;
+      }
+      
+      .settings-icon:hover {
+        background: #F5F5F5;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      .settings-icon svg {
+        width: 20px;
+        height: 20px;
+        stroke: #0B051D;
+      }
+      
+      .settings-panel {
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        width: 400px;
+        max-width: calc(100vw - 40px);
+        background: white;
+        border: 1px solid #E0E0E0;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        z-index: 999;
+        display: none;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+      
+      .settings-panel.open {
+        display: block;
+      }
+      
+      .settings-panel-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #E0E0E0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .settings-panel-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      
+      .settings-panel-content {
+        padding: 1.5rem;
+      }
+      
+      .settings-field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .settings-field-full {
+        grid-column: 1 / -1;
+      }
+      
+      .settings-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .settings-field label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #5A5A5A;
+      }
+      
+      .settings-field select,
+      .settings-field input {
+        padding: 0.5rem;
+        border: 1px solid #E0E0E0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-family: 'Klarna Text', sans-serif;
+      }
+      
+      .settings-field select:focus,
+      .settings-field input:focus {
+        outline: none;
+        border-color: #0B051D;
+      }
+      
+      .settings-status {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: #F5F5F5;
+        border-radius: 4px;
+        font-size: 0.875rem;
+      }
+      
+      .settings-status .pill {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: #E0E0E0;
+        border-radius: 4px;
+        font-weight: 500;
+      }
+      
+      .product-header {
+        margin-bottom: 2rem;
+      }
+      
+      .back-link {
+        color: #0B051D;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      
+      .product-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        margin-bottom: 3rem;
+      }
+      
+      .product-image {
+        width: 100%;
+        height: 500px;
+        background: linear-gradient(135deg, #FFA8CD 0%, #FFE9F3 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #0B051D;
+      }
+      
+      .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      
+      .product-title {
+        font-family: 'Klarna Title', sans-serif;
+        font-size: 2rem;
+        margin: 0;
+        color: #0B051D;
+      }
+      
+      .product-price {
+        font-family: 'Klarna Title', sans-serif;
+        font-size: 2.5rem;
+        color: #0B051D;
+        margin: 0;
+      }
+      
+      .product-description {
+        line-height: 1.6;
+        color: #5A5A5A;
+      }
+      
+      #product-payment-button-container {
+        width: 100%;
+        min-height: 60px;
+        display: block;
+        margin-top: 1.5rem;
+      }
+      
+      .footer {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #E0E0E0;
+        text-align: center;
+        color: #5A5A5A;
+        font-size: 0.875rem;
+      }
+      
+      @media (max-width: 768px) {
+        .product-content {
+          grid-template-columns: 1fr;
+        }
+        
+        .settings-panel {
+          width: calc(100vw - 40px);
+          right: 20px;
+          left: 20px;
+        }
+        
+        .settings-field-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
-    <!-- Main Content: Payment Presentation Config ONLY -->
-    <div style="max-width: 600px; margin: 40px auto; padding: 0 20px;">
-      <!-- Payment Presentation Config -->
-      <div class="panel config-panel">
-        <div class="config">
-          <div class="collapsible-header" id="product-payment-config-collapse-header">
-            <h3 style="margin: 0; cursor: pointer">
-              Settings
-            </h3>
-            <span class="collapse-icon">▼</span>
+    <!-- Settings Icon -->
+    <div class="settings-icon" id="settings-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settings-panel">
+      <div class="settings-panel-header">
+        <h3>Settings</h3>
+        <span class="collapse-icon" id="settings-close-icon" style="cursor: pointer; font-size: 0.875rem;">✕</span>
+      </div>
+      <div class="settings-panel-content">
+        <div class="settings-field-row">
+          <div class="settings-field">
+            <label for="product-country">Purchase country</label>
+            <select id="product-country"></select>
           </div>
-          <div class="config-collapsible" id="product-payment-config-collapse-content">
-            <div class="field">
-              <label for="product-country">Purchase country (sets currency)</label>
-              <select id="product-country"></select>
-            </div>
-            <div class="field">
-              <label for="product-locale">Locale</label>
-              <select id="product-locale"></select>
-            </div>
-            <div class="field" id="product-amount-field">
-              <label for="product-amount">Amount (minor units)</label>
-              <input id="product-amount" type="number" min="0" step="1" value="15900" />
-            </div>
-            <div class="status">
-              Currency: <span id="product-currency-pill" class="pill">—</span>
-            </div>
+          <div class="settings-field">
+            <label for="product-locale">Locale</label>
+            <select id="product-locale"></select>
           </div>
         </div>
+        <div class="settings-field-row">
+          <div class="settings-field settings-field-full">
+            <label for="product-amount">Amount (minor units)</label>
+            <input id="product-amount" type="number" min="0" step="1" value="15900" />
+          </div>
+        </div>
+        <div class="settings-status">
+          Currency: <span id="product-currency-pill" class="pill">—</span>
+        </div>
       </div>
-
-      <!-- Payment Button Container -->
-      <div style="margin-top: 24px;">
-        <div id="product-payment-button-container"></div>
+    </div>
+    
+    <!-- Product Container -->
+    <div class="product-container">
+      <div class="product-header">
+        <a href="/" class="back-link">
+          ← Back to Demo Store
+        </a>
+      </div>
+      
+      <div class="product-content">
+        <div class="product-image">
+          🛍️
+        </div>
+        
+        <div class="product-info">
+          <h1 class="product-title">Demo Product</h1>
+          <p class="product-price" id="product-price">€159.00</p>
+          <div class="product-description">
+            <p>This is a demo product for testing Klarna Express Checkout integration. The product details and pricing can be customized as needed.</p>
+          </div>
+          
+          <div id="product-payment-button-container"></div>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <div>Klarna Network Payment Selector</div>
       </div>
     </div>
 
     <script type="module" src="/js/product.js"></script>
+    <script>
+      // Settings panel toggle
+      const settingsIcon = document.getElementById('settings-icon');
+      const settingsPanel = document.getElementById('settings-panel');
+      const settingsCloseIcon = document.getElementById('settings-close-icon');
+      
+      settingsIcon.addEventListener('click', () => {
+        settingsPanel.classList.toggle('open');
+      });
+      
+      settingsCloseIcon.addEventListener('click', () => {
+        settingsPanel.classList.remove('open');
+      });
+      
+      // Close settings panel when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!settingsPanel.contains(e.target) && !settingsIcon.contains(e.target)) {
+          settingsPanel.classList.remove('open');
+        }
+      });
+    </script>
   </body>
 </html>
