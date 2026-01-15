@@ -1,21 +1,18 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/[...]"
     },
     {
-      "source": "/product$",
-      "destination": "/public/product.html"
+      "source": "/product",
+      "destination": "/product.html"
     },
     {
-      "source": "/payment-complete$",
-      "destination": "/public/payment-complete.html"
-    },
-    {
-      "source": "/",
-      "destination": "/public/index.html"
+      "source": "/payment-complete",
+      "destination": "/payment-complete.html"
     }
   ]
 }
