@@ -6,6 +6,10 @@
       "destination": "/api/[...]"
     },
     {
+      "source": "/klarna-network-payment-selector",
+      "destination": "/klarna-network-payment-selector.html"
+    },
+    {
       "source": "/product",
       "destination": "/product.html"
     },
