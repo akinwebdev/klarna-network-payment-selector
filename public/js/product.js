@@ -144,6 +144,9 @@ let currentSDKLocale = null;
 let buttonInitCurrency = null;
 let buttonInitAmount = null;
 
+// Track if complete event listener has been registered to prevent duplicates
+let completeEventListenerRegistered = false;
+
 async function initializePaymentButton() {
   try {
     // Load config first
@@ -312,8 +315,11 @@ async function initializePaymentButton() {
       },
     }).mount("#product-payment-button-container");
 
-    // Add product-page-specific complete event handler
-    klarnaInstance.Payment.on("complete", async (paymentRequest) => {
+    // Add product-page-specific complete event handler (only register once)
+    if (!completeEventListenerRegistered) {
+      completeEventListenerRegistered = true;
+      
+      klarnaInstance.Payment.on("complete", async (paymentRequest) => {
       console.log("Payment complete event received on product page:", paymentRequest);
       logFlow('event', 'Klarna Button: Payment Complete', paymentRequest);
       console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
@@ -497,10 +503,16 @@ async function initializePaymentButton() {
         return false;
       } catch (error) {
         console.error("Error creating Paytrail payment:", error);
+        logFlow('error', 'Paytrail Payment Error', { error: error.message, stack: error.stack });
         alert(`Error processing payment: ${error instanceof Error ? error.message : String(error)}`);
         return false;
       }
-    });
+      });
+      
+      console.log("Complete event listener registered for product page");
+    } else {
+      console.log("Complete event listener already registered, skipping duplicate registration");
+    }
 
     console.log("Payment button initialized successfully");
   } catch (error) {
