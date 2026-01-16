@@ -147,7 +147,6 @@ let buttonInitAmount = null;
 let completeEventListenerRegistered = false;
 let productPageCompleteHandler = null;
 let isProcessingComplete = false; // Guard to prevent duplicate execution
-let productPageCompleteHandler = null;
 
 async function initializePaymentButton() {
   try {
