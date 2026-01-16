@@ -15,7 +15,6 @@ let productLocaleSel;
 let productAmountInput;
 let productCurrencyPill;
 let productPriceDisplay;
-let paymentAccountSel;
 
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
@@ -266,8 +265,10 @@ async function initializePaymentButton() {
         if (currentAuthMode === "SUB_PARTNER") {
           switch (res.status) {
             case "CREATED":
+              console.log("✅ Payment Request ID received (SUB_PARTNER - CREATED):", res.paymentRequestId);
               return { paymentRequestId: res.paymentRequestId };
             case "COMPLETED":
+              console.log("✅ Payment Request ID received (SUB_PARTNER - COMPLETED):", res.paymentRequestId);
               return { returnUrl: res.successUrl };
             case "ERROR":
               throw new Error(res.message || "Payment request error");
@@ -277,8 +278,10 @@ async function initializePaymentButton() {
         } else {
           switch (res.status) {
             case "STEP_UP_REQUIRED":
+              console.log("✅ Payment Request ID received (ACQUIRING_PARTNER - STEP_UP_REQUIRED):", res.paymentRequestId);
               return { paymentRequestId: res.paymentRequestId };
             case "APPROVED":
+              console.log("✅ Payment Request ID received (ACQUIRING_PARTNER - APPROVED):", res.paymentRequestId);
               return { returnUrl: res.successUrl };
             case "DECLINED":
               alert(res.message || "Your payment was declined. Please try another method.");
@@ -479,7 +482,6 @@ async function initializeProductPage() {
   productAmountInput = document.getElementById("product-amount");
   productCurrencyPill = document.getElementById("product-currency-pill");
   productPriceDisplay = document.getElementById("product-price");
-  paymentAccountSel = document.getElementById("payment-account");
 
   // Check if all required elements exist
   if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill || !productPriceDisplay) {

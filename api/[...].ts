@@ -52,12 +52,6 @@ const PAYTRAIL_API_URL = getEnv("PAYTRAIL_API_URL") ||
 const PAYTRAIL_MERCHANT_ID = getEnv("PAYTRAIL_MERCHANT_ID");
 const PAYTRAIL_SECRET_KEY = getEnv("PAYTRAIL_SECRET_KEY");
 
-// Nexi Dev API configuration
-const NEXI_DEV_API_URL = getEnv("NEXI_DEV_API_URL") ||
-  "https://services.paytrail.com";
-const NEXI_DEV_MERCHANT_ID = getEnv("NEXI_DEV_MERCHANT_ID");
-const NEXI_DEV_SECRET_KEY = getEnv("NEXI_DEV_SECRET_KEY");
-
 // Determine which modes are available based on configured credentials
 const hasAcquiringPartnerConfig =
   !!(AP_CLIENT_ID && AP_API_KEY && PARTNER_ACCOUNT_ID);
@@ -842,12 +836,14 @@ app.post("/api/payment-request", async (c) => {
     const paymentRequestState = klarnaData.state;
 
     if (paymentRequestState === "COMPLETED") {
+      const paymentRequestId = klarnaData.payment_request_id;
+      console.log("✅ Payment Request ID (COMPLETED):", paymentRequestId);
       const returnUrlFromResponse =
         klarnaData.customer_interaction_config?.return_url || returnUrl ||
         "/payment-complete";
       return c.json({
         status: "COMPLETED",
-        paymentRequestId: klarnaData.payment_request_id,
+        paymentRequestId: paymentRequestId,
         successUrl: returnUrlFromResponse,
         expiresAt: klarnaData.expires_at,
         _request: requestMeta,
@@ -859,6 +855,8 @@ app.post("/api/payment-request", async (c) => {
       ?.payment_request_id;
     const paymentRequestUrl = klarnaData.state_context?.customer_interaction
       ?.payment_request_url;
+    
+    console.log("✅ Payment Request ID (CREATED):", paymentRequestId);
 
     return c.json({
       status: "CREATED",
@@ -1177,32 +1175,6 @@ function transformSupplementaryPurchaseData(
 // ============================================================================
 
 /**
- * Get credentials for a specific account
- */
-function getAccountCredentials(account: string = "paytrail"): {
-  merchantId: string;
-  secretKey: string;
-  apiUrl: string;
-} {
-  const normalizedAccount = account.toLowerCase();
-  
-  if (normalizedAccount === "nexi" || normalizedAccount === "nexi dev") {
-    return {
-      merchantId: NEXI_DEV_MERCHANT_ID || "",
-      secretKey: NEXI_DEV_SECRET_KEY || "",
-      apiUrl: NEXI_DEV_API_URL || "https://services.paytrail.com",
-    };
-  }
-  
-  // Default to Paytrail Test Account
-  return {
-    merchantId: PAYTRAIL_MERCHANT_ID || "",
-    secretKey: PAYTRAIL_SECRET_KEY || "",
-    apiUrl: PAYTRAIL_API_URL || "https://services.paytrail.com",
-  };
-}
-
-/**
  * Create HMAC signature for Paytrail API requests
  */
 function createPaytrailSignature(
@@ -1210,15 +1182,13 @@ function createPaytrailSignature(
   uri: string,
   headers: Record<string, string>,
   body: string = "",
-  merchantId: string,
-  secretKey: string,
 ): { headers: Record<string, string>; signature: string } {
   const timestamp = new Date().toISOString();
   const nonce = crypto.randomUUID();
 
   // Headers that need to be included in signature (Paytrail format)
   const signatureHeaders: Record<string, string> = {
-    "checkout-account": merchantId || "",
+    "checkout-account": PAYTRAIL_MERCHANT_ID || "",
     "checkout-algorithm": "sha256",
     "checkout-method": method,
     "checkout-nonce": nonce,
@@ -1236,7 +1206,7 @@ function createPaytrailSignature(
 
   // Create HMAC signature
   const signature = crypto
-    .createHmac("sha256", secretKey || "")
+    .createHmac("sha256", PAYTRAIL_SECRET_KEY || "")
     .update(signatureString)
     .digest("hex");
 
@@ -1253,17 +1223,13 @@ async function makePaytrailRequest(
   method: string,
   endpoint: string,
   body: unknown = null,
-  account: string = "paytrail",
 ): Promise<unknown> {
-  const credentials = getAccountCredentials(account);
   const bodyString = body ? JSON.stringify(body) : "";
   const { headers, signature } = createPaytrailSignature(
     method,
     endpoint,
     {},
     bodyString,
-    credentials.merchantId,
-    credentials.secretKey,
   );
 
   const requestHeaders: Record<string, string> = {
@@ -1273,7 +1239,7 @@ async function makePaytrailRequest(
   };
 
   console.log(
-    `Making ${method} request to: ${credentials.apiUrl}${endpoint} (Account: ${account})`,
+    `Making ${method} request to: ${PAYTRAIL_API_URL}${endpoint}`,
   );
   console.log("Request headers:", requestHeaders);
 
@@ -1286,7 +1252,7 @@ async function makePaytrailRequest(
   }
 
   try {
-    const response = await fetch(`${credentials.apiUrl}${endpoint}`, {
+    const response = await fetch(`${PAYTRAIL_API_URL}${endpoint}`, {
       method: method,
       headers: requestHeaders,
       body: bodyString || undefined,
@@ -1322,28 +1288,23 @@ async function makePaytrailRequest(
 // GET /api/merchants/payment-providers
 app.get("/api/merchants/payment-providers", async (c: Context) => {
   try {
-    const account = c.req.query("account") || "paytrail";
-    const credentials = getAccountCredentials(account);
-    
-    if (!credentials.merchantId || !credentials.secretKey) {
+    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
       return c.json(
         {
-          error: `${account} credentials not configured`,
+          error: "Paytrail credentials not configured",
           message:
-            `Please set ${account === "nexi" || account === "nexi dev" ? "NEXI_DEV_MERCHANT_ID and NEXI_DEV_SECRET_KEY" : "PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY"} environment variables`,
+            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
           timestamp: new Date().toISOString(),
         },
         500,
       );
     }
 
-    console.log(`🔄 Fetching payment providers from Paytrail API (Account: ${account})...`);
+    console.log("🔄 Fetching payment providers from Paytrail API...");
 
     const response = await makePaytrailRequest(
       "GET",
       "/merchants/payment-providers",
-      null,
-      account,
     );
 
     console.log("✅ Payment providers fetched successfully from Paytrail");
@@ -1368,15 +1329,12 @@ app.get("/api/merchants/payment-providers", async (c: Context) => {
 // GET /api/merchants/grouped-payment-providers
 app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
   try {
-    const account = c.req.query("account") || "paytrail";
-    const credentials = getAccountCredentials(account);
-    
-    if (!credentials.merchantId || !credentials.secretKey) {
+    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
       return c.json(
         {
-          error: `${account} credentials not configured`,
+          error: "Paytrail credentials not configured",
           message:
-            `Please set ${account === "nexi" || account === "nexi dev" ? "NEXI_DEV_MERCHANT_ID and NEXI_DEV_SECRET_KEY" : "PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY"} environment variables`,
+            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
           timestamp: new Date().toISOString(),
         },
         500,
@@ -1384,14 +1342,12 @@ app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
     }
 
     console.log(
-      `🔄 Fetching grouped payment providers from Paytrail API (Account: ${account})...`,
+      "🔄 Fetching grouped payment providers from Paytrail API...",
     );
 
     const response = await makePaytrailRequest(
       "GET",
       "/merchants/grouped-payment-providers",
-      null,
-      account,
     );
 
     console.log(
@@ -1418,25 +1374,20 @@ app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
 // POST /api/payments
 app.post("/api/payments", async (c: Context) => {
   try {
-    const body = await c.req.json();
-    const account = body.account || "paytrail";
-    const credentials = getAccountCredentials(account);
-    
-    if (!credentials.merchantId || !credentials.secretKey) {
+    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
       return c.json(
         {
-          error: `${account} credentials not configured`,
+          error: "Paytrail credentials not configured",
           message:
-            `Please set ${account === "nexi" || account === "nexi dev" ? "NEXI_DEV_MERCHANT_ID and NEXI_DEV_SECRET_KEY" : "PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY"} environment variables`,
+            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
           timestamp: new Date().toISOString(),
         },
         500,
       );
     }
 
-    console.log(`🔄 Creating payment with Paytrail API (Account: ${account})...`);
-    // Remove account from paymentData before sending to Paytrail
-    const { account: _, ...paymentData } = body;
+    console.log("🔄 Creating payment with Paytrail API...");
+    const paymentData = await c.req.json();
     console.log(
       "Payment data received:",
       JSON.stringify(paymentData, null, 2),
@@ -1481,7 +1432,7 @@ app.post("/api/payments", async (c: Context) => {
     }
 
     // Make real API call to Paytrail
-    const response = await makePaytrailRequest("POST", "/payments", paymentData, account);
+    const response = await makePaytrailRequest("POST", "/payments", paymentData);
 
     // Log the reference received
     console.log("📥 Received from Paytrail API:");
