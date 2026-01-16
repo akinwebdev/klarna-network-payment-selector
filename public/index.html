@@ -2726,6 +2726,13 @@
             displayProviders(allProviders);
             displayProvidersSelector2(allProviders);
             displayProvidersSelector3(allProviders);
+            
+            // Update footer with terms from response (if available)
+            const footerElement = document.querySelector('.payment-footer p');
+            if (footerElement && paymentData.terms) {
+                // Only show the terms from the response, remove the static "Payment service provider" text
+                footerElement.innerHTML = paymentData.terms;
+            }
         }
 
         function switchPaymentSelector(selectorNum) {
