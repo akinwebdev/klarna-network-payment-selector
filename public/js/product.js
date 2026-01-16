@@ -7,7 +7,7 @@
 import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
 import { ensureSDK, resetSDKState } from "./sdk.js";
 import { loadConfig } from "./config.js";
-import { currentAuthMode, sdkConfig } from "./state.js";
+import { sdkConfig } from "./state.js";
 import { logFlow } from "./flow-logger.js";
 
 // Product page specific DOM elements (will be set in initialization)
@@ -243,13 +243,11 @@ async function initializePaymentButton() {
           paymentRequestData,
           returnUrl: `${API_BASE}/payment-complete`,
           appReturnUrl: null,
-          authMode: currentAuthMode,
+          authMode: "SUB_PARTNER", // Product page only uses SUB_PARTNER mode
         };
 
-        // Use different endpoint based on auth mode
-        const endpoint = currentAuthMode === "SUB_PARTNER"
-          ? "/api/payment-request"
-          : "/api/authorize-payment";
+        // Product page only uses SUB_PARTNER mode with /api/payment-request endpoint
+        const endpoint = "/api/payment-request";
 
         logFlow('request', `POST ${endpoint}`, requestBody);
 
@@ -266,36 +264,18 @@ async function initializePaymentButton() {
           throw new Error(res.message || "Payment request failed");
         }
 
-        // Handle response based on the endpoint used
-        if (currentAuthMode === "SUB_PARTNER") {
-          switch (res.status) {
-            case "CREATED":
-              console.log("✅ Payment Request ID received (SUB_PARTNER - CREATED):", res.paymentRequestId);
-              return { paymentRequestId: res.paymentRequestId };
-            case "COMPLETED":
-              console.log("✅ Payment Request ID received (SUB_PARTNER - COMPLETED):", res.paymentRequestId);
-              return { returnUrl: res.successUrl };
-            case "ERROR":
-              throw new Error(res.message || "Payment request error");
-            default:
-              throw new Error(`Unexpected payment request status: ${res.status}`);
-          }
-        } else {
-          switch (res.status) {
-            case "STEP_UP_REQUIRED":
-              console.log("✅ Payment Request ID received (ACQUIRING_PARTNER - STEP_UP_REQUIRED):", res.paymentRequestId);
-              return { paymentRequestId: res.paymentRequestId };
-            case "APPROVED":
-              console.log("✅ Payment Request ID received (ACQUIRING_PARTNER - APPROVED):", res.paymentRequestId);
-              return { returnUrl: res.successUrl };
-            case "DECLINED":
-              alert(res.message || "Your payment was declined. Please try another method.");
-              return null;
-            case "ERROR":
-              throw new Error(res.message || "Payment authorization error");
-            default:
-              throw new Error(`Unexpected payment status: ${res.status}`);
-          }
+        // Handle SUB_PARTNER response
+        switch (res.status) {
+          case "CREATED":
+            console.log("✅ Payment Request ID received:", res.paymentRequestId);
+            return { paymentRequestId: res.paymentRequestId };
+          case "COMPLETED":
+            console.log("✅ Payment Request ID received (COMPLETED):", res.paymentRequestId);
+            return { returnUrl: res.successUrl };
+          case "ERROR":
+            throw new Error(res.message || "Payment request error");
+          default:
+            throw new Error(`Unexpected payment request status: ${res.status}`);
         }
       },
     }).mount("#product-payment-button-container");
