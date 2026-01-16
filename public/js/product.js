@@ -116,6 +116,9 @@ function buildProductPaymentRequestData() {
     amount,
     supplementaryPurchaseData: {
       purchaseReference: `purchase_ref_Product_${Date.now()}`,
+      customer: {
+        email: sessionCustomerEmail
+      },
     },
   };
 
@@ -133,6 +136,11 @@ let currentSDKLocale = null;
 // This ensures we use the same values when sending to Paytrail
 let buttonInitCurrency = null;
 let buttonInitAmount = null;
+
+// Generate a unique customer email for this session (for debugging)
+// This will be the same throughout the session but unique per page load
+const sessionCustomerEmail = `customer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`;
+console.log("📧 Generated session customer email:", sessionCustomerEmail);
 
 // Track if complete event listener has been registered to prevent duplicates
 let completeEventListenerRegistered = false;
@@ -365,7 +373,7 @@ async function initializePaymentButton() {
           currency: currency,
           language: language,
           customer: {
-            email: 'customer@example.com'
+            email: sessionCustomerEmail
           },
           redirectUrls: {
             success: `${API_BASE}/payment-complete`,
