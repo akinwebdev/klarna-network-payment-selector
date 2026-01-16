@@ -256,7 +256,6 @@ async function initializePaymentButton() {
         
         const requestBody = {
           klarnaNetworkSessionToken: token,
-          paymentOptionId,
           paymentRequestData,
           returnUrl: `${API_BASE}/payment-complete`,
           appReturnUrl: null,
