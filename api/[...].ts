@@ -914,13 +914,8 @@ app.post("/api/authorize-payment", async (c) => {
     const resolvedPaymentOptionId = paymentOptionId ||
       paymentRequestData.paymentOptionId;
 
-    if (!isOnlyAddToWallet && !resolvedPaymentOptionId) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Missing paymentOptionId: provide it directly or include it in paymentRequestData",
-      }, 400);
-    }
+    // paymentOptionId is optional when using Klarna.Payment.button() directly
+    // Only include it in the payment request if it's provided
 
     const accountId = partnerAccountId || auth.partnerAccountId;
 
@@ -952,10 +947,13 @@ app.post("/api/authorize-payment", async (c) => {
     if (!isOnlyAddToWallet) {
       authorizeRequest.request_payment_transaction = {
         amount: paymentRequestData.amount,
-        payment_option_id: resolvedPaymentOptionId,
         payment_transaction_reference:
           paymentRequestData.paymentRequestReference || `txn_${Date.now()}`,
       };
+      // Only include payment_option_id if it was provided
+      if (resolvedPaymentOptionId) {
+        authorizeRequest.request_payment_transaction.payment_option_id = resolvedPaymentOptionId;
+      }
     }
 
     if (paymentRequestData.requestCustomerToken) {
