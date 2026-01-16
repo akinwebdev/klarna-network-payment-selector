@@ -496,7 +496,7 @@ async function initializePaymentButton() {
       
       console.log("✅ Complete event listener registered for product page");
     } else {
-      console.warn("⚠️ Complete event listener already registered (flag was:", wasAlreadyRegistered, "), skipping duplicate registration");
+      console.warn("⚠️ Complete event listener already registered, skipping duplicate registration");
     }
 
     console.log("Payment button initialized successfully");
