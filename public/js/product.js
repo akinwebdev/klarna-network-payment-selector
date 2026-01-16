@@ -192,20 +192,9 @@ async function initializePaymentButton() {
 
     console.log("🔵 Klarna button initialization - Currency:", currency, "Amount:", amount);
 
-    // Fetch presentation to get payment options
-    const presentationConfig = {
-      currency,
-      locale,
-      amount,
-      intents,
-    };
-
-    console.log("Fetching presentation with config:", presentationConfig);
-    const presentation = await klarnaInstance.Payment.presentation(presentationConfig);
-    console.log("Presentation received:", presentation);
-
     // Create payment button using Klarna.Payment.button()
     // Note: paymentOptionId is NOT required when using Payment.button() directly
+    // We don't need to fetch presentation - Payment.button() handles it internally
     const buttonContainer = document.getElementById("product-payment-button-container");
     if (!buttonContainer) {
       console.error("Payment button container not found");
