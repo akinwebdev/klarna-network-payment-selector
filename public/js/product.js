@@ -163,6 +163,8 @@ async function initializePaymentButton() {
     if (currentSDKLocale !== null && currentSDKLocale !== locale) {
       console.log(`Locale changed from ${currentSDKLocale} to ${locale}, resetting SDK...`);
       resetSDKState();
+      // Reset the complete event listener flag when SDK is reset
+      completeEventListenerRegistered = false;
     }
     currentSDKLocale = locale;
     
@@ -318,9 +320,10 @@ async function initializePaymentButton() {
     // Add product-page-specific complete event handler (only register once)
     if (!completeEventListenerRegistered) {
       completeEventListenerRegistered = true;
+      console.log("🔵 Registering product page complete event listener (first time)");
       
       klarnaInstance.Payment.on("complete", async (paymentRequest) => {
-      console.log("Payment complete event received on product page:", paymentRequest);
+      console.log("🟢 Payment complete event received on product page:", paymentRequest);
       logFlow('event', 'Klarna Button: Payment Complete', paymentRequest);
       console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
       console.log("paymentRequest.stateContext:", paymentRequest?.stateContext);
