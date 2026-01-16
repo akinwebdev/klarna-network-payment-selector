@@ -8,6 +8,7 @@ import { COUNTRY_MAPPING, API_BASE } from "./constants.js";
 import { ensureSDK, resetSDKState } from "./sdk.js";
 import { loadConfig } from "./config.js";
 import { currentAuthMode, sdkConfig } from "./state.js";
+import { logFlow } from "./flow-logger.js";
 
 // Product page specific DOM elements (will be set in initialization)
 let productCountrySel;
@@ -241,6 +242,7 @@ async function initializePaymentButton() {
       initiationMode: "DEVICE_BEST",
       initiate: async (initiateData) => {
         console.log("Payment button initiated:", initiateData);
+        logFlow('event', 'Klarna Button: Initiated', initiateData);
         const token = initiateData?.klarnaNetworkSessionToken || null;
         console.log("Klarna Network Session Token:", token || "(not provided)");
         
@@ -261,6 +263,8 @@ async function initializePaymentButton() {
           ? "/api/payment-request"
           : "/api/authorize-payment";
 
+        logFlow('request', `POST ${endpoint}`, requestBody);
+
         const response = await fetch(`${API_BASE}${endpoint}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -268,6 +272,7 @@ async function initializePaymentButton() {
         });
 
         const res = await response.json();
+        logFlow('response', `POST ${endpoint}`, { status: response.status, statusText: response.statusText, data: res });
 
         if (!response.ok) {
           throw new Error(res.message || "Payment request failed");
@@ -310,6 +315,7 @@ async function initializePaymentButton() {
     // Add product-page-specific complete event handler
     klarnaInstance.Payment.on("complete", async (paymentRequest) => {
       console.log("Payment complete event received on product page:", paymentRequest);
+      logFlow('event', 'Klarna Button: Payment Complete', paymentRequest);
       console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
       console.log("paymentRequest.stateContext:", paymentRequest?.stateContext);
       
@@ -323,6 +329,10 @@ async function initializePaymentButton() {
       
       if (!klarnaNetworkSessionToken) {
         console.error("No Klarna Network Session Token found in paymentRequest");
+        logFlow('error', 'Klarna Button: No Session Token Found', {
+          availableKeys: Object.keys(paymentRequest || {}),
+          stateContextKeys: Object.keys(paymentRequest?.stateContext || {})
+        });
         console.error("Available paymentRequest keys:", Object.keys(paymentRequest || {}));
         console.error("Available stateContext keys:", Object.keys(paymentRequest?.stateContext || {}));
         alert("Payment completed but no session token found. Please check console for details.");
@@ -330,6 +340,7 @@ async function initializePaymentButton() {
       }
 
       console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
+      logFlow('info', 'Klarna Button: Session Token Extracted', { token: klarnaNetworkSessionToken.substring(0, 20) + '...' });
 
       // Check if user wants to skip Paytrail payment request (for testing)
       const skipPaytrailCheckbox = document.getElementById('skip-paytrail-request');
@@ -392,6 +403,7 @@ async function initializePaymentButton() {
         };
 
         console.log("Calling Paytrail /api/payments with:", JSON.stringify(paymentData, null, 2));
+        logFlow('request', 'POST /api/payments (Paytrail)', paymentData);
 
         // Call Paytrail payment endpoint
         const response = await fetch(`${API_BASE}/api/payments`, {
@@ -403,8 +415,10 @@ async function initializePaymentButton() {
         });
 
         const data = await response.json();
+        logFlow('response', 'POST /api/payments (Paytrail)', { status: response.status, statusText: response.statusText, data: data });
 
         if (!response.ok) {
+          logFlow('error', 'Paytrail Payment Failed', { status: response.status, error: data });
           throw new Error(data.message || data.error || 'Payment creation failed');
         }
 
@@ -423,6 +437,10 @@ async function initializePaymentButton() {
           console.log("Klarna provider found:", klarnaProvider);
           console.log("Provider URL:", klarnaProvider.url);
           console.log("Provider parameters:", klarnaProvider.parameters);
+          logFlow('info', 'Redirecting to Klarna Provider', {
+            url: klarnaProvider.url,
+            parameters: klarnaProvider.parameters
+          });
 
           // Create a form to POST to the provider URL with all parameters
           // This matches how the homepage handles provider redirects
