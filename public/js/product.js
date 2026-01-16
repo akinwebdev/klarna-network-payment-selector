@@ -116,9 +116,6 @@ function buildProductPaymentRequestData() {
     amount,
     supplementaryPurchaseData: {
       purchaseReference: `purchase_ref_Product_${Date.now()}`,
-      customer: {
-        email: 'customer@example.com'
-      },
     },
   };
 
