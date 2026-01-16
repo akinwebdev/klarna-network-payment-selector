@@ -167,7 +167,7 @@
         }
 
         .clear-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.5rem;
             background: #E4E3DF;
             color: #0B051D;
             border: 2px solid #E4E3DF;
@@ -176,6 +176,8 @@
             font-size: 0.8rem;
             font-weight: 500;
             transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .clear-btn:hover {
@@ -1311,7 +1313,7 @@
         <div id="payment-summary-box" style="background: #ffffff; border: 1px solid #E4E3DF; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3 style="font-size: 1.25rem; font-weight: 600; color: #0B051D; margin: 0;">Payment Summary</h3>
-                <button type="button" id="edit-payload-btn" class="btn" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem; background: white; color: #0B051D; border: 1px solid #0B051D; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#F9F8F5';" onmouseout="this.style.background='white';">
+                <button type="button" id="edit-payload-btn" class="btn" style="display: flex; align-items: center; gap: 0.5rem; background: white; color: #0B051D; border: 2px solid #0B051D;" onmouseover="this.style.background='#F9F8F5';" onmouseout="this.style.background='white';">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -1367,7 +1369,7 @@
         <div id="payment-form-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3 style="font-size: 1rem; font-weight: 600; color: #0B051D; margin: 0;">Edit Payment Payload</h3>
-                <button type="button" id="close-form-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #7f8c8d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#95a5a6';" onmouseout="this.style.background='#7f8c8d';">
+                <button type="button" id="close-form-btn" class="btn" style="background: #7f8c8d; color: white; border: 2px solid #7f8c8d;" onmouseover="this.style.background='#95a5a6'; this.style.borderColor='#95a5a6';" onmouseout="this.style.background='#7f8c8d'; this.style.borderColor='#7f8c8d';">
                     Close
                     </button>
                   </div>
@@ -1441,7 +1443,7 @@
                             <option value="GB">United Kingdom 🇬🇧</option>
                             <option value="US">United States of America 🇺🇸</option>
               </select>
-                        <button type="button" id="loadSampleDataBtn" style="padding: 10px 20px; background-color: #0B051D; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0;">Load Sample Data</button>
+                        <button type="button" id="loadSampleDataBtn" class="btn" style="background-color: #0B051D; color: white; border: 2px solid #0B051D; white-space: nowrap; flex-shrink: 0;">Load Sample Data</button>
             </div>
                     <small style="color: #7f8c8d; margin-top: 5px; display: block;">
                         ℹ️ Currency will remain EUR for all countries. Klarna handles currency conversion on their payment screen.
@@ -1778,10 +1780,11 @@
     <div class="payment-flow-section" style="margin-top: 2rem;">
         <h2>3. Conversion Boosters</h2>
         <p style="text-align: center; color: #0B051D; margin: 1.5rem 0; font-size: 1rem;">
-            Test the Klarna Express Checkout and On-site Messaging user flows by clicking on the button below. Sign-in with Klarna - coming soon.
+            Test the Klarna Express Checkout and On-site Messaging user flows by clicking on the button below.<br>
+            Sign-in with Klarna - coming soon.
         </p>
         <div style="text-align: center; margin-top: 1.5rem;">
-            <button class="api-button btn-providers" onclick="window.location.href='/product'" style="padding: 0.75rem 1.5rem; font-size: 0.9rem;">
+            <button class="api-button btn-providers" onclick="window.location.href='/product'">
                 Go to Product Detail Page
             </button>
       </div>
