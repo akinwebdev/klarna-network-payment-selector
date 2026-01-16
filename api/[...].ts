@@ -738,19 +738,12 @@ app.post("/api/payment-request", async (c) => {
     const resolvedPaymentOptionId = paymentOptionId ||
       paymentRequestData.paymentOptionId;
 
-    if (!resolvedPaymentOptionId) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Missing paymentOptionId: provide it directly or include it in paymentRequestData",
-      }, 400);
-    }
-
+    // paymentOptionId is optional when using Klarna.Payment.button() directly
+    // Only include it in the payment request if it's provided
     const paymentRequest: Record<string, unknown> = {
       currency: paymentRequestData.currency,
       payment_request_reference: paymentRequestData.paymentRequestReference ||
         `req_${Date.now()}`,
-      payment_option_id: resolvedPaymentOptionId,
       customer_interaction_config: {
         method: "HANDOVER",
         return_url: returnUrl ||
@@ -758,6 +751,11 @@ app.post("/api/payment-request", async (c) => {
         ...(appReturnUrl && { app_return_url: appReturnUrl }),
       },
     };
+    
+    // Only include payment_option_id if it was provided
+    if (resolvedPaymentOptionId) {
+      paymentRequest.payment_option_id = resolvedPaymentOptionId;
+    }
 
     if (!isOnlyAddToWallet) {
       paymentRequest.amount = paymentRequestData.amount;
