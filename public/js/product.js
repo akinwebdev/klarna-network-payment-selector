@@ -314,7 +314,7 @@ async function initializePaymentButton() {
       }
 
       console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
-      logFlow('info', 'Klarna Button: Session Token Extracted', { token: klarnaNetworkSessionToken.substring(0, 20) + '...' });
+      logFlow('info', 'Klarna Button: Session Token Extracted', { token: klarnaNetworkSessionToken });
 
       // Check if user wants to skip Paytrail payment request (for testing)
       const skipPaytrailCheckbox = document.getElementById('skip-paytrail-request');
