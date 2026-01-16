@@ -204,14 +204,21 @@ async function initializePaymentButton() {
     const presentation = await klarnaInstance.Payment.presentation(presentationConfig);
     console.log("Presentation received:", presentation);
 
-    // Get payment option ID from presentation
+    // Get payment option ID and button component from presentation
     const paymentOptionId = presentation.paymentOption?.paymentOptionId;
+    const buttonComponent = presentation.paymentOption?.paymentButton?.component;
+    
     if (!paymentOptionId) {
       console.error("No payment option ID in presentation");
       return;
     }
+    
+    if (!buttonComponent) {
+      console.error("No button component in presentation");
+      return;
+    }
 
-    // Create payment button using Klarna.Payment.button()
+    // Create payment button using the button component from presentation (recommended method)
     const buttonContainer = document.getElementById("product-payment-button-container");
     if (!buttonContainer) {
       console.error("Payment button container not found");
@@ -240,7 +247,8 @@ async function initializePaymentButton() {
       }
     }
 
-    klarnaInstance.Payment.button({
+    // Use the button component from presentation (Method 1 - recommended)
+    buttonComponent({
       shape: "default",
       theme: "default",
       initiationMode: "DEVICE_BEST",
