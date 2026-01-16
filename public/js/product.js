@@ -248,14 +248,16 @@ async function initializePaymentButton() {
       initiate: async (initiateData) => {
         console.log("Payment button initiated:", initiateData);
         logFlow('event', 'Klarna Button: Initiated', initiateData);
-        const token = initiateData?.klarnaNetworkSessionToken || null;
-        console.log("Klarna Network Session Token:", token || "(not provided)");
+        // Note: klarnaNetworkSessionToken from initiateData is optional and may not be present
+        // The actual token we need comes from the 'complete' event, not from initiation
+        // We don't send it to the backend here - the backend creates the payment request without it
         
         // Build payment request data with product page values
         const paymentRequestData = buildProductPaymentRequestData(paymentOptionId);
         
         const requestBody = {
-          klarnaNetworkSessionToken: token,
+          // Don't send klarnaNetworkSessionToken here - it's not needed for payment request creation
+          // The token from the complete event will be sent to Paytrail later
           paymentRequestData,
           returnUrl: `${API_BASE}/payment-complete`,
           appReturnUrl: null,
