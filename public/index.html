@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paytrail API Demo</title>
@@ -1258,8 +1258,8 @@
             }
         }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
         <main class="main-content">
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 2rem;">
@@ -1270,11 +1270,11 @@
                     <svg width="120" height="50" viewBox="0 0 120 50" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                         <text x="0" y="35" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="bold" fill="#0B051D" letter-spacing="-1px">Klarna</text>
                     </svg>
-                </div>
+      </div>
                 <div style="text-align: center;">
                     <span style="font-family: 'Klarna Title', 'Klarna Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 2.5rem; color: #0B051D; font-weight: 700;">Demo Store</span>
-                </div>
-        </div>
+      </div>
+    </div>
 
         <!-- Presentation Assets Section -->
         <div class="payment-flow-section">
@@ -1289,13 +1289,13 @@
             <button class="api-button btn-payment" onclick="createPayment()">
                 💳 Create Payment
             </button>
-        </div>
+    </div>
 
         <div class="results-section">
             <div class="results-header">
                 <h2 class="results-title">API Results</h2>
                 <button class="clear-btn" onclick="clearResults()">Clear All</button>
-            </div>
+    </div>
             <div id="results"></div>
         </div>
     </div>
@@ -1318,20 +1318,20 @@
                     </svg>
                     Edit Payload
                 </button>
-            </div>
+          </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
                 <div>
                     <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Amount</strong>
                     <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-amount">€15.90</p>
-                </div>
+            </div>
                 <div>
                     <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Currency</strong>
                     <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-currency">EUR</p>
-                </div>
+            </div>
                 <div>
                     <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Language</strong>
                     <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-language">EN</p>
-                </div>
+              </div>
                 <div>
                     <strong style="color: #7f8c8d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Reference</strong>
                     <p style="margin: 0.25rem 0 0 0; font-size: 1rem; color: #0B051D; font-weight: 500;" id="summary-reference">ref-12345678</p>
@@ -1369,8 +1369,8 @@
                 <h3 style="font-size: 1rem; font-weight: 600; color: #0B051D; margin: 0;">Edit Payment Payload</h3>
                 <button type="button" id="close-form-btn" class="btn" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: #7f8c8d; color: white; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#95a5a6';" onmouseout="this.style.background='#7f8c8d';">
                     Close
-                </button>
-            </div>
+                    </button>
+                  </div>
             <form id="payment-form">
                 <!-- Basic Payment Information -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Basic Information</h3>
@@ -1379,7 +1379,7 @@
                         <label for="stamp">Stamp (Merchant unique identifier)</label>
                         <input type="text" id="stamp" value="" maxlength="200" required>
                         <small style="color: #7f8c8d;">Max 200 characters</small>
-                    </div>
+                </div>
                     <div class="form-group">
                         <label for="reference">Reference (Order reference)</label>
                         <input type="text" id="reference" value="" maxlength="200" required>
@@ -1392,12 +1392,12 @@
                         <label for="amount">Amount (cents)</label>
                         <input type="number" id="amount" value="1590" min="1" max="99999998" required>
                         <small style="color: #7f8c8d;">€15.90 = 1590 cents</small>
-                    </div>
+                </div>
                     <div class="form-group">
                         <label for="currency">Currency</label>
                         <input type="text" id="currency" value="EUR" readonly style="background-color: #f5f5f5; cursor: not-allowed;" title="Paytrail API only supports EUR">
                         <small style="color: #7f8c8d;">Paytrail API only supports EUR</small>
-                    </div>
+              </div>
                     <div class="form-group">
                         <label for="language">Language</label>
                         <select id="language" required>
@@ -1405,8 +1405,8 @@
                             <option value="SV">SV (Swedish)</option>
                             <option value="EN" selected>EN (English)</option>
                         </select>
-                    </div>
-                </div>
+            </div>
+            </div>
 
                 <!-- Customer Information -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Customer Information</h3>
@@ -1440,45 +1440,45 @@
                             <option value="CH">Switzerland 🇨🇭</option>
                             <option value="GB">United Kingdom 🇬🇧</option>
                             <option value="US">United States of America 🇺🇸</option>
-                        </select>
+              </select>
                         <button type="button" id="loadSampleDataBtn" style="padding: 10px 20px; background-color: #0B051D; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; flex-shrink: 0;">Load Sample Data</button>
-                    </div>
+            </div>
                     <small style="color: #7f8c8d; margin-top: 5px; display: block;">
                         ℹ️ Currency will remain EUR for all countries. Klarna handles currency conversion on their payment screen.
                     </small>
-                </div>
+            </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Email <span style="color: #e74c3c;">*</span></label>
                         <input type="email" id="email" value="customer@email.fi" maxlength="200" required>
-                    </div>
+            </div>
                     <div class="form-group">
                         <label for="phone">Phone</label>
                         <input type="tel" id="phone" value="+358401234567">
-                    </div>
-                </div>
+          </div>
+        </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="firstName">First Name</label>
                         <input type="text" id="firstName" value="Test" maxlength="50">
-                    </div>
+          </div>
                     <div class="form-group">
                         <label for="lastName">Last Name</label>
                         <input type="text" id="lastName" value="Person-fi" maxlength="50">
-                    </div>
-                </div>
+            </div>
+            </div>
 
                 <div class="form-row">
                 <div class="form-group">
                         <label for="vatId">VAT ID</label>
                         <input type="text" id="vatId" value="" placeholder="FI02454583">
-                    </div>
+          </div>
                     <div class="form-group">
                         <label for="companyName">Company Name</label>
                         <input type="text" id="companyName" value="" maxlength="100" placeholder="Example company">
-                    </div>
-                </div>
+        </div>
+      </div>
 
                 <!-- Delivery Address -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Delivery Address</h3>
@@ -1512,16 +1512,16 @@
                 <div class="form-group">
                     <label for="invoicingStreetAddress">Street Address</label>
                     <input type="text" id="invoicingStreetAddress" value="Mannerheimintie 34" maxlength="50" placeholder="Testikatu 1">
-                </div>
+              </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="invoicingPostalCode">Postal Code</label>
                         <input type="text" id="invoicingPostalCode" value="00100" maxlength="15" placeholder="00510">
-                    </div>
+            </div>
                     <div class="form-group">
                         <label for="invoicingCity">City</label>
                         <input type="text" id="invoicingCity" value="Helsinki" maxlength="30" placeholder="Helsinki">
-                    </div>
+            </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -1540,11 +1540,11 @@
                     <div class="form-group">
                         <label for="itemUnitPrice">Unit Price (cents) <span style="color: #e74c3c;">*</span></label>
                         <input type="number" id="itemUnitPrice" value="1590" min="1" required>
-                    </div>
+            </div>
                     <div class="form-group">
                         <label for="itemUnits">Units (Quantity) <span style="color: #e74c3c;">*</span></label>
                         <input type="number" id="itemUnits" value="1" min="1" max="99999998" required>
-                    </div>
+          </div>
                     <div class="form-group">
                         <label for="itemVatPercentage">VAT Percentage <span style="color: #e74c3c;">*</span></label>
                         <input type="number" id="itemVatPercentage" value="24" min="0" max="100" step="0.1" required>
@@ -1582,12 +1582,12 @@
                         <label for="redirectSuccess">Success URL</label>
                         <input type="url" id="redirectSuccess" value="" placeholder="https://example.org/success" maxlength="300">
                         <small style="color: #7f8c8d;">Auto-filled if empty</small>
-                    </div>
+              </div>
                     <div class="form-group">
                         <label for="redirectCancel">Cancel URL</label>
                         <input type="url" id="redirectCancel" value="" placeholder="https://example.org/cancel" maxlength="300">
                         <small style="color: #7f8c8d;">Auto-filled if empty</small>
-                    </div>
+            </div>
                 </div>
 
                 <!-- Callback URLs (Optional) -->
@@ -1596,11 +1596,11 @@
                     <div class="form-group">
                         <label for="callbackSuccess">Callback Success URL</label>
                         <input type="url" id="callbackSuccess" value="" placeholder="https://example.org/callback/success" maxlength="3000">
-                    </div>
+              </div>
                     <div class="form-group">
                         <label for="callbackCancel">Callback Cancel URL</label>
                         <input type="url" id="callbackCancel" value="" placeholder="https://example.org/callback/cancel" maxlength="3000">
-                    </div>
+            </div>
                 </div>
                 <div class="form-group">
                     <label for="callbackDelay">Callback Delay (seconds, 0-900)</label>
@@ -1614,7 +1614,7 @@
                     <div class="form-group">
                         <label for="orderId">Order ID (Deprecated)</label>
                         <input type="text" id="orderId" value="" maxlength="60" placeholder="Order ID">
-                    </div>
+        </div>
                     <div class="form-group">
                         <label for="manualInvoiceActivation">Manual Invoice Activation</label>
                         <select id="manualInvoiceActivation">
@@ -1622,8 +1622,8 @@
                             <option value="true">True</option>
                         </select>
                         <small style="color: #7f8c8d;">For Walley and Klarna</small>
-                    </div>
-                </div>
+          </div>
+          </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="usePricesWithoutVat">Use Prices Without VAT</label>
@@ -1637,8 +1637,8 @@
                         <label for="groups">Payment Method Groups (comma-separated)</label>
                         <input type="text" id="groups" value="" placeholder="mobile,bank,creditcard,credit,other">
                         <small style="color: #7f8c8d;">Filter payment methods by groups</small>
-                    </div>
-                </div>
+        </div>
+      </div>
 
                 <!-- Klarna Provider Details -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem 0; color: #0B051D;">Klarna Provider Details (Optional)</h3>
@@ -1664,7 +1664,7 @@
                 <label for="enableManualCapture" style="font-size: 0.9rem; color: #0B051D; cursor: pointer; user-select: none;">
                     Enable manual capture
                 </label>
-            </div>
+              </div>
             <div style="text-align: center;">
                 <button type="button" class="btn btn-create" id="create-btn" onclick="createPaymentFlow()">
                     💳 Create Paytrail Payment Session
@@ -1685,15 +1685,15 @@
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                             <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
+              </svg>
                     </button>
                     <button class="close-payment-btn" onclick="createNewPayment()" title="Close">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
+              </svg>
                     </button>
-                </div>
+            </div>
 
                 <!-- Amount Display -->
                 <div class="amount-display">
@@ -1709,7 +1709,7 @@
                         Use Paytrail Hosted Payment Page
                     </button>
                     <p class="hosted-payment-note">Or select a payment method below</p>
-                </div>
+          </div>
 
                 <!-- Payment Selector Tabs -->
                 <div class="payment-selector-tabs">
@@ -1722,38 +1722,38 @@
                     <button class="selector-tab" data-selector="3" onclick="switchPaymentSelector(3)">
                         Payment Selector 3
                     </button>
-                </div>
+              </div>
 
                 <!-- Payment Methods Container - Selector 1 (Categories) -->
                 <div id="providers-container" class="payment-selector-content" data-selector="1">
                 <div class="loading">Loading payment providers...</div>
-            </div>
+              </div>
 
                 <!-- Payment Methods Container - Selector 2 (Klarna-style) -->
                 <div id="providers-container-2" class="payment-selector-content" data-selector="2" style="display: none;">
                     <div class="loading">Loading payment providers...</div>
-                </div>
+            </div>
 
                 <!-- Payment Methods Container - Selector 3 (Collapsible Categories) -->
                 <div id="providers-container-3" class="payment-selector-content" data-selector="3" style="display: none;">
                     <div class="loading">Loading payment providers...</div>
-                </div>
+            </div>
 
                 <!-- Footer with Terms -->
                 <div class="payment-footer">
                     <p>By selecting a payment method, you agree to our <a href="#" target="_blank">payment service terms & conditions</a>. Payment service provider: <a href="#" target="_blank">Paytrail Oyj</a>.</p>
-                </div>
+              </div>
 
                 <!-- Hidden transaction info -->
                 <div style="display: none;">
                     <strong>Transaction ID:</strong> <span id="transaction-id"></span>
-                </div>
+              </div>
 
                 <button class="btn" onclick="createNewPayment()" style="margin-top: 20px; display: none;">
                 🔄 Create New Payment
             </button>
             </div>
-        </div>
+            </div>
 
         <!-- Payment Response Modal -->
         <div id="payment-response-modal" class="payment-response-modal" onclick="if(event.target === this) closePaymentResponseModal()">
@@ -1766,11 +1766,11 @@
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
                     </button>
-                </div>
+        </div>
                 <div class="modal-body">
                     <div id="modal-json-content" class="modal-json">Loading...</div>
-                </div>
-            </div>
+          </div>
+          </div>
         </div>
     </div>
 
@@ -1788,14 +1788,14 @@
             <button class="api-button btn-payment" onclick="alert('Sign-in with Klarna - Coming soon')" style="opacity: 0.6; cursor: not-allowed;">
                 Sign-in with Klarna (coming soon)
             </button>
-        </div>
+      </div>
     </div>
 
     <!-- Payment Transaction Management Section -->
     <div class="payment-flow-section" style="margin-top: 2rem;">
         <h2>4. Payment Transaction Management</h2>
         <p style="text-align: center; color: #7f8c8d; margin: 2rem 0;">Coming soon</p>
-    </div>
+        </div>
 
     <!-- API Documentation Section -->
     <div class="payment-flow-section" style="margin-top: 2rem;">
@@ -1805,7 +1805,7 @@
                 📚 View API Documentation
             </a>
         </div>
-    </div>
+      </div>
 
     <script>
         let resultCounter = 0;
@@ -1829,11 +1829,11 @@
                     <div class="result-header">
                         <span class="result-method">${method} ${endpoint}</span>
                         <span class="result-status ${statusClass}">${statusText}</span>
-                    </div>
+        </div>
                     <div class="result-body" id="${resultId}-body">
                         ${status === 'loading' ? '<div class="loading-spinner"></div>Loading...' : ''}
-                    </div>
-                </div>
+        </div>
+      </div>
             `;
             
             resultsDiv.insertAdjacentHTML('afterbegin', resultHTML);
@@ -1861,7 +1861,7 @@
                             ${data.groups.map(group => 
                                 `<div class="summary-item" style="margin-left: 15px;">• ${group.name}: ${group.providers.length} providers</div>`
                             ).join('')}
-                        </div>
+    </div>
                     `;
                     bodyElement.innerHTML = summaryHTML + JSON.stringify(displayData, null, 2);
                 } else {
@@ -1920,12 +1920,16 @@
         async function createPayment() {
             const resultId = addResult('POST', '/api/payments', 'loading');
             
+            // Get language from the language selector, default to 'FI'
+            const languageSelect = document.getElementById('language');
+            const selectedLanguage = languageSelect ? languageSelect.value : 'FI';
+            
             const paymentData = {
                 stamp: `test-payment-${Date.now()}`,
                 reference: `ref-${Date.now()}`,
                 amount: 1590,
                 currency: 'EUR',
-                language: 'FI',
+                language: selectedLanguage,
                 // groups: ['bank'], // Removed to show all payment providers including Klarna
                 items: [{
                     unitPrice: 1590,
@@ -3315,5 +3319,5 @@
     </script>
         </main>
     </div>
-</body>
-</html> 
+  </body>
+</html>
