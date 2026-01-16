@@ -286,15 +286,10 @@ async function initializePaymentButton() {
     }).mount("#product-payment-button-container");
 
     // Add product-page-specific complete event handler (only register once)
-    // Remove any existing listener first to prevent duplicates
+    // Don't remove SDK's listener - just ensure we only register ours once
     if (!completeEventListenerRegistered) {
       completeEventListenerRegistered = true;
       console.log("🔵 Registering product page complete event listener (first time)");
-      
-      // Remove any existing listener to prevent duplicates
-      // This will remove ALL listeners, including the one from sdk.js, which is fine
-      // since we want the product page handler to take precedence
-      klarnaInstance.Payment.off("complete");
       
       // Store handler reference to prevent duplicate registrations
       productPageCompleteHandler = async (paymentRequest) => {
