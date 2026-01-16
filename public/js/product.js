@@ -318,12 +318,14 @@ async function initializePaymentButton() {
     }).mount("#product-payment-button-container");
 
     // Add product-page-specific complete event handler (only register once)
+    // Check flag BEFORE registering to prevent race conditions
+    const wasAlreadyRegistered = completeEventListenerRegistered;
     if (!completeEventListenerRegistered) {
       completeEventListenerRegistered = true;
       console.log("🔵 Registering product page complete event listener (first time)");
       
       klarnaInstance.Payment.on("complete", async (paymentRequest) => {
-      console.log("🟢 Payment complete event received on product page:", paymentRequest);
+      console.log("🟢 Payment complete event received on product page (listener #1):", paymentRequest);
       logFlow('event', 'Klarna Button: Payment Complete', paymentRequest);
       console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
       console.log("paymentRequest.stateContext:", paymentRequest?.stateContext);
@@ -512,9 +514,9 @@ async function initializePaymentButton() {
       }
       });
       
-      console.log("Complete event listener registered for product page");
+      console.log("✅ Complete event listener registered for product page");
     } else {
-      console.log("Complete event listener already registered, skipping duplicate registration");
+      console.warn("⚠️ Complete event listener already registered (flag was:", wasAlreadyRegistered, "), skipping duplicate registration");
     }
 
     console.log("Payment button initialized successfully");
