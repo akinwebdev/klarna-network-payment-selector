@@ -103,7 +103,7 @@ export function getProductSelectedIntents() {
 // PAYMENT REQUEST DATA BUILDING (Product Page)
 // ============================================================================
 
-function buildProductPaymentRequestData(paymentOptionId) {
+function buildProductPaymentRequestData() {
   const country = productCountrySel.value;
   const currency = COUNTRY_MAPPING[country].currency;
   const amount = parseInt(productAmountInput.value, 10) || 15900;
@@ -111,7 +111,6 @@ function buildProductPaymentRequestData(paymentOptionId) {
 
   const paymentRequestData = {
     currency,
-    paymentOptionId,
     paymentRequestReference: `pay_req_ref_Product_${Date.now()}`,
     intents: intents || undefined,
     amount,
@@ -253,7 +252,7 @@ async function initializePaymentButton() {
         // We don't send it to the backend here - the backend creates the payment request without it
         
         // Build payment request data with product page values
-        const paymentRequestData = buildProductPaymentRequestData(paymentOptionId);
+        const paymentRequestData = buildProductPaymentRequestData();
         
         const requestBody = {
           // Don't send klarnaNetworkSessionToken here - it's not needed for payment request creation
