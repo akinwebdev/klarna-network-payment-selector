@@ -138,6 +138,11 @@ function buildProductPaymentRequestData(paymentOptionId) {
 // Track current locale to detect changes
 let currentSDKLocale = null;
 
+// Store the currency and amount used when initializing the button
+// This ensures we use the same values when sending to Paytrail
+let buttonInitCurrency = null;
+let buttonInitAmount = null;
+
 async function initializePaymentButton() {
   try {
     // Load config first
@@ -174,6 +179,13 @@ async function initializePaymentButton() {
     const currency = COUNTRY_MAPPING[country].currency; // EUR
     const amount = parseInt(productAmountInput.value, 10) || 15900;
     const intents = getProductSelectedIntents(); // ["PAY"]
+
+    // Store currency and amount for use in complete event
+    // This ensures we use the same values that were used in Klarna payment
+    buttonInitCurrency = currency;
+    buttonInitAmount = amount;
+
+    console.log("🔵 Klarna button initialization - Currency:", currency, "Amount:", amount);
 
     // Fetch presentation to get payment options
     const presentationConfig = {
@@ -328,11 +340,22 @@ async function initializePaymentButton() {
       }
 
       try {
-        // Get current product page values
-        const country = productCountrySel.value;
-        // Paytrail only supports EUR, so force EUR for Paytrail payments
-        const currency = 'EUR';
-        const amount = parseInt(productAmountInput.value, 10) || 15900;
+        // Use the same currency and amount that were used when initializing the Klarna button
+        // This ensures consistency - if Klarna payment was created with GBP 15900,
+        // Paytrail should receive the same currency and amount
+        const currency = buttonInitCurrency || COUNTRY_MAPPING[productCountrySel.value].currency;
+        const amount = buttonInitAmount || parseInt(productAmountInput.value, 10) || 15900;
+        
+        console.log("🟢 Paytrail payment request - Currency:", currency, "Amount:", amount);
+        console.log("🟢 Using stored values from button init - Currency:", buttonInitCurrency, "Amount:", buttonInitAmount);
+        
+        // Paytrail only supports EUR, so if currency is not EUR, we need to handle this
+        // For now, we'll use the currency from Klarna button, but this may cause issues
+        // TODO: Consider currency conversion or restricting to EUR-only countries
+        if (currency !== 'EUR') {
+          console.warn("⚠️ WARNING: Currency mismatch! Klarna button used", currency, "but Paytrail only supports EUR.");
+          console.warn("⚠️ This may cause Klarna to not recognize the completed payment.");
+        }
         
         // Generate unique references
         const stamp = `stamp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
