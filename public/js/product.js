@@ -330,7 +330,13 @@ async function initializePaymentButton() {
       const skipPaytrailCheckbox = document.getElementById('skip-paytrail-request');
       if (skipPaytrailCheckbox && skipPaytrailCheckbox.checked) {
         console.log("⚠️ Skipping Paytrail payment request (testing mode enabled)");
+        console.log("✅ Session Token (for reference):", klarnaNetworkSessionToken);
+        logFlow('info', 'Klarna Button: Paytrail Request Skipped (Testing Mode)', { 
+          token: klarnaNetworkSessionToken,
+          note: 'Payment completed successfully, but Paytrail request was skipped as requested'
+        });
         alert("Payment completed! Paytrail request skipped (testing mode).");
+        isProcessingComplete = false; // Reset flag so user can try again
         return false;
       }
 
