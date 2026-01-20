@@ -324,9 +324,19 @@ async function initializePaymentButton() {
         switch (res.status) {
           case "CREATED":
             console.log("✅ Payment Request ID received:", res.paymentRequestId);
+            // Log the payment_request_id to flow logs
+            logFlow('success', 'Payment Request Created', { 
+              payment_request_id: res.paymentRequestId,
+              status: res.status 
+            });
             return { paymentRequestId: res.paymentRequestId };
           case "COMPLETED":
             console.log("✅ Payment Request ID received (COMPLETED):", res.paymentRequestId);
+            // Log the payment_request_id to flow logs
+            logFlow('success', 'Payment Request Created (COMPLETED)', { 
+              payment_request_id: res.paymentRequestId,
+              status: res.status 
+            });
             return { returnUrl: res.successUrl };
           case "ERROR":
             throw new Error(res.message || "Payment request error");
