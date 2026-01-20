@@ -417,26 +417,21 @@ export function generateUUID() {
 import { currentAuthMode } from "./state.js";
 
 /**
- * Update interoperability options visibility based on country and auth mode
- * Interoperability flows are only available for Acquiring Partners AND US market
+ * Update interoperability options visibility
+ * Interoperability flows are not available (ACQUIRING_PARTNER only, which is removed)
  */
 export function updateInteroperabilityOptionsVisibility() {
   // Only run if advancedFlowSel exists (not on product page)
   if (!advancedFlowSel) return;
 
-  const isUS = countrySel?.value?.toUpperCase() === "US";
-  const isAcquiringPartner = currentAuthMode === "ACQUIRING_PARTNER";
-  const shouldShow = isUS && isAcquiringPartner;
-
+  // Hide interoperability options since ACQUIRING_PARTNER mode is removed
   const interopOptions = document.querySelectorAll(
     "#advanced-flow .acquiring-partner-only",
   );
   interopOptions.forEach((option) => {
-    option.style.display = shouldShow ? "" : "none";
-    // If current selection is an interop option and we should hide it, reset to default
-    if (
-      !shouldShow && advancedFlowSel && advancedFlowSel.value === option.value
-    ) {
+    option.style.display = "none";
+    // If current selection is an interop option, reset to default
+    if (advancedFlowSel && advancedFlowSel.value === option.value) {
       advancedFlowSel.value = "";
       // Also unlock the amount field if it was locked
       unlockAmountField();

@@ -16,6 +16,7 @@ let productLocaleSel;
 let productAmountInput;
 let productCurrencyPill;
 let productPriceDisplay;
+let productPaymentEndpointSel;
 
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
@@ -232,10 +233,18 @@ async function initializePaymentButton() {
       initiationMode: "DEVICE_BEST",
       initiate: async (initiateData) => {
         console.log("Payment button initiated:", initiateData);
-        logFlow('event', 'Klarna Button: Initiated', initiateData);
-        // Note: klarnaNetworkSessionToken from initiateData is optional and may not be present
+        
+        // Filter out klarnaNetworkSessionToken from initiate log if present
+        // This token (if it exists) is from a previous session and should not be used
         // The actual token we need comes from the 'complete' event, not from initiation
-        // We don't send it to the backend here - the backend creates the payment request without it
+        const initiateLogData = { ...initiateData };
+        if (initiateLogData.klarnaNetworkSessionToken) {
+          console.log("⚠️ Note: klarnaNetworkSessionToken found in initiateData (from previous session, will be ignored)");
+          delete initiateLogData.klarnaNetworkSessionToken;
+        }
+        logFlow('event', 'Klarna Button: Initiated', initiateLogData);
+        
+        // We don't send klarnaNetworkSessionToken to the backend here - the backend creates the payment request without it
         
         // Build payment request data with product page values
         const paymentRequestData = buildProductPaymentRequestData();
@@ -392,11 +401,17 @@ async function initializePaymentButton() {
           }
         };
 
-        console.log("Calling Paytrail /api/payments with:", JSON.stringify(paymentData, null, 2));
-        logFlow('request', 'POST /api/payments (Paytrail)', paymentData);
+        // Get the selected payment endpoint
+        const selectedEndpoint = productPaymentEndpointSel.value;
+        // HPP option uses the same /api/payments endpoint but handles response differently
+        const actualEndpoint = selectedEndpoint === '/payments-hpp' ? '/payments' : selectedEndpoint;
+        const endpointUrl = `${API_BASE}/api${actualEndpoint}`;
+        
+        console.log(`Calling Paytrail ${endpointUrl} with:`, JSON.stringify(paymentData, null, 2));
+        logFlow('request', `POST ${endpointUrl} (Paytrail)`, paymentData);
 
         // Call Paytrail payment endpoint
-        const response = await fetch(`${API_BASE}/api/payments`, {
+        const response = await fetch(endpointUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -405,8 +420,67 @@ async function initializePaymentButton() {
         });
 
         const data = await response.json();
-        logFlow('response', 'POST /api/payments (Paytrail)', { status: response.status, statusText: response.statusText, data: data });
+        logFlow('response', `POST ${endpointUrl} (Paytrail)`, { status: response.status, statusText: response.statusText, data: data });
 
+        // Check if this is the HPP option
+        const isHppEndpoint = selectedEndpoint === '/payments-hpp';
+        
+        // Check if this is one of the new Klarna endpoints (charge or authorization-hold)
+        const isKlarnaExpressEndpoint = selectedEndpoint.includes('/klarna/charge') || 
+                                       selectedEndpoint.includes('/klarna/authorization-hold');
+
+        if (isKlarnaExpressEndpoint) {
+          // Handle new Klarna Express endpoints
+          if (response.status === 201 && data.transactionId) {
+            // Success: payment created
+            console.log("✅ Klarna Express payment created successfully");
+            console.log("Transaction ID:", data.transactionId);
+            logFlow('success', 'Klarna Express Payment Created', { transactionId: data.transactionId });
+            alert(`Payment created successfully! Transaction ID: ${data.transactionId}`);
+            isProcessingComplete = false; // Reset flag
+            return;
+          } else if (response.status === 403 && data.stepUpUrl) {
+            // Step-up required: redirect to stepUpUrl
+            console.log("⚠️ Step-up required for Klarna Express payment");
+            console.log("Transaction ID:", data.transactionId);
+            console.log("Step-up URL:", data.stepUpUrl);
+            logFlow('info', 'Klarna Express Step-up Required', { 
+              transactionId: data.transactionId, 
+              stepUpUrl: data.stepUpUrl 
+            });
+            
+            // Redirect to step-up URL
+            window.location.href = data.stepUpUrl;
+            return;
+          } else {
+            // Error case
+            logFlow('error', 'Klarna Express Payment Failed', { status: response.status, error: data });
+            throw new Error(data.message || data.error || 'Klarna Express payment failed');
+          }
+        }
+
+        // Handle HPP endpoint - redirect to href value
+        if (isHppEndpoint) {
+          if (!response.ok) {
+            logFlow('error', 'Paytrail Payment Failed (HPP)', { status: response.status, error: data });
+            throw new Error(data.message || data.error || 'Payment creation failed');
+          }
+
+          console.log("Paytrail payment response (HPP):", data);
+
+          // For HPP, redirect to the href value in the response
+          if (data.href) {
+            console.log("Redirecting to HPP URL:", data.href);
+            logFlow('info', 'Redirecting to HPP URL', { href: data.href });
+            window.location.href = data.href;
+            return;
+          } else {
+            logFlow('error', 'HPP Payment Response Missing href', { data });
+            throw new Error('HPP payment response missing href value');
+          }
+        }
+
+        // Original /api/payments endpoint handling
         if (!response.ok) {
           logFlow('error', 'Paytrail Payment Failed', { status: response.status, error: data });
           throw new Error(data.message || data.error || 'Payment creation failed');
@@ -524,9 +598,10 @@ async function initializeProductPage() {
   productAmountInput = document.getElementById("product-amount");
   productCurrencyPill = document.getElementById("product-currency-pill");
   productPriceDisplay = document.getElementById("product-price");
+  productPaymentEndpointSel = document.getElementById("product-payment-endpoint");
 
   // Check if all required elements exist
-  if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill || !productPriceDisplay) {
+  if (!productCountrySel || !productLocaleSel || !productAmountInput || !productCurrencyPill || !productPriceDisplay || !productPaymentEndpointSel) {
     console.error("Required DOM elements not found");
     return;
   }

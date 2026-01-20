@@ -13,7 +13,6 @@ import {
 } from "./state.js";
 import {
   $,
-  authModeAcquiringPartner,
   authModeBadge,
   authModeSubPartner,
   authModeToggle,
@@ -98,43 +97,18 @@ export async function loadConfig() {
 // ============================================================================
 
 /**
- * Set up auth mode toggle based on available modes
+ * Set up auth mode toggle (always SUB_PARTNER mode)
  */
 function setupAuthModeToggle() {
   if (!authModeToggle) return;
 
-  const hasSubPartner = availableAuthModes.some((m) =>
-    m.mode === "SUB_PARTNER"
-  );
-  const hasAcquiringPartner = availableAuthModes.some((m) =>
-    m.mode === "ACQUIRING_PARTNER"
-  );
+  // Hide the toggle since we only support SUB_PARTNER mode
+  authModeToggle.style.display = "none";
 
-  // If only one mode is available, hide the toggle
-  if (availableAuthModes.length <= 1) {
-    authModeToggle.style.display = "none";
-    return;
-  }
-
-  // Show the toggle
-  authModeToggle.style.display = "flex";
-
-  // Enable/disable options based on availability
+  // Ensure SUB_PARTNER is selected
   if (authModeSubPartner) {
-    authModeSubPartner.disabled = !hasSubPartner;
-    authModeSubPartner.checked = currentAuthMode === "SUB_PARTNER";
-  }
-  if (authModeAcquiringPartner) {
-    authModeAcquiringPartner.disabled = !hasAcquiringPartner;
-    authModeAcquiringPartner.checked = currentAuthMode === "ACQUIRING_PARTNER";
-  }
-
-  // Add event listeners
-  if (authModeSubPartner) {
-    authModeSubPartner.addEventListener("change", handleAuthModeChange);
-  }
-  if (authModeAcquiringPartner) {
-    authModeAcquiringPartner.addEventListener("change", handleAuthModeChange);
+    authModeSubPartner.checked = true;
+    authModeSubPartner.disabled = false;
   }
 }
 
@@ -153,7 +127,6 @@ async function handleAuthModeChange(event) {
   if (modeConfig && sdkConfig) {
     sdkConfig.authMode = newMode;
     sdkConfig.clientId = modeConfig.clientId;
-    sdkConfig.partnerAccountId = modeConfig.partnerAccountId || null;
   }
 
   // Update UI
@@ -166,32 +139,24 @@ async function handleAuthModeChange(event) {
 }
 
 /**
- * Update UI elements based on current auth mode
+ * Update UI elements based on current auth mode (always SUB_PARTNER)
  */
 export function updateAuthModeUI() {
-  const isSubPartner = currentAuthMode === "SUB_PARTNER";
-
   // Update auth mode badge
   if (authModeBadge) {
-    authModeBadge.textContent = isSubPartner
-      ? "👤 Sub Partner"
-      : "🏢 Acquiring Partner";
-    authModeBadge.className = `auth-mode-badge ${
-      isSubPartner ? "sub-partner" : "acquiring-partner"
-    }`;
+    authModeBadge.textContent = "👤 Sub Partner";
+    authModeBadge.className = "auth-mode-badge sub-partner";
     authModeBadge.style.display = "inline-block";
   }
 
   // Update info banners (only if they exist)
   const subPartnerBanner = $("#info-banner-sub-partner");
-  const acquiringPartnerBanner = $("#info-banner-acquiring-partner");
   if (subPartnerBanner) {
-    subPartnerBanner.style.display = isSubPartner
-      ? "flex"
-      : "none";
+    subPartnerBanner.style.display = "flex";
   }
+  const acquiringPartnerBanner = $("#info-banner-acquiring-partner");
   if (acquiringPartnerBanner) {
-    acquiringPartnerBanner.style.display = isSubPartner ? "none" : "flex";
+    acquiringPartnerBanner.style.display = "none";
   }
 
   // Update interoperability options visibility (only if element exists)

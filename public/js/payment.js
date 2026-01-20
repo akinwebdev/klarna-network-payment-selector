@@ -218,12 +218,8 @@ export async function initiateKlarnaPayment(
       authMode: currentAuthMode,
     };
 
-    // Use different endpoint based on auth mode:
-    // SUB_PARTNER: POST /api/payment-request (creates payment request, returns payment_request_id for SDK)
-    // ACQUIRING_PARTNER: POST /api/authorize-payment (may return STEP_UP_REQUIRED or APPROVED)
-    const endpoint = currentAuthMode === "SUB_PARTNER"
-      ? "/api/payment-request"
-      : "/api/authorize-payment";
+    // Use /api/payment-request endpoint (SUB_PARTNER mode)
+    const endpoint = "/api/payment-request";
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
@@ -351,10 +347,8 @@ export async function initiateApiKlarnaPayment(paymentOptionId) {
 
     // Use different endpoint based on auth mode:
     // SUB_PARTNER: POST /api/payment-request (creates payment request, returns URL for redirect)
-    // ACQUIRING_PARTNER: POST /api/authorize-payment (may return STEP_UP_REQUIRED or APPROVED)
-    const endpoint = currentAuthMode === "SUB_PARTNER"
-      ? "/api/payment-request"
-      : "/api/authorize-payment";
+    // Use /api/payment-request endpoint (SUB_PARTNER mode)
+    const endpoint = "/api/payment-request";
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",

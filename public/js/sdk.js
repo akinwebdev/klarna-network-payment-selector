@@ -88,9 +88,7 @@ export async function ensureSDK() {
     "https://js.klarna.com/web-sdk/v2/klarna.mjs"
   );
 
-  // Initialize SDK based on authentication mode from environment variables
-  // SUB_PARTNER: only CLIENT_ID needed
-  // ACQUIRING_PARTNER: CLIENT_ID + PARTNER_ACCOUNT_ID needed
+  // Initialize SDK for Sub Partner mode
   const initConfig = {
     clientId: sdkConfig.clientId,
     products: ["PAYMENT", "MESSAGING"],
@@ -99,11 +97,6 @@ export async function ensureSDK() {
   // Include locale if provided in config
   if (sdkConfig.locale) {
     initConfig.locale = sdkConfig.locale;
-  }
-
-  // Only include partnerAccountId for Acquiring Partner mode
-  if (sdkConfig.partnerAccountId) {
-    initConfig.partnerAccountId = sdkConfig.partnerAccountId;
   }
 
   // Include sdkToken for tokenized payments or interoperability flows

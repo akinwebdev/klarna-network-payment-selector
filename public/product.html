@@ -291,6 +291,17 @@
         </div>
         <div class="settings-field-row">
           <div class="settings-field settings-field-full">
+            <label for="product-payment-endpoint">Authorize payment via</label>
+            <select id="product-payment-endpoint">
+              <option value="/payments">/payments</option>
+              <option value="/payments-hpp">/payments (HPP)</option>
+              <option value="/payments/klarna/charge">/payments/klarna/charge (auto-capture)</option>
+              <option value="/payments/klarna/authorization-hold">/payments/klarna/authorization-hold (manual capture)</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-field-row">
+          <div class="settings-field settings-field-full">
             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
               <input id="skip-paytrail-request" type="checkbox" style="cursor: pointer;" />
               <span>Don't send Paytrail's payment request</span>

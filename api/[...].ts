@@ -2,14 +2,9 @@
  * Klarna Payment Selector Demo - Vercel Version
  *
  * This server uses Hono to handle API routes on Vercel.
- * Supports both Acquiring Partner and Sub Partner authentication modes with dynamic switching.
+ * Supports Sub Partner authentication mode.
  *
  * Environment Variables (set in Vercel dashboard):
- *
- *    Acquiring Partner credentials:
- *    - AP_CLIENT_ID: Client ID for Acquiring Partner mode
- *    - AP_API_KEY: Base64 encoded API credentials for Acquiring Partner mode
- *    - PARTNER_ACCOUNT_ID: Partner account ID (required for Acquiring Partner mode)
  *
  *    Sub Partner credentials:
  *    - SP_CLIENT_ID: Client ID for Sub Partner mode
@@ -37,11 +32,6 @@ const getEnv = (key: string): string => {
 const KLARNA_API_BASE_URL = getEnv("KLARNA_API_BASE_URL") ||
   "https://api-global.test.klarna.com";
 
-// Acquiring Partner credentials
-const AP_CLIENT_ID = getEnv("AP_CLIENT_ID");
-const AP_API_KEY = getEnv("AP_API_KEY");
-const PARTNER_ACCOUNT_ID = getEnv("PARTNER_ACCOUNT_ID"); // Required for Acquiring Partner mode
-
 // Sub Partner credentials
 const SP_CLIENT_ID = getEnv("SP_CLIENT_ID");
 const SP_API_KEY = getEnv("SP_API_KEY");
@@ -52,50 +42,25 @@ const PAYTRAIL_API_URL = getEnv("PAYTRAIL_API_URL") ||
 const PAYTRAIL_MERCHANT_ID = getEnv("PAYTRAIL_MERCHANT_ID");
 const PAYTRAIL_SECRET_KEY = getEnv("PAYTRAIL_SECRET_KEY");
 
-// Determine which modes are available based on configured credentials
-const hasAcquiringPartnerConfig =
-  !!(AP_CLIENT_ID && AP_API_KEY && PARTNER_ACCOUNT_ID);
+// Check if Sub Partner credentials are configured
 const hasSubPartnerConfig = !!(SP_CLIENT_ID && SP_API_KEY);
 
 // Interface for auth configuration
 interface AuthConfig {
   clientId: string;
   apiKey: string;
-  partnerAccountId: string | null;
-  isAcquiringPartner: boolean;
 }
 
-// Get credentials for a specific auth mode
-function getAuthConfig(
-  mode: "SUB_PARTNER" | "ACQUIRING_PARTNER",
-): AuthConfig | null {
-  if (mode === "ACQUIRING_PARTNER") {
-    if (AP_CLIENT_ID && AP_API_KEY && PARTNER_ACCOUNT_ID) {
-      return {
-        clientId: AP_CLIENT_ID,
-        apiKey: AP_API_KEY,
-        partnerAccountId: PARTNER_ACCOUNT_ID,
-        isAcquiringPartner: true,
-      };
-    }
-    return null;
-  } else {
-    // SUB_PARTNER mode
-    if (SP_CLIENT_ID && SP_API_KEY) {
-      return {
-        clientId: SP_CLIENT_ID,
-        apiKey: SP_API_KEY,
-        partnerAccountId: null,
-        isAcquiringPartner: false,
-      };
-    }
-    return null;
+// Get Sub Partner credentials
+function getAuthConfig(): AuthConfig | null {
+  if (SP_CLIENT_ID && SP_API_KEY) {
+    return {
+      clientId: SP_CLIENT_ID,
+      apiKey: SP_API_KEY,
+    };
   }
+  return null;
 }
-
-// Default auth mode (prefer Acquiring Partner if both available, otherwise use what's configured)
-const defaultAuthMode: "SUB_PARTNER" | "ACQUIRING_PARTNER" =
-  hasAcquiringPartnerConfig ? "ACQUIRING_PARTNER" : "SUB_PARTNER";
 
 // mTLS configuration (optional) - certificates should be base64 encoded PEM
 const MTLS_CERT_B64 = getEnv("MTLS_CERT");
@@ -141,22 +106,11 @@ function decodeBase64(b64: string): string {
 // Check if mTLS is configured
 const isMtlsConfigured = Boolean(MTLS_CERT_B64 && MTLS_KEY_B64);
 
-// Helper to get auth config from request parameter (resolves to appropriate credentials)
-function resolveAuthConfig(requestedMode?: string): AuthConfig {
-  const mode =
-    (requestedMode?.toUpperCase() === "SUB_PARTNER" ||
-        requestedMode?.toUpperCase() === "ACQUIRING_PARTNER")
-      ? requestedMode.toUpperCase() as "SUB_PARTNER" | "ACQUIRING_PARTNER"
-      : defaultAuthMode;
-
-  const config = getAuthConfig(mode);
+// Helper to get auth config (always uses Sub Partner mode)
+function resolveAuthConfig(): AuthConfig {
+  const config = getAuthConfig();
   if (!config) {
-    // Fall back to default mode if requested mode not available
-    const fallbackConfig = getAuthConfig(defaultAuthMode);
-    if (!fallbackConfig) {
-      throw new Error("No authentication configuration available");
-    }
-    return fallbackConfig;
+    throw new Error("Sub Partner authentication configuration not available. Please set SP_CLIENT_ID and SP_API_KEY environment variables.");
   }
   return config;
 }
@@ -193,55 +147,27 @@ app.get("/api/health", (c) => {
   });
 });
 
-// SDK configuration endpoint - provides client ID and partner account ID to frontend
+// SDK configuration endpoint - provides client ID to frontend
 app.get("/api/config", (c) => {
-  // Build available modes configuration
-  const availableModes: {
-    mode: "SUB_PARTNER" | "ACQUIRING_PARTNER";
-    clientId: string;
-    partnerAccountId?: string;
-  }[] = [];
-
-  // Check Acquiring Partner configuration
-  const apConfig = getAuthConfig("ACQUIRING_PARTNER");
-  if (apConfig) {
-    availableModes.push({
-      mode: "ACQUIRING_PARTNER",
-      clientId: apConfig.clientId,
-      partnerAccountId: apConfig.partnerAccountId || undefined,
-    });
-  }
-
-  // Check Sub Partner configuration
-  const spConfig = getAuthConfig("SUB_PARTNER");
-  if (spConfig) {
-    availableModes.push({
-      mode: "SUB_PARTNER",
-      clientId: spConfig.clientId,
-    });
-  }
-
-  if (availableModes.length === 0) {
+  const config = getAuthConfig();
+  
+  if (!config) {
     return c.json({
       error:
-        "No authentication modes configured. Please set either AP_CLIENT_ID/AP_API_KEY/PARTNER_ACCOUNT_ID for Acquiring Partner mode, or SP_CLIENT_ID/SP_API_KEY for Sub Partner mode.",
+        "Sub Partner authentication not configured. Please set SP_CLIENT_ID and SP_API_KEY environment variables.",
     }, 500);
   }
 
-  // Determine default mode (prefer Acquiring Partner if both available)
-  const defaultMode = availableModes.find((m) =>
-    m.mode === "ACQUIRING_PARTNER"
-  ) || availableModes[0];
-
   return c.json({
     // Available authentication modes
-    availableModes,
-    defaultMode: defaultMode.mode,
+    availableModes: [{
+      mode: "SUB_PARTNER",
+      clientId: config.clientId,
+    }],
+    defaultMode: "SUB_PARTNER",
     // Legacy fields for backward compatibility
-    clientId: defaultMode.clientId,
-    ...(defaultMode.partnerAccountId &&
-      { partnerAccountId: defaultMode.partnerAccountId }),
-    authMode: defaultMode.mode,
+    clientId: config.clientId,
+    authMode: "SUB_PARTNER",
     mtlsEnabled: isMtlsConfigured,
     // Customer token configuration - returns list of countries with tokens
     customerTokenConfigured: hasAnyCustomerToken,
@@ -253,11 +179,11 @@ app.get("/api/config", (c) => {
 app.post("/api/identity/sdk-tokens", async (c) => {
   try {
     const body = await c.req.json();
-    const { country, authMode: requestedAuthMode } = body;
+    const { country } = body;
 
     let auth: AuthConfig;
     try {
-      auth = resolveAuthConfig(requestedAuthMode);
+      auth = resolveAuthConfig();
     } catch (error) {
       return c.json({
         status: "ERROR",
@@ -267,9 +193,7 @@ app.post("/api/identity/sdk-tokens", async (c) => {
 
     const customerToken = country ? getCustomerTokenForCountry(country) : null;
 
-    const apiPath = auth.isAcquiringPartner
-      ? `/v2/accounts/${auth.partnerAccountId}/identity/sdk-tokens`
-      : `/v2/identity/sdk-tokens`;
+    const apiPath = `/v2/identity/sdk-tokens`;
     const requestUrl = `${KLARNA_API_BASE_URL}${apiPath}`;
 
     const headers: Record<string, string> = {
@@ -298,7 +222,7 @@ app.post("/api/identity/sdk-tokens", async (c) => {
 
     const requestMeta = {
       url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
+      authMode: "SUB_PARTNER",
       method: "POST",
       klarnaCustomerToken: customerToken,
       requestBody: {},
@@ -335,237 +259,6 @@ app.post("/api/identity/sdk-tokens", async (c) => {
   }
 });
 
-// Interoperability Test Token endpoint (for Acquiring Partners only)
-app.post("/api/interoperability/test-tokens", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { customerJourney, country, authMode: requestedAuthMode } = body;
-
-    let auth: AuthConfig;
-    try {
-      auth = resolveAuthConfig(requestedAuthMode);
-    } catch (error) {
-      return c.json({
-        status: "ERROR",
-        message: "Server configuration error: No authentication configured",
-      }, 500);
-    }
-
-    if (!auth.isAcquiringPartner) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Interoperability flows are only available for Acquiring Partners",
-      }, 400);
-    }
-
-    if (!customerJourney) {
-      return c.json({
-        status: "ERROR",
-        message: "Missing required field: customerJourney",
-      }, 400);
-    }
-
-    const validJourneys = [
-      "KLARNA_EXPRESS_CHECKOUT",
-      "SIGN_IN_WITH_KLARNA",
-      "KLARNA_PRE_QUALIFICATION",
-      "KLARNA_ACCOUNT_LINKING",
-    ];
-    if (!validJourneys.includes(customerJourney)) {
-      return c.json({
-        status: "ERROR",
-        message: `Invalid customerJourney. Must be one of: ${
-          validJourneys.join(", ")
-        }`,
-      }, 400);
-    }
-
-    if (!auth.partnerAccountId) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Server configuration error: PARTNER_ACCOUNT_ID not set (required for interoperability)",
-      }, 500);
-    }
-
-    const customerToken = country ? getCustomerTokenForCountry(country) : null;
-    if (!customerToken) {
-      return c.json({
-        status: "ERROR",
-        message: `No customer token configured for country: ${country}`,
-      }, 400);
-    }
-
-    const requestUrl =
-      `${KLARNA_API_BASE_URL}/v2/accounts/${auth.partnerAccountId}/interoperability/test-tokens`;
-
-    const requestBody = {
-      customer_journey: customerJourney,
-    };
-
-    const headers: Record<string, string> = {
-      "Authorization": `Basic ${auth.apiKey}`,
-      "Content-Type": "application/json",
-      "Klarna-Customer-Token": customerToken,
-      "Klarna-Customer-Region": "krn:test:us1:test",
-    };
-
-    const klarnaResponse = await fetchWithMtls(
-      requestUrl,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify(requestBody),
-      },
-    );
-
-    const klarnaData = await klarnaResponse.json();
-    const correlationId = klarnaResponse.headers.get("klarna-correlation-id") ||
-      null;
-    const mtlsVerificationStatus =
-      klarnaResponse.headers.get("klarna-mtls-verification-status") || null;
-
-    const requestMeta = {
-      url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
-      method: "POST",
-      klarnaCustomerToken: customerToken,
-      requestBody,
-    };
-    const responseMeta = {
-      correlationId,
-      mtlsVerificationStatus,
-      responseBody: klarnaData,
-    };
-
-    if (!klarnaResponse.ok) {
-      return c.json({
-        status: "ERROR",
-        message: klarnaData.error_message ||
-          "Interoperability test token generation failed",
-        details: klarnaData,
-        _request: requestMeta,
-        _response: responseMeta,
-      }, klarnaResponse.status);
-    }
-
-    return c.json({
-      status: "OK",
-      interoperabilityToken: klarnaData.interoperability_token,
-      _request: requestMeta,
-      _response: responseMeta,
-    });
-  } catch (error) {
-    console.error("Interoperability test token error:", error);
-    return c.json({
-      status: "ERROR",
-      message: error instanceof Error ? error.message : "Internal server error",
-    }, 500);
-  }
-});
-
-// Interoperability SDK Token endpoint (for Acquiring Partners only)
-app.post("/api/interoperability/sdk-tokens", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { interoperabilityToken, authMode: requestedAuthMode } = body;
-
-    let auth: AuthConfig;
-    try {
-      auth = resolveAuthConfig(requestedAuthMode);
-    } catch (error) {
-      return c.json({
-        status: "ERROR",
-        message: "Server configuration error: No authentication configured",
-      }, 500);
-    }
-
-    if (!auth.isAcquiringPartner) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Interoperability flows are only available for Acquiring Partners",
-      }, 400);
-    }
-
-    if (!interoperabilityToken) {
-      return c.json({
-        status: "ERROR",
-        message: "Missing required field: interoperabilityToken",
-      }, 400);
-    }
-
-    if (!auth.partnerAccountId) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Server configuration error: PARTNER_ACCOUNT_ID not set (required for interoperability)",
-      }, 500);
-    }
-
-    const requestUrl =
-      `${KLARNA_API_BASE_URL}/v2/accounts/${auth.partnerAccountId}/interoperability/sdk-tokens`;
-
-    const headers: Record<string, string> = {
-      "Authorization": `Basic ${auth.apiKey}`,
-      "Content-Type": "application/json",
-      "Klarna-Interoperability-Token": interoperabilityToken,
-    };
-
-    const klarnaResponse = await fetchWithMtls(
-      requestUrl,
-      {
-        method: "POST",
-        headers,
-      },
-    );
-
-    const klarnaData = await klarnaResponse.json();
-    const correlationId = klarnaResponse.headers.get("klarna-correlation-id") ||
-      null;
-    const mtlsVerificationStatus =
-      klarnaResponse.headers.get("klarna-mtls-verification-status") || null;
-
-    const requestMeta = {
-      url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
-      method: "POST",
-      klarnaInteroperabilityToken: interoperabilityToken,
-      requestBody: {},
-    };
-    const responseMeta = {
-      correlationId,
-      mtlsVerificationStatus,
-      responseBody: klarnaData,
-    };
-
-    if (!klarnaResponse.ok) {
-      return c.json({
-        status: "ERROR",
-        message: klarnaData.error_message ||
-          "Interoperability SDK token generation failed",
-        details: klarnaData,
-        _request: requestMeta,
-        _response: responseMeta,
-      }, klarnaResponse.status);
-    }
-
-    return c.json({
-      status: "OK",
-      sdkToken: klarnaData.sdk_token,
-      _request: requestMeta,
-      _response: responseMeta,
-    });
-  } catch (error) {
-    console.error("Interoperability SDK token error:", error);
-    return c.json({
-      status: "ERROR",
-      message: error instanceof Error ? error.message : "Internal server error",
-    }, 500);
-  }
-});
-
 // Payment Presentation API endpoint (GET with query params)
 app.get("/api/presentation", async (c) => {
   try {
@@ -582,8 +275,6 @@ app.get("/api/presentation", async (c) => {
     const includeCustomerToken =
       c.req.query("include_customer_token") === "true";
     const country = c.req.query("country");
-    const interoperabilityToken = c.req.query("interoperability_token");
-    const requestedAuthMode = c.req.query("auth_mode");
 
     if (!currency) {
       return c.json({
@@ -594,7 +285,7 @@ app.get("/api/presentation", async (c) => {
 
     let auth: AuthConfig;
     try {
-      auth = resolveAuthConfig(requestedAuthMode || undefined);
+      auth = resolveAuthConfig();
     } catch (error) {
       return c.json({
         status: "ERROR",
@@ -625,9 +316,7 @@ app.get("/api/presentation", async (c) => {
       );
     }
 
-    const apiPath = auth.isAcquiringPartner
-      ? `/v2/accounts/${auth.partnerAccountId}/payment/presentation`
-      : `/v2/payment/presentation`;
+    const apiPath = `/v2/payment/presentation`;
     const requestUrl =
       `${KLARNA_API_BASE_URL}${apiPath}?${queryParams.toString()}`;
 
@@ -640,10 +329,6 @@ app.get("/api/presentation", async (c) => {
       : null;
     if (customerToken) {
       headers["Klarna-Customer-Token"] = customerToken;
-    }
-
-    if (interoperabilityToken) {
-      headers["Klarna-Interoperability-Token"] = interoperabilityToken;
     }
 
     const klarnaResponse = await fetchWithMtls(
@@ -662,11 +347,10 @@ app.get("/api/presentation", async (c) => {
 
     const requestMeta = {
       url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
+      authMode: "SUB_PARTNER",
       method: "GET",
       queryParams: Object.fromEntries(queryParams.entries()),
       klarnaCustomerToken: customerToken,
-      klarnaInteroperabilityToken: interoperabilityToken || null,
     };
     const responseMeta = {
       correlationId,
@@ -711,12 +395,11 @@ app.post("/api/payment-request", async (c) => {
       appReturnUrl,
       includeCustomerToken,
       country,
-      authMode: requestedAuthMode,
     } = body;
 
     let auth: AuthConfig;
     try {
-      auth = resolveAuthConfig(requestedAuthMode);
+      auth = resolveAuthConfig();
     } catch (error) {
       return c.json({
         status: "ERROR",
@@ -809,7 +492,7 @@ app.post("/api/payment-request", async (c) => {
 
     const requestMeta = {
       url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
+      authMode: "SUB_PARTNER",
       method: "POST",
       klarnaNetworkSessionToken: klarnaNetworkSessionToken || null,
       klarnaCustomerToken: customerToken,
@@ -873,233 +556,8 @@ app.post("/api/payment-request", async (c) => {
   }
 });
 
-// Payment authorization endpoint
-app.post("/api/authorize-payment", async (c) => {
-  try {
-    const body = await c.req.json();
-    const {
-      klarnaNetworkSessionToken,
-      paymentOptionId,
-      paymentRequestData,
-      returnUrl,
-      appReturnUrl,
-      partnerAccountId,
-      includeCustomerToken,
-      country,
-      interoperabilityToken,
-      authMode: requestedAuthMode,
-    } = body;
-
-    let auth: AuthConfig;
-    try {
-      auth = resolveAuthConfig(requestedAuthMode);
-    } catch (error) {
-      return c.json({
-        status: "ERROR",
-        message: "Server configuration error: No authentication configured",
-      }, 500);
-    }
-
-    if (!paymentRequestData) {
-      return c.json({
-        status: "ERROR",
-        message: "Missing required field: paymentRequestData is required",
-      }, 400);
-    }
-
-    const intents = paymentRequestData.intents as string[] | undefined;
-    const isOnlyAddToWallet = intents && intents.length === 1 &&
-      intents[0] === "ADD_TO_WALLET";
-
-    const resolvedPaymentOptionId = paymentOptionId ||
-      paymentRequestData.paymentOptionId;
-
-    // paymentOptionId is optional when using Klarna.Payment.button() directly
-    // Only include it in the payment request if it's provided
-
-    const accountId = partnerAccountId || auth.partnerAccountId;
-
-    if (auth.isAcquiringPartner && !accountId) {
-      return c.json({
-        status: "ERROR",
-        message:
-          "Partner Account ID is required for Acquiring Partner mode. Set PARTNER_ACCOUNT_ID env var or provide in request.",
-      }, 400);
-    }
-
-    const authorizeRequest: Record<string, unknown> = {
-      currency: paymentRequestData.currency,
-      supplementary_purchase_data: transformSupplementaryPurchaseData(
-        paymentRequestData.supplementaryPurchaseData,
-      ),
-      step_up_config: {
-        payment_request_reference: paymentRequestData.paymentRequestReference ||
-          `req_${Date.now()}`,
-        customer_interaction_config: {
-          method: "HANDOVER",
-          return_url: returnUrl ||
-            `${new URL(c.req.url).origin}/payment-complete`,
-          ...(appReturnUrl && { app_return_url: appReturnUrl }),
-        },
-      },
-    };
-
-    if (!isOnlyAddToWallet) {
-      authorizeRequest.request_payment_transaction = {
-        amount: paymentRequestData.amount,
-        payment_transaction_reference:
-          paymentRequestData.paymentRequestReference || `txn_${Date.now()}`,
-      };
-      // Only include payment_option_id if it was provided
-      if (resolvedPaymentOptionId) {
-        authorizeRequest.request_payment_transaction.payment_option_id = resolvedPaymentOptionId;
-      }
-    }
-
-    if (paymentRequestData.requestCustomerToken) {
-      authorizeRequest.request_customer_token = {
-        scopes: paymentRequestData.requestCustomerToken.scopes,
-        customer_token_reference:
-          paymentRequestData.requestCustomerToken.customerTokenReference,
-      };
-    }
-
-    const apiPath = auth.isAcquiringPartner
-      ? `/v2/accounts/${accountId}/payment/authorize`
-      : `/v2/payment/authorize`;
-    const requestUrl = `${KLARNA_API_BASE_URL}${apiPath}`;
-
-    const headers: Record<string, string> = {
-      "Authorization": `Basic ${auth.apiKey}`,
-      "Content-Type": "application/json",
-    };
-    if (klarnaNetworkSessionToken) {
-      headers["Klarna-Network-Session-Token"] = klarnaNetworkSessionToken;
-    }
-    const customerToken = includeCustomerToken && country
-      ? getCustomerTokenForCountry(country)
-      : null;
-    if (customerToken) {
-      headers["Klarna-Customer-Token"] = customerToken;
-    }
-    if (interoperabilityToken) {
-      headers["Klarna-Interoperability-Token"] = interoperabilityToken;
-    }
-
-    const klarnaResponse = await fetchWithMtls(
-      requestUrl,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify(authorizeRequest),
-      },
-    );
-
-    const klarnaData = await klarnaResponse.json();
-    const correlationId = klarnaResponse.headers.get("klarna-correlation-id") ||
-      null;
-    const mtlsVerificationStatus =
-      klarnaResponse.headers.get("klarna-mtls-verification-status") || null;
-
-    const requestMeta = {
-      url: requestUrl,
-      authMode: auth.isAcquiringPartner ? "ACQUIRING_PARTNER" : "SUB_PARTNER",
-      method: "POST",
-      klarnaNetworkSessionToken: klarnaNetworkSessionToken || null,
-      klarnaCustomerToken: customerToken,
-      klarnaInteroperabilityToken: interoperabilityToken || null,
-      requestBody: authorizeRequest,
-    };
-    const responseMeta = {
-      correlationId,
-      mtlsVerificationStatus,
-      responseBody: klarnaData,
-    };
-
-    if (!klarnaResponse.ok) {
-      return c.json({
-        status: "ERROR",
-        message: klarnaData.error_message || "Payment authorization failed",
-        details: klarnaData,
-        _request: requestMeta,
-        _response: responseMeta,
-      }, klarnaResponse.status);
-    }
-
-    const paymentResult = klarnaData.payment_transaction_response?.result;
-    const customerTokenResult = klarnaData.customer_token_response?.result;
-
-    const result = isOnlyAddToWallet ? customerTokenResult : paymentResult;
-
-    switch (result) {
-      case "STEP_UP_REQUIRED":
-        return c.json({
-          status: "STEP_UP_REQUIRED",
-          paymentRequestId: klarnaData.payment_request?.state_context
-            ?.customer_interaction?.payment_request_id,
-          paymentRequestUrl: klarnaData.payment_request?.state_context
-            ?.customer_interaction?.payment_request_url,
-          expiresAt: klarnaData.payment_request?.expires_at,
-          _request: requestMeta,
-          _response: responseMeta,
-        });
-
-      case "APPROVED":
-        if (isOnlyAddToWallet) {
-          return c.json({
-            status: "APPROVED",
-            customerTokenId: klarnaData.customer_token_response?.customer_token
-              ?.customer_token_id,
-            customerTokenReference: klarnaData.customer_token_response
-              ?.customer_token?.customer_token_reference,
-            successUrl: returnUrl || "/payment-complete",
-            _request: requestMeta,
-            _response: responseMeta,
-          });
-        }
-        return c.json({
-          status: "APPROVED",
-          paymentTransactionId: klarnaData.payment_transaction_response
-            ?.payment_transaction?.payment_transaction_id,
-          paymentTransactionReference: klarnaData.payment_transaction_response
-            ?.payment_transaction?.payment_transaction_reference,
-          successUrl: returnUrl || "/payment-complete",
-          _request: requestMeta,
-          _response: responseMeta,
-        });
-
-      case "DECLINED":
-        const declineReason = isOnlyAddToWallet
-          ? klarnaData.customer_token_response?.result_reason
-          : klarnaData.payment_transaction_response?.result_reason;
-        return c.json({
-          status: "DECLINED",
-          message: declineReason || "Request declined",
-          reason: declineReason,
-          _request: requestMeta,
-          _response: responseMeta,
-        });
-
-      default:
-        return c.json({
-          status: "ERROR",
-          message: `Unexpected result: ${result}`,
-          details: klarnaData,
-          _request: requestMeta,
-          _response: responseMeta,
-        }, 500);
-    }
-  } catch (error) {
-    console.error("Payment authorization error:", error);
-    return c.json({
-      status: "ERROR",
-      message: error instanceof Error ? error.message : "Internal server error",
-    }, 500);
-  }
-});
-
 // ============================================================================
-// HELPER FUNCTIONS
+// PAYTRAIL API ENDPOINTS
 // ============================================================================
 
 function transformSupplementaryPurchaseData(
@@ -1461,6 +919,299 @@ app.post("/api/payments", async (c: Context) => {
     };
 
     return c.json(errorResponse, 500);
+  }
+});
+
+// POST /api/payments/klarna/charge (auto-capture)
+app.post("/api/payments/klarna/charge", async (c: Context) => {
+  try {
+    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+      return c.json(
+        {
+          error: "Paytrail credentials not configured",
+          message:
+            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    }
+
+    console.log("🔄 Creating Klarna charge payment (auto-capture) with Paytrail API...");
+    const paymentData = await c.req.json();
+    console.log(
+      "Payment data received:",
+      JSON.stringify(paymentData, null, 2),
+    );
+
+    // Validate required fields (same as /api/payments)
+    const requiredFields = [
+      "stamp",
+      "reference",
+      "amount",
+      "currency",
+      "customer",
+      "redirectUrls",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !paymentData[field],
+    );
+
+    if (missingFields.length > 0) {
+      return c.json(
+        {
+          error: "Missing required fields",
+          missing: missingFields,
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    // Log Klarna network session token if present
+    if (paymentData.providerDetails?.klarna?.networkSessionToken) {
+      console.log(
+        "  Klarna Network Session Token:",
+        paymentData.providerDetails.klarna.networkSessionToken,
+      );
+    }
+
+    // Make API call directly to handle 403 responses
+    const bodyString = JSON.stringify(paymentData);
+    const { headers, signature } = createPaytrailSignature(
+      "POST",
+      "/payments/klarna-express/charge",
+      {},
+      bodyString,
+    );
+
+    const requestHeaders: Record<string, string> = {
+      ...headers,
+      signature: signature,
+      "content-type": "application/json; charset=utf-8",
+    };
+
+    console.log(
+      "Making POST request to: https://services.paytrail.com/payments/klarna-express/charge",
+    );
+
+    const paytrailResponse = await fetch(
+      "https://services.paytrail.com/payments/klarna-express/charge",
+      {
+        method: "POST",
+        headers: requestHeaders,
+        body: bodyString,
+      },
+    );
+
+    const responseData = await paytrailResponse.json();
+
+    // Handle response based on status
+    // Success: 201 with transaction ID
+    // Error: 403 with transaction ID and stepUpUrl
+
+    if (paytrailResponse.status === 201 && responseData.transactionId) {
+      // Success: return 201 with transaction ID
+      console.log("✅ Klarna charge payment created successfully");
+      console.log("  Transaction ID:", responseData.transactionId);
+      return c.json(
+        {
+          transactionId: responseData.transactionId,
+        },
+        201,
+      );
+    } else if (paytrailResponse.status === 403 && responseData.transactionId && responseData.stepUpUrl) {
+      // Step-up required: return 403 with transaction ID and stepUpUrl
+      console.log("⚠️ Step-up required for Klarna charge payment");
+      console.log("  Transaction ID:", responseData.transactionId);
+      console.log("  Step-up URL:", responseData.stepUpUrl);
+      return c.json(
+        {
+          transactionId: responseData.transactionId,
+          stepUpUrl: responseData.stepUpUrl,
+          error: responseData.error || "Step-up required",
+          message: responseData.message,
+        },
+        403,
+      );
+    }
+
+    // Unexpected response format or status
+    console.error("❌ Unexpected response from Paytrail:", {
+      status: paytrailResponse.status,
+      data: responseData,
+    });
+    return c.json(
+      {
+        error: "Unexpected response from Paytrail",
+        status: paytrailResponse.status,
+        response: responseData,
+        timestamp: new Date().toISOString(),
+      },
+      paytrailResponse.status >= 400 && paytrailResponse.status < 500
+        ? paytrailResponse.status
+        : 500,
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error creating Klarna charge payment:",
+      error instanceof Error ? error.message : String(error),
+    );
+
+    return c.json(
+      {
+        error: "Failed to create payment with Paytrail API",
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      },
+      500,
+    );
+  }
+});
+
+// POST /api/payments/klarna/authorization-hold (manual capture)
+app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
+  try {
+    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+      return c.json(
+        {
+          error: "Paytrail credentials not configured",
+          message:
+            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    }
+
+    console.log("🔄 Creating Klarna authorization hold (manual capture) with Paytrail API...");
+    const paymentData = await c.req.json();
+    console.log(
+      "Payment data received:",
+      JSON.stringify(paymentData, null, 2),
+    );
+
+    // Validate required fields (same as /api/payments)
+    const requiredFields = [
+      "stamp",
+      "reference",
+      "amount",
+      "currency",
+      "customer",
+      "redirectUrls",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !paymentData[field],
+    );
+
+    if (missingFields.length > 0) {
+      return c.json(
+        {
+          error: "Missing required fields",
+          missing: missingFields,
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    // Log Klarna network session token if present
+    if (paymentData.providerDetails?.klarna?.networkSessionToken) {
+      console.log(
+        "  Klarna Network Session Token:",
+        paymentData.providerDetails.klarna.networkSessionToken,
+      );
+    }
+
+    // Make API call directly to handle 403 responses
+    const bodyString = JSON.stringify(paymentData);
+    const { headers, signature } = createPaytrailSignature(
+      "POST",
+      "/payments/klarna-express/authorization-hold",
+      {},
+      bodyString,
+    );
+
+    const requestHeaders: Record<string, string> = {
+      ...headers,
+      signature: signature,
+      "content-type": "application/json; charset=utf-8",
+    };
+
+    console.log(
+      "Making POST request to: https://services.paytrail.com/payments/klarna-express/authorization-hold",
+    );
+
+    const paytrailResponse = await fetch(
+      "https://services.paytrail.com/payments/klarna-express/authorization-hold",
+      {
+        method: "POST",
+        headers: requestHeaders,
+        body: bodyString,
+      },
+    );
+
+    const responseData = await paytrailResponse.json();
+
+    // Handle response based on status
+    // Success: 201 with transaction ID
+    // Error: 403 with transaction ID and stepUpUrl
+    if (paytrailResponse.status === 201 && responseData.transactionId) {
+      // Success: return 201 with transaction ID
+      console.log("✅ Klarna authorization hold created successfully");
+      console.log("  Transaction ID:", responseData.transactionId);
+      return c.json(
+        {
+          transactionId: responseData.transactionId,
+        },
+        201,
+      );
+    } else if (paytrailResponse.status === 403 && responseData.transactionId && responseData.stepUpUrl) {
+      // Step-up required: return 403 with transaction ID and stepUpUrl
+      console.log("⚠️ Step-up required for Klarna authorization hold");
+      console.log("  Transaction ID:", responseData.transactionId);
+      console.log("  Step-up URL:", responseData.stepUpUrl);
+      return c.json(
+        {
+          transactionId: responseData.transactionId,
+          stepUpUrl: responseData.stepUpUrl,
+          error: responseData.error || "Step-up required",
+          message: responseData.message,
+        },
+        403,
+      );
+    }
+
+    // Unexpected response format or status
+    console.error("❌ Unexpected response from Paytrail:", {
+      status: paytrailResponse.status,
+      data: responseData,
+    });
+    return c.json(
+      {
+        error: "Unexpected response from Paytrail",
+        status: paytrailResponse.status,
+        response: responseData,
+        timestamp: new Date().toISOString(),
+      },
+      paytrailResponse.status >= 400 && paytrailResponse.status < 500
+        ? paytrailResponse.status
+        : 500,
+    );
+  } catch (error) {
+    console.error(
+      "❌ Error creating Klarna authorization hold:",
+      error instanceof Error ? error.message : String(error),
+    );
+
+    return c.json(
+      {
+        error: "Failed to create payment with Paytrail API",
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      },
+      500,
+    );
   }
 });
 

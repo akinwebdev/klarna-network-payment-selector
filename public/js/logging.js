@@ -138,9 +138,7 @@ export function logBackendCall(
     (endpoint === "payment/presentation" ? "GET" : "POST");
 
   // Build request section
-  const authModeLabel = request.authMode === "SUB_PARTNER"
-    ? "👤 Sub Partner"
-    : "🏢 Acquiring Partner";
+  const authModeLabel = "👤 Sub Partner";
   let requestHtml = `
     <div class="backend-log-section">
       <div class="backend-log-label">Request <span class="auth-mode-indicator">${authModeLabel}</span></div>
