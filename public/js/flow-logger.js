@@ -16,6 +16,7 @@ function initLogPanel() {
 
   const panel = document.createElement('div');
   panel.id = 'flow-logger-panel';
+  panel.className = 'hidden'; // Hidden by default, shown when log icon is clicked
   panel.innerHTML = `
     <div class="flow-logger-header">
       <h3>Payment Flow Logs</h3>
@@ -53,6 +54,10 @@ function initLogPanel() {
         flex-direction: column;
         font-family: 'Klarna Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         font-size: 12px;
+      }
+      
+      #flow-logger-panel.hidden {
+        display: none;
       }
       
       #flow-logger-panel.minimized {
@@ -314,7 +319,18 @@ function clearLogs() {
   }
 }
 
-// Toggle panel
+// Toggle panel visibility (show/hide)
+export function toggleLogPanelVisibility() {
+  const panel = document.getElementById('flow-logger-panel');
+  if (panel) {
+    panel.classList.toggle('hidden');
+  }
+}
+
+// Expose to window for easy access from HTML
+window.toggleLogPanelVisibility = toggleLogPanelVisibility;
+
+// Toggle panel minimized state
 function togglePanel() {
   const panel = document.getElementById('flow-logger-panel');
   const btn = document.getElementById('flow-logger-toggle');
