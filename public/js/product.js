@@ -21,6 +21,9 @@ let productPaymentEndpointSel;
 // Track current session's payment_request_id to validate tokens are from current session
 let currentSessionPaymentRequestId = null;
 
+// Store button instance reference so we can unmount it if needed
+let currentButtonInstance = null;
+
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
 // ============================================================================
@@ -355,22 +358,58 @@ async function initializePaymentButton() {
     // Store it in a const to ensure closure captures the correct value
     // Also update module-level variable so event handler can validate
     const currentPaymentRequestId = paymentRequestId;
+    
+    // Store the previous payment_request_id before updating, so we can cancel it
+    const previousPaymentRequestId = currentSessionPaymentRequestId;
     currentSessionPaymentRequestId = paymentRequestId; // Update module-level variable
+    
     console.log("🔄 Initializing Klarna payment button with payment_request_id:", currentPaymentRequestId);
     console.log("🔄 Payment request ID timestamp:", new Date().toISOString());
+    console.log("🔄 Previous payment_request_id (if any):", previousPaymentRequestId);
     console.log("🔄 Updated currentSessionPaymentRequestId:", currentSessionPaymentRequestId);
+    
+    // Unmount previous button instance if it exists
+    if (currentButtonInstance && typeof currentButtonInstance.unmount === 'function') {
+      try {
+        console.log("🔄 Unmounting previous button instance");
+        currentButtonInstance.unmount();
+        console.log("✅ Previous button instance unmounted");
+      } catch (error) {
+        console.warn("⚠️ Error unmounting previous button instance:", error);
+      }
+      currentButtonInstance = null;
+    }
     
     // Clear button container again right before mounting to ensure clean state
     buttonContainer.innerHTML = "";
     
-    klarnaInstance.Payment.button({
+    // Cancel any PREVIOUS payment request before creating a new button
+    // This ensures the SDK doesn't try to reuse the old payment_request_id
+    if (previousPaymentRequestId && klarnaInstance.Payment?.cancel) {
+      try {
+        console.log("🔄 Cancelling PREVIOUS payment request before creating new button:", previousPaymentRequestId);
+        klarnaInstance.Payment.cancel(previousPaymentRequestId);
+        console.log("✅ Previous payment request cancelled");
+      } catch (error) {
+        console.warn("⚠️ Error cancelling previous payment request (might not exist or already completed):", error);
+      }
+    } else if (previousPaymentRequestId) {
+      console.log("⚠️ Previous payment_request_id exists but Payment.cancel is not available:", previousPaymentRequestId);
+    }
+    
+    console.log("🔄 Creating NEW button instance with payment_request_id:", currentPaymentRequestId);
+    console.log("🔄 Button creation timestamp:", new Date().toISOString());
+    
+    const buttonInstance = klarnaInstance.Payment.button({
       shape: "default",
       theme: "default",
       initiationMode: "DEVICE_BEST",
       initiate: async (initiateData) => {
-        console.log("Payment button initiated:", initiateData);
-        console.log("🔄 initiate callback - using payment_request_id:", currentPaymentRequestId);
-        console.log("🔄 Payment request ID timestamp in initiate:", new Date().toISOString());
+        console.log("🟡 Payment button initiated - initiate callback called");
+        console.log("🟡 initiateData received:", initiateData);
+        console.log("🟡 initiate callback - using payment_request_id:", currentPaymentRequestId);
+        console.log("🟡 Payment request ID timestamp in initiate:", new Date().toISOString());
+        console.log("🟡 Current session payment_request_id (module level):", currentSessionPaymentRequestId);
         
         // Filter out klarnaNetworkSessionToken from initiate log if present
         // This token (if it exists) is from a previous session and should not be used
@@ -380,14 +419,27 @@ async function initializePaymentButton() {
           console.log("⚠️ Note: klarnaNetworkSessionToken found in initiateData (from previous session, will be ignored)");
           delete initiateLogData.klarnaNetworkSessionToken;
         }
-        logFlow('event', 'Klarna Button: Initiated', initiateLogData);
+        logFlow('event', 'Klarna Button: Initiated', {
+          ...initiateLogData,
+          paymentRequestIdBeingReturned: currentPaymentRequestId,
+          timestamp: new Date().toISOString()
+        });
         
         // Return the payment_request_id we created server-side (not creating a new one)
         // Use const to ensure we're returning the correct value from this closure
-        console.log("🔄 Returning payment_request_id to SDK:", currentPaymentRequestId);
-        return { paymentRequestId: currentPaymentRequestId };
+        const returnValue = { paymentRequestId: currentPaymentRequestId };
+        console.log("🟡 Returning payment_request_id to SDK:", returnValue);
+        console.log("🟡 Return value timestamp:", new Date().toISOString());
+        return returnValue;
       },
-    }).mount("#product-payment-button-container");
+    });
+    
+    console.log("🔄 Mounting button instance to container");
+    buttonInstance.mount("#product-payment-button-container");
+    console.log("✅ Button mounted successfully");
+    
+    // Store button instance reference for future unmounting
+    currentButtonInstance = buttonInstance;
 
     // Add product-page-specific complete event handler (only register once)
     // Don't remove SDK's listener - just ensure we only register ours once
