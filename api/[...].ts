@@ -1005,7 +1005,29 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
       },
     );
 
-    const responseData = await paytrailResponse.json();
+    let responseData: any;
+    try {
+      const responseText = await paytrailResponse.text();
+      console.log("📥 Raw Paytrail response text:", responseText);
+      responseData = responseText ? JSON.parse(responseText) : {};
+    } catch (parseError) {
+      console.error("❌ Failed to parse Paytrail response as JSON:", parseError);
+      return c.json(
+        {
+          error: "Failed to parse Paytrail response",
+          message: parseError instanceof Error ? parseError.message : "Unknown error",
+          status: paytrailResponse.status,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    }
+
+    console.log("📥 Paytrail response for Klarna charge:", {
+      status: paytrailResponse.status,
+      statusText: paytrailResponse.statusText,
+      data: responseData,
+    });
 
     // Handle response based on status
     // Success: 201 with transaction ID
@@ -1021,6 +1043,18 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
         },
         201,
       );
+    } else if (paytrailResponse.status === 201 && !responseData.transactionId) {
+      // 201 but missing transactionId - log and return error
+      console.error("❌ Paytrail returned 201 but missing transactionId:", responseData);
+      return c.json(
+        {
+          error: "Unexpected response format from Paytrail",
+          message: "Response status is 201 but transactionId is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
     } else if (paytrailResponse.status === 403 && responseData.transactionId && responseData.stepUpUrl) {
       // Step-up required: return 403 with transaction ID and stepUpUrl
       console.log("⚠️ Step-up required for Klarna charge payment");
@@ -1035,11 +1069,24 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
         },
         403,
       );
+    } else if (paytrailResponse.status === 403) {
+      // 403 but missing required fields
+      console.error("❌ Paytrail returned 403 but missing transactionId or stepUpUrl:", responseData);
+      return c.json(
+        {
+          error: "Unexpected response format from Paytrail",
+          message: "Response status is 403 but transactionId or stepUpUrl is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
     }
 
     // Unexpected response format or status
     console.error("❌ Unexpected response from Paytrail:", {
       status: paytrailResponse.status,
+      statusText: paytrailResponse.statusText,
       data: responseData,
     });
     return c.json(
@@ -1153,7 +1200,29 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
       },
     );
 
-    const responseData = await paytrailResponse.json();
+    let responseData: any;
+    try {
+      const responseText = await paytrailResponse.text();
+      console.log("📥 Raw Paytrail response text:", responseText);
+      responseData = responseText ? JSON.parse(responseText) : {};
+    } catch (parseError) {
+      console.error("❌ Failed to parse Paytrail response as JSON:", parseError);
+      return c.json(
+        {
+          error: "Failed to parse Paytrail response",
+          message: parseError instanceof Error ? parseError.message : "Unknown error",
+          status: paytrailResponse.status,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    }
+
+    console.log("📥 Paytrail response for Klarna authorization-hold:", {
+      status: paytrailResponse.status,
+      statusText: paytrailResponse.statusText,
+      data: responseData,
+    });
 
     // Handle response based on status
     // Success: 201 with transaction ID
@@ -1167,6 +1236,18 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
           transactionId: responseData.transactionId,
         },
         201,
+      );
+    } else if (paytrailResponse.status === 201 && !responseData.transactionId) {
+      // 201 but missing transactionId - log and return error
+      console.error("❌ Paytrail returned 201 but missing transactionId:", responseData);
+      return c.json(
+        {
+          error: "Unexpected response format from Paytrail",
+          message: "Response status is 201 but transactionId is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
       );
     } else if (paytrailResponse.status === 403 && responseData.transactionId && responseData.stepUpUrl) {
       // Step-up required: return 403 with transaction ID and stepUpUrl
@@ -1182,11 +1263,24 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
         },
         403,
       );
+    } else if (paytrailResponse.status === 403) {
+      // 403 but missing required fields
+      console.error("❌ Paytrail returned 403 but missing transactionId or stepUpUrl:", responseData);
+      return c.json(
+        {
+          error: "Unexpected response format from Paytrail",
+          message: "Response status is 403 but transactionId or stepUpUrl is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
     }
 
     // Unexpected response format or status
     console.error("❌ Unexpected response from Paytrail:", {
       status: paytrailResponse.status,
+      statusText: paytrailResponse.statusText,
       data: responseData,
     });
     return c.json(

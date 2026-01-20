@@ -2628,7 +2628,8 @@
                         klarna: {}
                     };
                     if (klarnaSessionToken) {
-                        paymentData.providerDetails.klarna.sessionToken = klarnaSessionToken;
+                        // Paytrail API expects networkSessionToken, not sessionToken
+                        paymentData.providerDetails.klarna.networkSessionToken = klarnaSessionToken;
                     }
                     if (klarnaData) {
                         paymentData.providerDetails.klarna.data = klarnaData;
