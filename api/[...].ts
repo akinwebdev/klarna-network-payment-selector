@@ -1127,7 +1127,7 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
     const bodyString = JSON.stringify(paymentData);
     const { headers, signature } = createPaytrailSignature(
       "POST",
-      "/payments/klarna-express/authorization-hold",
+      "/payments/klarna/authorization-hold",
       {},
       bodyString,
     );
@@ -1139,11 +1139,11 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
     };
 
     console.log(
-      "Making POST request to: https://services.paytrail.com/payments/klarna-express/authorization-hold",
+      "Making POST request to: https://services.paytrail.com/payments/klarna/authorization-hold",
     );
 
     const paytrailResponse = await fetch(
-      "https://services.paytrail.com/payments/klarna-express/authorization-hold",
+      "https://services.paytrail.com/payments/klarna/authorization-hold",
       {
         method: "POST",
         headers: requestHeaders,
