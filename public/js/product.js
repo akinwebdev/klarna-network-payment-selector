@@ -424,6 +424,7 @@ async function initializePaymentButton() {
 
         // Check if this is the HPP option
         const isHppEndpoint = selectedEndpoint === '/payments-hpp';
+        console.log("🔍 Endpoint check:", { selectedEndpoint, isHppEndpoint });
         
         // Check if this is one of the new Klarna endpoints (charge or authorization-hold)
         const isKlarnaExpressEndpoint = selectedEndpoint.includes('/klarna/charge') || 
@@ -461,21 +462,32 @@ async function initializePaymentButton() {
 
         // Handle HPP endpoint - redirect to href value from Paytrail response
         if (isHppEndpoint) {
-          if (!response.ok) {
+          console.log("🔍 HPP endpoint detected, checking response...");
+          console.log("Response status:", response.status);
+          console.log("Response ok:", response.ok);
+          console.log("Response data:", data);
+          
+          // Check for successful response (201 is returned for successful payment creation)
+          if (!response.ok || (response.status !== 201 && response.status !== 200)) {
             logFlow('error', 'Paytrail Payment Failed (HPP)', { status: response.status, error: data });
             throw new Error(data.message || data.error || 'Payment creation failed');
           }
 
           console.log("Paytrail payment response (HPP):", data);
+          console.log("Checking for href in response...", { hasHref: !!data.href, dataKeys: Object.keys(data) });
 
           // For HPP, always use the href value from the response (not Klarna provider)
           if (data.href) {
-            console.log("Redirecting to HPP URL from Paytrail response:", data.href);
+            console.log("✅ Found href, redirecting to HPP URL from Paytrail response:", data.href);
             logFlow('info', 'Redirecting to HPP URL', { href: data.href });
-            window.location.href = data.href;
-            return;
+            // For HPP, redirect immediately using GET request (window.location.href uses GET)
+            // Stop all further execution by redirecting immediately
+            window.location.replace(data.href);
+            return false; // Return false to prevent any further execution
           } else {
-            logFlow('error', 'HPP Payment Response Missing href', { data });
+            console.error("❌ HPP Payment Response Missing href", data);
+            console.error("Response structure:", JSON.stringify(data, null, 2));
+            logFlow('error', 'HPP Payment Response Missing href', { data, dataKeys: Object.keys(data) });
             throw new Error('HPP payment response missing href value');
           }
         }
