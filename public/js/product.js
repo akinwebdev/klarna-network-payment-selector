@@ -459,7 +459,7 @@ async function initializePaymentButton() {
           }
         }
 
-        // Handle HPP endpoint - redirect to href value
+        // Handle HPP endpoint - redirect to href value from Paytrail response
         if (isHppEndpoint) {
           if (!response.ok) {
             logFlow('error', 'Paytrail Payment Failed (HPP)', { status: response.status, error: data });
@@ -468,9 +468,9 @@ async function initializePaymentButton() {
 
           console.log("Paytrail payment response (HPP):", data);
 
-          // For HPP, redirect to the href value in the response
+          // For HPP, always use the href value from the response (not Klarna provider)
           if (data.href) {
-            console.log("Redirecting to HPP URL:", data.href);
+            console.log("Redirecting to HPP URL from Paytrail response:", data.href);
             logFlow('info', 'Redirecting to HPP URL', { href: data.href });
             window.location.href = data.href;
             return;
