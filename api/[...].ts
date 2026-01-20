@@ -1030,10 +1030,10 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
     });
 
     // Handle response based on status
-    // Success: 201 with transaction ID
+    // Success: 200 or 201 with transaction ID
     // Error: 403 with transaction ID and stepUpUrl
 
-    if (paytrailResponse.status === 201 && responseData.transactionId) {
+    if ((paytrailResponse.status === 201 || paytrailResponse.status === 200) && responseData.transactionId) {
       // Success: return 201 with transaction ID
       console.log("✅ Klarna charge payment created successfully");
       console.log("  Transaction ID:", responseData.transactionId);
@@ -1043,7 +1043,7 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
         },
         201,
       );
-    } else if (paytrailResponse.status === 201 && !responseData.transactionId) {
+    } else if ((paytrailResponse.status === 201 || paytrailResponse.status === 200) && !responseData.transactionId) {
       // 201 but missing transactionId - log and return error
       console.error("❌ Paytrail returned 201 but missing transactionId:", responseData);
       return c.json(
@@ -1225,9 +1225,9 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
     });
 
     // Handle response based on status
-    // Success: 201 with transaction ID
+    // Success: 200 or 201 with transaction ID
     // Error: 403 with transaction ID and stepUpUrl
-    if (paytrailResponse.status === 201 && responseData.transactionId) {
+    if ((paytrailResponse.status === 201 || paytrailResponse.status === 200) && responseData.transactionId) {
       // Success: return 201 with transaction ID
       console.log("✅ Klarna authorization hold created successfully");
       console.log("  Transaction ID:", responseData.transactionId);
@@ -1237,7 +1237,7 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
         },
         201,
       );
-    } else if (paytrailResponse.status === 201 && !responseData.transactionId) {
+    } else if ((paytrailResponse.status === 201 || paytrailResponse.status === 200) && !responseData.transactionId) {
       // 201 but missing transactionId - log and return error
       console.error("❌ Paytrail returned 201 but missing transactionId:", responseData);
       return c.json(
