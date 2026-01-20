@@ -980,7 +980,7 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
     const bodyString = JSON.stringify(paymentData);
     const { headers, signature } = createPaytrailSignature(
       "POST",
-      "/payments/klarna-express/charge",
+      "/payments/klarna/charge",
       {},
       bodyString,
     );
@@ -992,11 +992,11 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
     };
 
     console.log(
-      "Making POST request to: https://services.paytrail.com/payments/klarna-express/charge",
+      "Making POST request to: https://services.paytrail.com/payments/klarna/charge",
     );
 
     const paytrailResponse = await fetch(
-      "https://services.paytrail.com/payments/klarna-express/charge",
+      "https://services.paytrail.com/payments/klarna/charge",
       {
         method: "POST",
         headers: requestHeaders,
