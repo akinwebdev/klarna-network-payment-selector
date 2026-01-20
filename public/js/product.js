@@ -383,11 +383,6 @@ async function initializePaymentButton() {
         // Get the selected payment endpoint
         const selectedEndpoint = productPaymentEndpointSel.value;
         
-        // Check if this is a Klarna Express endpoint (charge or authorization-hold)
-        // These endpoints don't need redirectUrls as they return 201 with transactionId
-        const isKlarnaExpressEndpointForPayload = selectedEndpoint.includes('/klarna/charge') || 
-                                                   selectedEndpoint.includes('/klarna/authorization-hold');
-        
         // Build Paytrail payment request
         const paymentData = {
           stamp: stamp,
@@ -398,21 +393,16 @@ async function initializePaymentButton() {
           customer: {
             email: sessionCustomerEmail
           },
+          redirectUrls: {
+            success: `${API_BASE}/payment-complete`,
+            cancel: `${API_BASE}/product`
+          },
           providerDetails: {
             klarna: {
               networkSessionToken: klarnaNetworkSessionToken
             }
           }
         };
-        
-        // Only include redirectUrls for /payments and /payments-hpp endpoints
-        // Klarna Express endpoints (charge/authorization-hold) don't need redirectUrls
-        if (!isKlarnaExpressEndpointForPayload) {
-          paymentData.redirectUrls = {
-            success: `${API_BASE}/payment-complete`,
-            cancel: `${API_BASE}/product`
-          };
-        }
         // HPP option uses the same /api/payments endpoint but handles response differently
         const actualEndpoint = selectedEndpoint === '/payments-hpp' ? '/payments' : selectedEndpoint;
         const endpointUrl = `${API_BASE}/api${actualEndpoint}`;

@@ -944,14 +944,15 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
       JSON.stringify(paymentData, null, 2),
     );
 
-    // Validate required fields (same as /api/payments)
+    // Validate required fields
+    // Note: redirectUrls is not required for Klarna Express endpoints
+    // as they return 201 with transactionId instead of redirecting
     const requiredFields = [
       "stamp",
       "reference",
       "amount",
       "currency",
       "customer",
-      "redirectUrls",
     ];
     const missingFields = requiredFields.filter(
       (field) => !paymentData[field],
@@ -1091,14 +1092,15 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
       JSON.stringify(paymentData, null, 2),
     );
 
-    // Validate required fields (same as /api/payments)
+    // Validate required fields
+    // Note: redirectUrls is not required for Klarna Express endpoints
+    // as they return 201 with transactionId instead of redirecting
     const requiredFields = [
       "stamp",
       "reference",
       "amount",
       "currency",
       "customer",
-      "redirectUrls",
     ];
     const missingFields = requiredFields.filter(
       (field) => !paymentData[field],
