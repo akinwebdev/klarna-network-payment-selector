@@ -22,7 +22,6 @@ function initLogPanel() {
       <h3>Payment Flow Logs</h3>
       <div class="flow-logger-controls">
         <button id="flow-logger-clear" class="flow-logger-btn">Clear</button>
-        <button id="flow-logger-toggle" class="flow-logger-btn">Minimize</button>
         <button id="flow-logger-export" class="flow-logger-btn">Export</button>
       </div>
     </div>
@@ -41,7 +40,7 @@ function initLogPanel() {
       #flow-logger-panel {
         position: fixed;
         bottom: 20px;
-        right: 20px;
+        left: 20px;
         width: 600px;
         max-width: calc(100vw - 40px);
         max-height: 500px;
@@ -58,11 +57,6 @@ function initLogPanel() {
       
       #flow-logger-panel.hidden {
         display: none;
-      }
-      
-      #flow-logger-panel.minimized {
-        max-height: 50px;
-        overflow: hidden;
       }
       
       .flow-logger-header {
@@ -190,7 +184,6 @@ function initLogPanel() {
   
   // Add event listeners
   document.getElementById('flow-logger-clear').addEventListener('click', clearLogs);
-  document.getElementById('flow-logger-toggle').addEventListener('click', togglePanel);
   document.getElementById('flow-logger-export').addEventListener('click', exportLogs);
   
   // Load existing logs
@@ -330,15 +323,6 @@ export function toggleLogPanelVisibility() {
 // Expose to window for easy access from HTML
 window.toggleLogPanelVisibility = toggleLogPanelVisibility;
 
-// Toggle panel minimized state
-function togglePanel() {
-  const panel = document.getElementById('flow-logger-panel');
-  const btn = document.getElementById('flow-logger-toggle');
-  if (panel) {
-    panel.classList.toggle('minimized');
-    btn.textContent = panel.classList.contains('minimized') ? 'Expand' : 'Minimize';
-  }
-}
 
 // Export logs
 function exportLogs() {
