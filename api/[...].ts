@@ -1084,16 +1084,21 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
     }
 
     // Unexpected response format or status
-    console.error("❌ Unexpected response from Paytrail:", {
+    console.error("❌ Unexpected response from Paytrail for Klarna charge:", {
       status: paytrailResponse.status,
       statusText: paytrailResponse.statusText,
+      headers: Object.fromEntries(paytrailResponse.headers.entries()),
       data: responseData,
+      expected: "Status 200/201 with transactionId, or status 403 with transactionId and stepUpUrl",
     });
     return c.json(
       {
         error: "Unexpected response from Paytrail",
+        message: `Paytrail returned status ${paytrailResponse.status} with unexpected format. Check server logs for details.`,
         status: paytrailResponse.status,
+        statusText: paytrailResponse.statusText,
         response: responseData,
+        expected: "Status 200/201 with transactionId, or status 403 with transactionId and stepUpUrl",
         timestamp: new Date().toISOString(),
       },
       paytrailResponse.status >= 400 && paytrailResponse.status < 500
@@ -1278,16 +1283,21 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
     }
 
     // Unexpected response format or status
-    console.error("❌ Unexpected response from Paytrail:", {
+    console.error("❌ Unexpected response from Paytrail for Klarna authorization-hold:", {
       status: paytrailResponse.status,
       statusText: paytrailResponse.statusText,
+      headers: Object.fromEntries(paytrailResponse.headers.entries()),
       data: responseData,
+      expected: "Status 200/201 with transactionId, or status 403 with transactionId and stepUpUrl",
     });
     return c.json(
       {
         error: "Unexpected response from Paytrail",
+        message: `Paytrail returned status ${paytrailResponse.status} with unexpected format. Check server logs for details.`,
         status: paytrailResponse.status,
+        statusText: paytrailResponse.statusText,
         response: responseData,
+        expected: "Status 200/201 with transactionId, or status 403 with transactionId and stepUpUrl",
         timestamp: new Date().toISOString(),
       },
       paytrailResponse.status >= 400 && paytrailResponse.status < 500
