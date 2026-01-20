@@ -110,7 +110,7 @@ function buildProductPaymentRequestData() {
   const amount = parseInt(productAmountInput.value, 10) || 15900;
   const intents = getProductSelectedIntents(); // ["PAY"]
 
-  // Generate unique purchase reference for supplementary purchase data
+  // Generate unique references to prevent Klarna idempotency conflicts
   // Use high-resolution timestamp + multiple random components for uniqueness
   const timestamp = Date.now();
   const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
@@ -120,6 +120,7 @@ function buildProductPaymentRequestData() {
   
   const paymentRequestData = {
     currency,
+    paymentRequestReference: `pay_req_ref_Product_${uniqueId}`,
     intents: intents || undefined,
     amount,
     supplementaryPurchaseData: {
@@ -131,6 +132,7 @@ function buildProductPaymentRequestData() {
   };
 
   console.log("🔄 Generated Klarna payment request data:", {
+    paymentRequestReference: paymentRequestData.paymentRequestReference,
     purchaseReference: paymentRequestData.supplementaryPurchaseData.purchaseReference,
     uniqueId
   });
@@ -162,6 +164,16 @@ let isProcessingComplete = false; // Guard to prevent duplicate execution
 
 async function initializePaymentButton() {
   try {
+    console.log("🔄 initializePaymentButton called");
+    console.log("🔄 Current state:", {
+      currentSDKLocale,
+      completeEventListenerRegistered,
+      isProcessingComplete,
+      sessionCustomerEmail,
+      buttonInitCurrency,
+      buttonInitAmount
+    });
+    
     // Load config first
     const configLoaded = await loadConfig();
     if (!configLoaded) {
@@ -188,12 +200,27 @@ async function initializePaymentButton() {
       sdkConfig.locale = locale;
     }
 
+    // Reset SDK state when returning to page to ensure fresh initialization
+    // This prevents Klarna from seeing reused payment requests
+    if (completeEventListenerRegistered) {
+      console.log("🔄 User returned to page - resetting SDK state for fresh initialization");
+      resetSDKState();
+      completeEventListenerRegistered = false;
+      productPageCompleteHandler = null;
+      isProcessingComplete = false;
+    }
+    
     // Initialize SDK (will use locale from sdkConfig)
     const klarnaInstance = await ensureSDK();
     if (!klarnaInstance) {
       console.error("Klarna SDK not available");
       return;
     }
+    
+    console.log("🔄 SDK instance obtained:", {
+      isNewInstance: !completeEventListenerRegistered,
+      klarnaInstanceExists: !!klarnaInstance
+    });
 
     // Get pre-selected values
     const country = productCountrySel.value; // FI
@@ -217,7 +244,10 @@ async function initializePaymentButton() {
       return;
     }
 
+    // Clear button container to unmount any existing button
+    // This ensures we create a fresh button instance on every page load
     buttonContainer.innerHTML = "";
+    console.log("🔄 Cleared button container - creating fresh button instance");
 
     // Clear and mount on-site messaging placement above the payment button
     const osmContainer = document.getElementById("osm-placement");
@@ -239,6 +269,10 @@ async function initializePaymentButton() {
       }
     }
 
+    // Initialize button on every page load - this ensures a fresh button instance
+    // Each time the button's initiate callback is called, it will create a NEW payment request
+    console.log("🔄 Initializing Klarna payment button (fresh instance on page load)");
+    
     klarnaInstance.Payment.button({
       shape: "default",
       theme: "default",
@@ -256,14 +290,12 @@ async function initializePaymentButton() {
         }
         logFlow('event', 'Klarna Button: Initiated', initiateLogData);
         
-        // We don't send klarnaNetworkSessionToken to the backend here - the backend creates the payment request without it
-        
-        // Build payment request data with product page values
+        // Create a new payment request each time the button is initiated
+        // This ensures we get a fresh payment_request_id for each button click
+        console.log("🔄 Creating new payment request for this button initiation...");
         const paymentRequestData = buildProductPaymentRequestData();
         
         const requestBody = {
-          // Don't send klarnaNetworkSessionToken here - it's not needed for payment request creation
-          // The token from the complete event will be sent to Paytrail later
           paymentRequestData,
           returnUrl: `${API_BASE}/payment-complete`,
           appReturnUrl: null,
