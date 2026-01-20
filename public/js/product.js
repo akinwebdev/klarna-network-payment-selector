@@ -431,8 +431,14 @@ async function initializePaymentButton() {
                                        selectedEndpoint.includes('/klarna/authorization-hold');
 
         if (isKlarnaExpressEndpoint) {
+          console.log("🔍 Klarna Express endpoint detected");
+          console.log("Response status:", response.status);
+          console.log("Response data:", data);
+          console.log("Has transactionId:", !!data.transactionId);
+          
           // Handle new Klarna Express endpoints
-          if (response.status === 201 && data.transactionId) {
+          // Accept both 200 and 201 as success status codes
+          if ((response.status === 201 || response.status === 200) && data.transactionId) {
             // Success: payment created - redirect to payment-complete page with transaction ID
             console.log("✅ Klarna Express payment created successfully");
             console.log("Transaction ID:", data.transactionId);
@@ -444,7 +450,8 @@ async function initializePaymentButton() {
             // Redirect to payment-complete page with transaction ID
             const redirectUrl = `${API_BASE}/payment-complete?transaction_id=${encodeURIComponent(data.transactionId)}&status=completed`;
             console.log("Redirecting to:", redirectUrl);
-            window.location.href = redirectUrl;
+            // Use window.location.replace to ensure redirect happens
+            window.location.replace(redirectUrl);
             return;
           } else if (response.status === 403 && data.stepUpUrl) {
             // Step-up required: redirect to stepUpUrl
@@ -460,9 +467,18 @@ async function initializePaymentButton() {
             window.location.href = data.stepUpUrl;
             return;
           } else {
-            // Error case
-            logFlow('error', 'Klarna Express Payment Failed', { status: response.status, error: data });
-            throw new Error(data.message || data.error || 'Klarna Express payment failed');
+            // Error case - log detailed information
+            console.error("❌ Klarna Express payment failed or unexpected response");
+            console.error("Response status:", response.status);
+            console.error("Response data:", data);
+            console.error("Expected: status 200/201 with transactionId, or status 403 with stepUpUrl");
+            logFlow('error', 'Klarna Express Payment Failed', { 
+              status: response.status, 
+              statusText: response.statusText,
+              error: data,
+              expected: "status 200/201 with transactionId, or status 403 with stepUpUrl"
+            });
+            throw new Error(data.message || data.error || `Klarna Express payment failed: status ${response.status}`);
           }
         }
 
