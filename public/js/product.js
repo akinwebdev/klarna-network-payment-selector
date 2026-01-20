@@ -174,6 +174,19 @@ async function initializePaymentButton() {
       buttonInitAmount
     });
     
+    // Clear any stored payment_request_id from localStorage/sessionStorage to prevent reuse
+    // This ensures we always create a fresh payment request
+    try {
+      const storedPaymentRequestId = sessionStorage.getItem('paymentRequestId') || localStorage.getItem('paymentRequestId');
+      if (storedPaymentRequestId) {
+        console.log("⚠️ Found stored payment_request_id, clearing it:", storedPaymentRequestId);
+        sessionStorage.removeItem('paymentRequestId');
+        localStorage.removeItem('paymentRequestId');
+      }
+    } catch (e) {
+      console.warn("Error clearing stored payment_request_id:", e);
+    }
+    
     // Load config first
     const configLoaded = await loadConfig();
     if (!configLoaded) {
@@ -272,6 +285,9 @@ async function initializePaymentButton() {
     // Create payment request server-side BEFORE initializing the button
     // This ensures we get a fresh payment_request_id for each page load, similar to /payments flow
     console.log("🔄 Creating payment request server-side before button initialization...");
+    console.log("🔄 Page load timestamp:", new Date().toISOString());
+    console.log("🔄 Session ID check - customer email:", sessionCustomerEmail);
+    
     const paymentRequestData = buildProductPaymentRequestData();
     
     const requestBody = {
@@ -304,17 +320,25 @@ async function initializePaymentButton() {
       case "CREATED":
         paymentRequestId = res.paymentRequestId;
         console.log("✅ Payment Request ID created server-side:", paymentRequestId);
+        console.log("✅ Payment Request ID timestamp:", new Date().toISOString());
+        console.log("✅ Payment Request Reference sent:", paymentRequestData.paymentRequestReference);
         logFlow('success', 'Payment Request Created (Server-side)', { 
           payment_request_id: paymentRequestId,
-          status: res.status 
+          payment_request_reference: paymentRequestData.paymentRequestReference,
+          status: res.status,
+          timestamp: new Date().toISOString()
         });
         break;
       case "COMPLETED":
         paymentRequestId = res.paymentRequestId;
         console.log("✅ Payment Request ID created server-side (COMPLETED):", paymentRequestId);
+        console.log("✅ Payment Request ID timestamp:", new Date().toISOString());
+        console.log("✅ Payment Request Reference sent:", paymentRequestData.paymentRequestReference);
         logFlow('success', 'Payment Request Created (Server-side, COMPLETED)', { 
           payment_request_id: paymentRequestId,
-          status: res.status 
+          payment_request_reference: paymentRequestData.paymentRequestReference,
+          status: res.status,
+          timestamp: new Date().toISOString()
         });
         break;
       case "ERROR":
@@ -324,7 +348,13 @@ async function initializePaymentButton() {
     }
 
     // Now initialize button with the payment_request_id we just created
-    console.log("🔄 Initializing Klarna payment button with payment_request_id:", paymentRequestId);
+    // Store it in a const to ensure closure captures the correct value
+    const currentPaymentRequestId = paymentRequestId;
+    console.log("🔄 Initializing Klarna payment button with payment_request_id:", currentPaymentRequestId);
+    console.log("🔄 Payment request ID timestamp:", new Date().toISOString());
+    
+    // Clear button container again right before mounting to ensure clean state
+    buttonContainer.innerHTML = "";
     
     klarnaInstance.Payment.button({
       shape: "default",
@@ -332,6 +362,8 @@ async function initializePaymentButton() {
       initiationMode: "DEVICE_BEST",
       initiate: async (initiateData) => {
         console.log("Payment button initiated:", initiateData);
+        console.log("🔄 initiate callback - using payment_request_id:", currentPaymentRequestId);
+        console.log("🔄 Payment request ID timestamp in initiate:", new Date().toISOString());
         
         // Filter out klarnaNetworkSessionToken from initiate log if present
         // This token (if it exists) is from a previous session and should not be used
@@ -344,8 +376,9 @@ async function initializePaymentButton() {
         logFlow('event', 'Klarna Button: Initiated', initiateLogData);
         
         // Return the payment_request_id we created server-side (not creating a new one)
-        console.log("🔄 Using payment_request_id created server-side:", paymentRequestId);
-        return { paymentRequestId: paymentRequestId };
+        // Use const to ensure we're returning the correct value from this closure
+        console.log("🔄 Returning payment_request_id to SDK:", currentPaymentRequestId);
+        return { paymentRequestId: currentPaymentRequestId };
       },
     }).mount("#product-payment-button-container");
 
