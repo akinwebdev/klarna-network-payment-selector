@@ -842,6 +842,90 @@ async function initializePaymentButton() {
 // ============================================================================
 
 async function initializeProductPage() {
+  console.log("🔄 Product page loading - performing complete cleanup and SDK reinitialization");
+  
+  // Step 1: Clear ALL localStorage to ensure fresh start
+  try {
+    console.log("🧹 Clearing all localStorage...");
+    localStorage.clear();
+    console.log("✅ localStorage cleared");
+  } catch (e) {
+    console.warn("⚠️ Error clearing localStorage:", e);
+  }
+  
+  // Step 2: Clear sessionStorage (except for transaction IDs that might be needed)
+  try {
+    console.log("🧹 Clearing sessionStorage (keeping transaction IDs)...");
+    const transactionId = sessionStorage.getItem('paytrailTransactionId');
+    sessionStorage.clear();
+    // Restore transaction ID if it exists (might be needed for payment-complete page)
+    if (transactionId) {
+      sessionStorage.setItem('paytrailTransactionId', transactionId);
+      console.log("✅ Restored transaction ID:", transactionId);
+    }
+    console.log("✅ sessionStorage cleared");
+  } catch (e) {
+    console.warn("⚠️ Error clearing sessionStorage:", e);
+  }
+  
+  // Step 3: Unmount Klarna button if it exists
+  try {
+    console.log("🧹 Unmounting Klarna button if it exists...");
+    if (currentButtonInstance && typeof currentButtonInstance.unmount === 'function') {
+      currentButtonInstance.unmount();
+      console.log("✅ Klarna button unmounted");
+    }
+    currentButtonInstance = null;
+    
+    // Also clear button container
+    const buttonContainer = document.getElementById("product-payment-button-container");
+    if (buttonContainer) {
+      buttonContainer.innerHTML = "";
+      console.log("✅ Button container cleared");
+    }
+  } catch (e) {
+    console.warn("⚠️ Error unmounting button:", e);
+  }
+  
+  // Step 4: Remove Payment event listeners before resetting SDK
+  try {
+    console.log("🧹 Removing Payment event listeners...");
+    // Try to get klarna instance from ensureSDK (it might return null if not initialized)
+    const klarnaInstance = await ensureSDK().catch(() => null);
+    if (klarnaInstance && klarnaInstance.Payment) {
+      // Remove complete event listener if it exists
+      if (productPageCompleteHandler) {
+        klarnaInstance.Payment.off("complete", productPageCompleteHandler);
+        console.log("✅ Removed complete event listener");
+      }
+      // Also remove all listeners as a safety measure
+      klarnaInstance.Payment.off("complete");
+      console.log("✅ Removed all complete event listeners");
+    }
+  } catch (e) {
+    console.warn("⚠️ Error removing event listeners (SDK might not be initialized yet):", e);
+  }
+  
+  // Step 5: Reset SDK state completely
+  try {
+    console.log("🧹 Resetting SDK state completely...");
+    resetSDKState();
+    console.log("✅ SDK state reset");
+  } catch (e) {
+    console.warn("⚠️ Error resetting SDK state:", e);
+  }
+  
+  // Step 5: Reset all module-level state
+  console.log("🧹 Resetting module-level state...");
+  completeEventListenerRegistered = false;
+  productPageCompleteHandler = null;
+  isProcessingComplete = false;
+  currentSessionPaymentRequestId = null;
+  currentSDKLocale = null;
+  console.log("✅ Module-level state reset");
+  
+  console.log("✅ Complete cleanup finished - SDK will be reinstalled from scratch");
+  
   // Get DOM elements
   productCountrySel = document.getElementById("product-country");
   productLocaleSel = document.getElementById("product-locale");
