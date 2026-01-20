@@ -380,6 +380,14 @@ async function initializePaymentButton() {
         };
         const language = languageMap[localeCode.toLowerCase()] || 'EN';
 
+        // Get the selected payment endpoint
+        const selectedEndpoint = productPaymentEndpointSel.value;
+        
+        // Check if this is a Klarna Express endpoint (charge or authorization-hold)
+        // These endpoints don't need redirectUrls as they return 201 with transactionId
+        const isKlarnaExpressEndpointForPayload = selectedEndpoint.includes('/klarna/charge') || 
+                                                   selectedEndpoint.includes('/klarna/authorization-hold');
+        
         // Build Paytrail payment request
         const paymentData = {
           stamp: stamp,
@@ -390,19 +398,21 @@ async function initializePaymentButton() {
           customer: {
             email: sessionCustomerEmail
           },
-          redirectUrls: {
-            success: `${API_BASE}/payment-complete`,
-            cancel: `${API_BASE}/product`
-          },
           providerDetails: {
             klarna: {
               networkSessionToken: klarnaNetworkSessionToken
             }
           }
         };
-
-        // Get the selected payment endpoint
-        const selectedEndpoint = productPaymentEndpointSel.value;
+        
+        // Only include redirectUrls for /payments and /payments-hpp endpoints
+        // Klarna Express endpoints (charge/authorization-hold) don't need redirectUrls
+        if (!isKlarnaExpressEndpointForPayload) {
+          paymentData.redirectUrls = {
+            success: `${API_BASE}/payment-complete`,
+            cancel: `${API_BASE}/product`
+          };
+        }
         // HPP option uses the same /api/payments endpoint but handles response differently
         const actualEndpoint = selectedEndpoint === '/payments-hpp' ? '/payments' : selectedEndpoint;
         const endpointUrl = `${API_BASE}/api${actualEndpoint}`;
@@ -437,8 +447,14 @@ async function initializePaymentButton() {
             console.log("✅ Klarna Express payment created successfully");
             console.log("Transaction ID:", data.transactionId);
             logFlow('success', 'Klarna Express Payment Created', { transactionId: data.transactionId });
+            
+            // Store transaction ID in sessionStorage as backup
+            sessionStorage.setItem('paytrailTransactionId', data.transactionId);
+            
             // Redirect to payment-complete page with transaction ID
-            window.location.href = `${API_BASE}/payment-complete?transaction_id=${encodeURIComponent(data.transactionId)}&status=completed`;
+            const redirectUrl = `${API_BASE}/payment-complete?transaction_id=${encodeURIComponent(data.transactionId)}&status=completed`;
+            console.log("Redirecting to:", redirectUrl);
+            window.location.href = redirectUrl;
             return;
           } else if (response.status === 403 && data.stepUpUrl) {
             // Step-up required: redirect to stepUpUrl

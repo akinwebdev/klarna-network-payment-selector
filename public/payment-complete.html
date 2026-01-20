@@ -401,11 +401,17 @@
       // Parse URL parameters to display transaction info
       (function () {
         const params = new URLSearchParams(window.location.search);
+        console.log("Payment-complete page - URL search params:", window.location.search);
+        console.log("Payment-complete page - transaction_id param:", params.get("transaction_id"));
+        console.log("Payment-complete page - sessionStorage:", sessionStorage.getItem("paytrailTransactionId"));
+        
         // Check URL parameters first, then sessionStorage
         const transactionId = params.get("transaction_id") ||
           params.get("payment_request_id") ||
           sessionStorage.getItem("paytrailTransactionId");
         const status = params.get("status");
+
+        console.log("Payment-complete page - Final transactionId:", transactionId);
 
         if (transactionId) {
           document.getElementById("order-info").style.display = "block";
@@ -413,6 +419,8 @@
             transactionId;
           // Clear from sessionStorage after displaying
           sessionStorage.removeItem("paytrailTransactionId");
+        } else {
+          console.warn("⚠️ No transaction ID found in URL params or sessionStorage");
         }
 
         if (status) {
