@@ -407,8 +407,8 @@ async function initializePaymentButton() {
         const actualEndpoint = selectedEndpoint === '/payments-hpp' ? '/payments' : selectedEndpoint;
         const endpointUrl = `${API_BASE}/api${actualEndpoint}`;
         
-        console.log(`Calling Paytrail ${endpointUrl} with:`, JSON.stringify(paymentData, null, 2));
-        logFlow('request', `POST ${endpointUrl} (Paytrail)`, paymentData);
+        console.log(`Calling backend API ${endpointUrl} with:`, JSON.stringify(paymentData, null, 2));
+        logFlow('request', `POST ${endpointUrl} (Backend API)`, paymentData);
 
         // Call Paytrail payment endpoint
         const response = await fetch(endpointUrl, {
