@@ -18,6 +18,9 @@ let productCurrencyPill;
 let productPriceDisplay;
 let productPaymentEndpointSel;
 
+// Track current session's payment_request_id to validate tokens are from current session
+let currentSessionPaymentRequestId = null;
+
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
 // ============================================================================
@@ -221,6 +224,7 @@ async function initializePaymentButton() {
       completeEventListenerRegistered = false;
       productPageCompleteHandler = null;
       isProcessingComplete = false;
+      currentSessionPaymentRequestId = null; // Clear current session payment request ID
     }
     
     // Initialize SDK (will use locale from sdkConfig)
@@ -349,9 +353,12 @@ async function initializePaymentButton() {
 
     // Now initialize button with the payment_request_id we just created
     // Store it in a const to ensure closure captures the correct value
+    // Also update module-level variable so event handler can validate
     const currentPaymentRequestId = paymentRequestId;
+    currentSessionPaymentRequestId = paymentRequestId; // Update module-level variable
     console.log("🔄 Initializing Klarna payment button with payment_request_id:", currentPaymentRequestId);
     console.log("🔄 Payment request ID timestamp:", new Date().toISOString());
+    console.log("🔄 Updated currentSessionPaymentRequestId:", currentSessionPaymentRequestId);
     
     // Clear button container again right before mounting to ensure clean state
     buttonContainer.innerHTML = "";
@@ -389,6 +396,7 @@ async function initializePaymentButton() {
       console.log("🔵 Registering product page complete event listener (first time)");
       
       // Store handler reference to prevent duplicate registrations
+      // Use module-level currentSessionPaymentRequestId to validate token is from current session
       productPageCompleteHandler = async (paymentRequest) => {
       // Guard against duplicate execution
       if (isProcessingComplete) {
@@ -398,9 +406,41 @@ async function initializePaymentButton() {
       isProcessingComplete = true;
       
       console.log("🟢 Payment complete event received on product page:", paymentRequest);
-      logFlow('event', 'Klarna Button: Payment Complete', paymentRequest);
+      console.log("🟢 Complete event timestamp:", new Date().toISOString());
+      console.log("🟢 Current session payment_request_id:", currentSessionPaymentRequestId);
+      console.log("🟢 Payment request ID from event:", paymentRequest?.paymentRequestId);
+      logFlow('event', 'Klarna Button: Payment Complete', {
+        ...paymentRequest,
+        currentSessionPaymentRequestId: currentSessionPaymentRequestId,
+        eventTimestamp: new Date().toISOString()
+      });
       console.log("Full paymentRequest object:", JSON.stringify(paymentRequest, null, 2));
       console.log("paymentRequest.stateContext:", paymentRequest?.stateContext);
+      
+      // Validate that this complete event is for the current session's payment request
+      // If the payment_request_id doesn't match, this might be a stale event from a previous session
+      // Use module-level variable to check against current session
+      if (paymentRequest?.paymentRequestId && currentSessionPaymentRequestId && 
+          paymentRequest.paymentRequestId !== currentSessionPaymentRequestId) {
+        console.warn("⚠️ WARNING: Payment request ID mismatch!");
+        console.warn("  Expected (current session):", currentSessionPaymentRequestId);
+        console.warn("  Received (from event):", paymentRequest.paymentRequestId);
+        console.warn("  This might be a stale event from a previous session - ignoring");
+        console.warn("  Event timestamp:", new Date().toISOString());
+        logFlow('warning', 'Klarna Button: Payment Request ID Mismatch', {
+          expected: currentSessionPaymentRequestId,
+          received: paymentRequest.paymentRequestId,
+          note: 'This might be a stale event from a previous session - token will be ignored',
+          eventTimestamp: new Date().toISOString()
+        });
+        isProcessingComplete = false; // Reset flag so we can process the correct event
+        return false;
+      }
+      
+      // Also log if payment_request_id matches to confirm we're using the correct token
+      if (paymentRequest?.paymentRequestId === currentSessionPaymentRequestId) {
+        console.log("✅ Payment request ID matches current session - token is valid");
+      }
       
       // Extract Klarna Network Session Token from stateContext
       // Based on Paytrail project, the token is in stateContext.interoperabilityToken
@@ -419,16 +459,22 @@ async function initializePaymentButton() {
         console.error("Available paymentRequest keys:", Object.keys(paymentRequest || {}));
         console.error("Available stateContext keys:", Object.keys(paymentRequest?.stateContext || {}));
         alert("Payment completed but no session token found. Please check console for details.");
+        isProcessingComplete = false; // Reset flag
         return false;
       }
 
-      console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
+      console.log("✅ Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
+      console.log("🔄 Session token timestamp:", new Date().toISOString());
       console.log("🔄 Session token length:", klarnaNetworkSessionToken?.length);
       console.log("🔄 Session token first 20 chars:", klarnaNetworkSessionToken?.substring(0, 20));
+      console.log("🔄 Session token last 20 chars:", klarnaNetworkSessionToken?.substring(klarnaNetworkSessionToken.length - 20));
       logFlow('info', 'Klarna Button: Session Token Extracted', { 
         token: klarnaNetworkSessionToken,
         tokenLength: klarnaNetworkSessionToken?.length,
-        tokenPreview: klarnaNetworkSessionToken?.substring(0, 20) + '...'
+        tokenPreview: klarnaNetworkSessionToken?.substring(0, 20) + '...',
+        tokenSuffix: '...' + klarnaNetworkSessionToken?.substring(klarnaNetworkSessionToken.length - 20),
+        timestamp: new Date().toISOString(),
+        paymentRequestId: paymentRequest?.paymentRequestId
       });
 
       // Check if user wants to skip Paytrail payment request (for testing)
