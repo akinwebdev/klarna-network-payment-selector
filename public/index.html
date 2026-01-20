@@ -2560,7 +2560,7 @@
                 if (document.getElementById('itemReference').value) item.reference = document.getElementById('itemReference').value;
 
                 // Build redirect URLs
-                const redirectSuccess = document.getElementById('redirectSuccess').value || window.location.origin + '/payment-success.html';
+                const redirectSuccess = document.getElementById('redirectSuccess').value || window.location.origin + '/payment-complete';
                 const redirectCancel = document.getElementById('redirectCancel').value || window.location.origin + '/payment-cancel.html';
 
                 // Use stamp and reference values directly from form (already have UUIDs from page load)

@@ -406,10 +406,14 @@
         console.log("Payment-complete page - sessionStorage:", sessionStorage.getItem("paytrailTransactionId"));
         
         // Check URL parameters first, then sessionStorage
+        // Support both our format (transaction_id) and Paytrail callback format (checkout-transaction-id)
         const transactionId = params.get("transaction_id") ||
+          params.get("checkout-transaction-id") ||
           params.get("payment_request_id") ||
           sessionStorage.getItem("paytrailTransactionId");
-        const status = params.get("status");
+        // Support both our format (status) and Paytrail callback format (checkout-status)
+        const status = params.get("status") || 
+          (params.get("checkout-status") === "ok" ? "completed" : params.get("checkout-status"));
 
         console.log("Payment-complete page - Final transactionId:", transactionId);
 
