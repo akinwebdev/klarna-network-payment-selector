@@ -1949,6 +1949,22 @@
                 }
             };
             
+            // Add Klarna provider details if provided
+            const klarnaSessionToken = document.getElementById('klarnaSessionToken')?.value.trim();
+            const klarnaData = document.getElementById('klarnaData')?.value.trim();
+            if (klarnaSessionToken || klarnaData) {
+                paymentData.providerDetails = {
+                    klarna: {}
+                };
+                if (klarnaSessionToken) {
+                    // Paytrail API expects networkSessionToken, not sessionToken
+                    paymentData.providerDetails.klarna.networkSessionToken = klarnaSessionToken;
+                }
+                if (klarnaData) {
+                    paymentData.providerDetails.klarna.data = klarnaData;
+                }
+            }
+            
             try {
                 const response = await fetch('/api/payments', {
                     method: 'POST',
