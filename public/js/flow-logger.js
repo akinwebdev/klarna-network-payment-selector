@@ -40,9 +40,9 @@ function initLogPanel() {
       #flow-logger-panel {
         position: fixed;
         bottom: 20px;
-        left: 20px;
+        right: 80px;
         width: 600px;
-        max-width: calc(100vw - 40px);
+        max-width: calc(100vw - 100px);
         max-height: 500px;
         background: white;
         border: 1px solid #E0E0E0;
