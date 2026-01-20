@@ -110,18 +110,30 @@ function buildProductPaymentRequestData() {
   const amount = parseInt(productAmountInput.value, 10) || 15900;
   const intents = getProductSelectedIntents(); // ["PAY"]
 
+  // Generate unique purchase reference for supplementary purchase data
+  // Use high-resolution timestamp + multiple random components for uniqueness
+  const timestamp = Date.now();
+  const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
+  const randomStr1 = Math.random().toString(36).substr(2, 9);
+  const randomStr2 = Math.random().toString(36).substr(2, 9);
+  const uniqueId = `${timestamp}_${performanceNow}_${randomStr1}_${randomStr2}`;
+  
   const paymentRequestData = {
     currency,
-    paymentRequestReference: `pay_req_ref_Product_${Date.now()}`,
     intents: intents || undefined,
     amount,
     supplementaryPurchaseData: {
-      purchaseReference: `purchase_ref_Product_${Date.now()}`,
+      purchaseReference: `purchase_ref_Product_${uniqueId}`,
       customer: {
         email: sessionCustomerEmail
       },
     },
   };
+
+  console.log("🔄 Generated Klarna payment request data:", {
+    purchaseReference: paymentRequestData.supplementaryPurchaseData.purchaseReference,
+    uniqueId
+  });
 
   return paymentRequestData;
 }
@@ -333,7 +345,13 @@ async function initializePaymentButton() {
       }
 
       console.log("Klarna Network Session Token extracted:", klarnaNetworkSessionToken);
-      logFlow('info', 'Klarna Button: Session Token Extracted', { token: klarnaNetworkSessionToken });
+      console.log("🔄 Session token length:", klarnaNetworkSessionToken?.length);
+      console.log("🔄 Session token first 20 chars:", klarnaNetworkSessionToken?.substring(0, 20));
+      logFlow('info', 'Klarna Button: Session Token Extracted', { 
+        token: klarnaNetworkSessionToken,
+        tokenLength: klarnaNetworkSessionToken?.length,
+        tokenPreview: klarnaNetworkSessionToken?.substring(0, 20) + '...'
+      });
 
       // Check if user wants to skip Paytrail payment request (for testing)
       const skipPaytrailCheckbox = document.getElementById('skip-paytrail-request');
@@ -367,9 +385,18 @@ async function initializePaymentButton() {
           console.warn("⚠️ This may cause Klarna to not recognize the completed payment.");
         }
         
-        // Generate unique references
-        const stamp = `stamp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const reference = `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Generate unique references for each payment attempt
+        // Use high-resolution timestamp + multiple random components to ensure uniqueness
+        // This prevents idempotency conflicts when user tries again after returning to page
+        const timestamp = Date.now();
+        const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
+        const randomStr1 = Math.random().toString(36).substr(2, 9);
+        const randomStr2 = Math.random().toString(36).substr(2, 9);
+        const uniqueId = `${timestamp}_${performanceNow}_${randomStr1}_${randomStr2}`;
+        const stamp = `stamp_${uniqueId}`;
+        const reference = `ref_${uniqueId}`;
+        
+        console.log("🔄 Generated new payment references:", { stamp, reference, uniqueId });
 
         // Map locale to Paytrail language code (must be uppercase: FI, SV, or EN)
         const localeCode = productLocaleSel.value.split('-')[0] || 'en';
