@@ -433,12 +433,12 @@ async function initializePaymentButton() {
         if (isKlarnaExpressEndpoint) {
           // Handle new Klarna Express endpoints
           if (response.status === 201 && data.transactionId) {
-            // Success: payment created
+            // Success: payment created - redirect to payment-complete page with transaction ID
             console.log("✅ Klarna Express payment created successfully");
             console.log("Transaction ID:", data.transactionId);
             logFlow('success', 'Klarna Express Payment Created', { transactionId: data.transactionId });
-            alert(`Payment created successfully! Transaction ID: ${data.transactionId}`);
-            isProcessingComplete = false; // Reset flag
+            // Redirect to payment-complete page with transaction ID
+            window.location.href = `${API_BASE}/payment-complete?transaction_id=${encodeURIComponent(data.transactionId)}&status=completed`;
             return;
           } else if (response.status === 403 && data.stepUpUrl) {
             // Step-up required: redirect to stepUpUrl
@@ -480,6 +480,13 @@ async function initializePaymentButton() {
           if (data.href) {
             console.log("✅ Found href, redirecting to HPP URL from Paytrail response:", data.href);
             logFlow('info', 'Redirecting to HPP URL', { href: data.href });
+            
+            // Store transaction ID in sessionStorage for payment-complete page
+            if (data.transactionId) {
+              sessionStorage.setItem('paytrailTransactionId', data.transactionId);
+              console.log("Stored transaction ID for payment-complete page:", data.transactionId);
+            }
+            
             // For HPP, redirect immediately using GET request (window.location.href uses GET)
             // Stop all further execution by redirecting immediately
             window.location.replace(data.href);
@@ -517,6 +524,12 @@ async function initializePaymentButton() {
             url: klarnaProvider.url,
             parameters: klarnaProvider.parameters
           });
+
+          // Store transaction ID in sessionStorage for payment-complete page
+          if (data.transactionId) {
+            sessionStorage.setItem('paytrailTransactionId', data.transactionId);
+            console.log("Stored transaction ID for payment-complete page:", data.transactionId);
+          }
 
           // Create a form to POST to the provider URL with all parameters
           // This matches how the homepage handles provider redirects

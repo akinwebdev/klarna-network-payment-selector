@@ -401,14 +401,18 @@
       // Parse URL parameters to display transaction info
       (function () {
         const params = new URLSearchParams(window.location.search);
+        // Check URL parameters first, then sessionStorage
         const transactionId = params.get("transaction_id") ||
-          params.get("payment_request_id");
+          params.get("payment_request_id") ||
+          sessionStorage.getItem("paytrailTransactionId");
         const status = params.get("status");
 
         if (transactionId) {
           document.getElementById("order-info").style.display = "block";
           document.getElementById("transaction-id").textContent =
             transactionId;
+          // Clear from sessionStorage after displaying
+          sessionStorage.removeItem("paytrailTransactionId");
         }
 
         if (status) {
