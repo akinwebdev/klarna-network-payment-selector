@@ -269,9 +269,62 @@ async function initializePaymentButton() {
       }
     }
 
-    // Initialize button on every page load - this ensures a fresh button instance
-    // Each time the button's initiate callback is called, it will create a NEW payment request
-    console.log("🔄 Initializing Klarna payment button (fresh instance on page load)");
+    // Create payment request server-side BEFORE initializing the button
+    // This ensures we get a fresh payment_request_id for each page load, similar to /payments flow
+    console.log("🔄 Creating payment request server-side before button initialization...");
+    const paymentRequestData = buildProductPaymentRequestData();
+    
+    const requestBody = {
+      paymentRequestData,
+      returnUrl: `${API_BASE}/payment-complete`,
+      appReturnUrl: null,
+      authMode: "SUB_PARTNER", // Product page only uses SUB_PARTNER mode
+    };
+
+    const endpoint = "/api/payment-request";
+    logFlow('request', `POST ${endpoint}`, requestBody);
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+
+    const res = await response.json();
+    logFlow('response', `POST ${endpoint}`, { status: response.status, statusText: response.statusText, data: res });
+
+    if (!response.ok) {
+      console.error("Failed to create payment request:", res);
+      throw new Error(res.message || "Payment request failed");
+    }
+
+    // Handle SUB_PARTNER response and get payment_request_id
+    let paymentRequestId;
+    switch (res.status) {
+      case "CREATED":
+        paymentRequestId = res.paymentRequestId;
+        console.log("✅ Payment Request ID created server-side:", paymentRequestId);
+        logFlow('success', 'Payment Request Created (Server-side)', { 
+          payment_request_id: paymentRequestId,
+          status: res.status 
+        });
+        break;
+      case "COMPLETED":
+        paymentRequestId = res.paymentRequestId;
+        console.log("✅ Payment Request ID created server-side (COMPLETED):", paymentRequestId);
+        logFlow('success', 'Payment Request Created (Server-side, COMPLETED)', { 
+          payment_request_id: paymentRequestId,
+          status: res.status 
+        });
+        break;
+      case "ERROR":
+        throw new Error(res.message || "Payment request error");
+      default:
+        throw new Error(`Unexpected payment request status: ${res.status}`);
+    }
+
+    // Now initialize button with the payment_request_id we just created
+    console.log("🔄 Initializing Klarna payment button with payment_request_id:", paymentRequestId);
     
     klarnaInstance.Payment.button({
       shape: "default",
@@ -290,59 +343,9 @@ async function initializePaymentButton() {
         }
         logFlow('event', 'Klarna Button: Initiated', initiateLogData);
         
-        // Create a new payment request each time the button is initiated
-        // This ensures we get a fresh payment_request_id for each button click
-        console.log("🔄 Creating new payment request for this button initiation...");
-        const paymentRequestData = buildProductPaymentRequestData();
-        
-        const requestBody = {
-          paymentRequestData,
-          returnUrl: `${API_BASE}/payment-complete`,
-          appReturnUrl: null,
-          authMode: "SUB_PARTNER", // Product page only uses SUB_PARTNER mode
-        };
-
-        // Product page only uses SUB_PARTNER mode with /api/payment-request endpoint
-        const endpoint = "/api/payment-request";
-
-        logFlow('request', `POST ${endpoint}`, requestBody);
-
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        });
-
-        const res = await response.json();
-        logFlow('response', `POST ${endpoint}`, { status: response.status, statusText: response.statusText, data: res });
-
-        if (!response.ok) {
-          throw new Error(res.message || "Payment request failed");
-        }
-
-        // Handle SUB_PARTNER response
-        switch (res.status) {
-          case "CREATED":
-            console.log("✅ Payment Request ID received:", res.paymentRequestId);
-            // Log the payment_request_id to flow logs
-            logFlow('success', 'Payment Request Created', { 
-              payment_request_id: res.paymentRequestId,
-              status: res.status 
-            });
-            return { paymentRequestId: res.paymentRequestId };
-          case "COMPLETED":
-            console.log("✅ Payment Request ID received (COMPLETED):", res.paymentRequestId);
-            // Log the payment_request_id to flow logs
-            logFlow('success', 'Payment Request Created (COMPLETED)', { 
-              payment_request_id: res.paymentRequestId,
-              status: res.status 
-            });
-            return { returnUrl: res.successUrl };
-          case "ERROR":
-            throw new Error(res.message || "Payment request error");
-          default:
-            throw new Error(`Unexpected payment request status: ${res.status}`);
-        }
+        // Return the payment_request_id we created server-side (not creating a new one)
+        console.log("🔄 Using payment_request_id created server-side:", paymentRequestId);
+        return { paymentRequestId: paymentRequestId };
       },
     }).mount("#product-payment-button-container");
 
