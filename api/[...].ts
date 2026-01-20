@@ -714,9 +714,12 @@ async function makePaytrailRequest(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
+      const error = new Error(
         errorData.message || `Paytrail API error: ${response.statusText}`,
-      );
+      ) as Error & { status?: number; errorData?: unknown };
+      error.status = response.status;
+      error.errorData = errorData;
+      throw error;
     }
 
     const data = await response.json();
@@ -911,14 +914,23 @@ app.post("/api/payments", async (c: Context) => {
       error instanceof Error ? error.message : String(error),
     );
 
+    // Extract error details if available
+    const errorWithStatus = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = errorWithStatus.status;
+    const paytrailErrorData = errorWithStatus.errorData;
+
     // If API call fails, return error details
     const errorResponse = {
       error: "Failed to create payment with Paytrail API",
       message: error instanceof Error ? error.message : String(error),
+      ...(paytrailStatus && { paytrailStatus }),
+      ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
       timestamp: new Date().toISOString(),
     };
 
-    return c.json(errorResponse, 500);
+    // Return appropriate status code (use Paytrail's status if available, otherwise 500)
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(errorResponse, statusCode);
   }
 });
 
@@ -1076,6 +1088,19 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
         {
           error: "Unexpected response format from Paytrail",
           message: "Response status is 403 but transactionId or stepUpUrl is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    } else if (paytrailResponse.status === 500) {
+      // Paytrail server error
+      console.error("❌ Paytrail returned 500 server error for Klarna charge:", responseData);
+      return c.json(
+        {
+          error: "Paytrail server error",
+          message: responseData.message || responseData.error || "Paytrail API returned a server error",
+          status: 500,
           response: responseData,
           timestamp: new Date().toISOString(),
         },
@@ -1275,6 +1300,19 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
         {
           error: "Unexpected response format from Paytrail",
           message: "Response status is 403 but transactionId or stepUpUrl is missing",
+          response: responseData,
+          timestamp: new Date().toISOString(),
+        },
+        500,
+      );
+    } else if (paytrailResponse.status === 500) {
+      // Paytrail server error
+      console.error("❌ Paytrail returned 500 server error for Klarna authorization-hold:", responseData);
+      return c.json(
+        {
+          error: "Paytrail server error",
+          message: responseData.message || responseData.error || "Paytrail API returned a server error",
+          status: 500,
           response: responseData,
           timestamp: new Date().toISOString(),
         },
