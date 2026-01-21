@@ -1761,7 +1761,7 @@
         <div id="payment-response-modal" class="payment-response-modal" onclick="if(event.target === this) closePaymentResponseModal()">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Paytrail /payments API Response</h3>
+                    <h3>Paytrail /payments API Request & Response</h3>
                     <button class="modal-close-btn" onclick="closePaymentResponseModal()" title="Close">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2677,6 +2677,7 @@
                 console.log('  Full response data:', data);
                     
                     currentPaymentData = data;
+                    currentPaymentRequestPayload = paymentData; // Store request payload for modal
                     showPaymentResponse(data);
                 } else {
                     // Show more detailed error message
@@ -3176,31 +3177,33 @@
 
         // Store the request reference for comparison
         let requestReference = null;
+        // Store the request payload for display in modal
+        let currentPaymentRequestPayload = null;
 
         function showPaymentResponseModal() {
             const modal = document.getElementById('payment-response-modal');
             const jsonContent = document.getElementById('modal-json-content');
             
-            if (currentPaymentData) {
-                // Create a comparison object showing request vs response
-                const comparison = {
-                    note: '⚠️ IMPORTANT: Paytrail returns their checkout reference in the "reference" field, NOT your merchant reference',
+            if (currentPaymentData || currentPaymentRequestPayload) {
+                // Create an object showing both request payload and response
+                const requestAndResponse = {
                     request: {
-                        merchantReference: requestReference || 'Not available',
-                        note: 'Your merchant reference sent in the /payments request'
+                        endpoint: 'POST /api/payments',
+                        payload: currentPaymentRequestPayload || 'Request payload not available',
+                        note: 'This is the actual request payload sent to Paytrail\'s /payments endpoint'
                     },
                     response: {
-                        reference: currentPaymentData.reference || 'Not in response',
-                        note: '⚠️ This is Paytrail\'s checkout reference (e.g., "8963228992"), NOT your merchant reference',
-                        transactionId: currentPaymentData.transactionId || 'Not in response',
-                        note2: 'Use transactionId to query payment status or reports to retrieve your original merchant reference',
-                        checkoutReference: currentPaymentData.checkoutReference || 'Not in response (if present, this is also Paytrail\'s reference)'
-                    },
-                    fullResponse: currentPaymentData
+                        data: currentPaymentData || 'Response not available',
+                        note: '⚠️ IMPORTANT: Paytrail returns their checkout reference in the "reference" field, NOT your merchant reference',
+                        merchantReference: requestReference || 'Not available',
+                        paytrailReference: currentPaymentData?.reference || 'Not in response',
+                        transactionId: currentPaymentData?.transactionId || 'Not in response',
+                        note2: 'Use transactionId to query payment status or reports to retrieve your original merchant reference'
+                    }
                 };
                 
-                // Format the comparison with proper indentation
-                jsonContent.textContent = JSON.stringify(comparison, null, 2);
+                // Format with proper indentation
+                jsonContent.textContent = JSON.stringify(requestAndResponse, null, 2);
                 modal.classList.add('active');
             } else {
                 jsonContent.textContent = 'No payment data available. Please create a payment first.';
