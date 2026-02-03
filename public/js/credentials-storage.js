@@ -9,7 +9,8 @@
     MERCHANT_ID: 'paytrail_merchant_id',
     SECRET_KEY: 'paytrail_secret_key',
     KLARNA_WEBSDK_CLIENT_ID: 'klarna_websdk_client_id',
-    KLARNA_API_KEY: 'klarna_api_key'
+    KLARNA_API_KEY: 'klarna_api_key',
+    KLARNA_ENVIRONMENT: 'klarna_environment'
   };
 
   function get(key) {

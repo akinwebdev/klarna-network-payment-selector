@@ -30,10 +30,13 @@ import { logBackendCall, logBackendError } from "./logging.js";
 export async function fetchSdkToken() {
   try {
     const country = getCurrentCountry();
+    const klarnaEnvironment = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get)
+      ? (window.CredentialStorage.get("klarna_environment") || "playground")
+      : "playground";
     const response = await fetch(`${API_BASE}/api/identity/sdk-tokens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country, authMode: currentAuthMode }),
+      body: JSON.stringify({ country, authMode: currentAuthMode, klarnaEnvironment }),
     });
 
     const res = await response.json();

@@ -131,6 +131,12 @@ async function fetchApiPresentation() {
       queryParams.append("auth_mode", currentAuthMode);
     }
 
+    // Klarna environment (playground | production) from credentials
+    const klarnaEnvironment = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get)
+      ? (window.CredentialStorage.get("klarna_environment") || "playground")
+      : "playground";
+    queryParams.append("klarna_environment", klarnaEnvironment);
+
     const response = await fetch(
       `${API_BASE}/api/presentation?${queryParams.toString()}`,
     );

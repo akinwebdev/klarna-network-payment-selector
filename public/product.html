@@ -392,6 +392,19 @@
           <label for="paytrail-modal-klarna-api-key" style="font-size: 0.85rem; color: #0B051D;">Klarna API Key</label>
           <input type="password" id="paytrail-modal-klarna-api-key" placeholder="Klarna API Key (optional)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
         </div>
+        <div style="margin-bottom: 1rem;">
+          <span style="font-size: 0.85rem; color: #0B051D;">Environment (Klarna API)</span>
+          <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="radio" name="paytrail-modal-klarna-environment-product" value="playground" id="paytrail-modal-env-playground-product">
+              Playground
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="radio" name="paytrail-modal-klarna-environment-product" value="production" id="paytrail-modal-env-production-product">
+              Production
+            </label>
+          </div>
+        </div>
         <div style="display: flex; gap: 0.5rem;">
           <button type="button" style="flex: 1; padding: 0.75rem; background: #0B051D; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" onclick="window.savePaytrailCredentialsFromModalProduct && window.savePaytrailCredentialsFromModalProduct()">Save</button>
           <button type="button" style="flex: 1; padding: 0.75rem; background: #E4E3DF; color: #0B051D; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" onclick="window.closePaytrailCredentialsModalProduct && window.closePaytrailCredentialsModalProduct()">Close</button>
@@ -408,6 +421,7 @@
         var PAYTRAIL_SK = 'paytrail_secret_key';
         var KLARNA_CLIENT_ID = 'klarna_websdk_client_id';
         var KLARNA_API_KEY = 'klarna_api_key';
+        var KLARNA_ENVIRONMENT = 'klarna_environment';
         function getCred(key) { return window.CredentialStorage && window.CredentialStorage.get(key); }
         function setCred(key, val) { if (window.CredentialStorage) window.CredentialStorage.set(key, val); }
         function hasCreds() {
@@ -436,10 +450,15 @@
           var skEl = document.getElementById('paytrail-modal-secret-key');
           var klarnaEl = document.getElementById('paytrail-modal-klarna-client-id');
           var klarnaKeyEl = document.getElementById('paytrail-modal-klarna-api-key');
+          var env = getCred(KLARNA_ENVIRONMENT) || 'playground';
           if (midEl) midEl.value = getCred(PAYTRAIL_MID) || '';
           if (skEl) skEl.value = getCred(PAYTRAIL_SK) || '';
           if (klarnaEl) klarnaEl.value = getCred(KLARNA_CLIENT_ID) || '';
           if (klarnaKeyEl) klarnaKeyEl.value = getCred(KLARNA_API_KEY) || '';
+          var envPlayground = document.getElementById('paytrail-modal-env-playground-product');
+          var envProduction = document.getElementById('paytrail-modal-env-production-product');
+          if (envPlayground) envPlayground.checked = (env !== 'production');
+          if (envProduction) envProduction.checked = (env === 'production');
           if (modal) modal.style.display = 'flex';
         };
         window.closePaytrailCredentialsModalProduct = function() {
@@ -461,10 +480,13 @@
           }
           var klarnaId = klarnaEl ? klarnaEl.value.trim() : '';
           var klarnaKey = klarnaKeyEl ? klarnaKeyEl.value.trim() : '';
+          var envEl = document.querySelector('input[name="paytrail-modal-klarna-environment-product"]:checked');
+          var env = (envEl && envEl.value) || 'playground';
           setCred(PAYTRAIL_MID, mid);
           setCred(PAYTRAIL_SK, sk);
           setCred(KLARNA_CLIENT_ID, klarnaId || null);
           setCred(KLARNA_API_KEY, klarnaKey || null);
+          setCred(KLARNA_ENVIRONMENT, env);
           window.closePaytrailCredentialsModalProduct();
           updateBanner();
         };

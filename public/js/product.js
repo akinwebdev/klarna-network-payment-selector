@@ -299,12 +299,14 @@ async function initializePaymentButton() {
     
     const klarnaClientId = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_websdk_client_id") : null) || localStorage.getItem("klarna_websdk_client_id") || sessionStorage.getItem("klarna_websdk_client_id") || undefined;
     const klarnaApiKey = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_api_key") : null) || localStorage.getItem("klarna_api_key") || sessionStorage.getItem("klarna_api_key") || undefined;
+    const klarnaEnvironment = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_environment") : null) || localStorage.getItem("klarna_environment") || sessionStorage.getItem("klarna_environment") || "playground";
 
     const requestBody = {
       paymentRequestData,
       returnUrl: `${API_BASE}/payment-complete`,
       appReturnUrl: null,
       authMode: "SUB_PARTNER", // Product page only uses SUB_PARTNER mode
+      klarnaEnvironment,
       ...(klarnaClientId && { klarnaClientId }),
       ...(klarnaApiKey && { klarnaApiKey }),
     };

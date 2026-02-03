@@ -29,8 +29,14 @@ const getEnv = (key: string): string => {
   return process.env[key] || "";
 };
 
-const KLARNA_API_BASE_URL = getEnv("KLARNA_API_BASE_URL") ||
-  "https://api-global.test.klarna.com";
+const KLARNA_BASE_PLAYGROUND = "https://api-global.test.klarna.com";
+const KLARNA_BASE_PRODUCTION = "https://api-global.klarna.com";
+const KLARNA_API_BASE_URL = getEnv("KLARNA_API_BASE_URL") || KLARNA_BASE_PLAYGROUND;
+
+/** Resolve Klarna API base URL from client-provided environment (playground | production). */
+function getKlarnaBaseUrl(env: string | undefined): string {
+  return env === "production" ? KLARNA_BASE_PRODUCTION : KLARNA_BASE_PLAYGROUND;
+}
 
 // Sub Partner credentials
 const SP_CLIENT_ID = getEnv("SP_CLIENT_ID");
@@ -179,7 +185,7 @@ app.get("/api/config", (c) => {
 app.post("/api/identity/sdk-tokens", async (c) => {
   try {
     const body = await c.req.json();
-    const { country } = body;
+    const { country, klarnaEnvironment } = body;
 
     let auth: AuthConfig;
     try {
@@ -194,7 +200,8 @@ app.post("/api/identity/sdk-tokens", async (c) => {
     const customerToken = country ? getCustomerTokenForCountry(country) : null;
 
     const apiPath = `/v2/identity/sdk-tokens`;
-    const requestUrl = `${KLARNA_API_BASE_URL}${apiPath}`;
+    const klarnaBaseUrl = getKlarnaBaseUrl(klarnaEnvironment);
+    const requestUrl = `${klarnaBaseUrl}${apiPath}`;
 
     const headers: Record<string, string> = {
       "Authorization": `Basic ${auth.apiKey}`,
@@ -275,6 +282,7 @@ app.get("/api/presentation", async (c) => {
     const includeCustomerToken =
       c.req.query("include_customer_token") === "true";
     const country = c.req.query("country");
+    const klarnaEnvironment = c.req.query("klarna_environment");
 
     if (!currency) {
       return c.json({
@@ -317,8 +325,9 @@ app.get("/api/presentation", async (c) => {
     }
 
     const apiPath = `/v2/payment/presentation`;
+    const klarnaBaseUrl = getKlarnaBaseUrl(klarnaEnvironment);
     const requestUrl =
-      `${KLARNA_API_BASE_URL}${apiPath}?${queryParams.toString()}`;
+      `${klarnaBaseUrl}${apiPath}?${queryParams.toString()}`;
 
     const headers: Record<string, string> = {
       "Authorization": `Basic ${auth.apiKey}`,
@@ -394,6 +403,7 @@ app.post("/api/payment-request", async (c) => {
     const {
       klarnaClientId,
       klarnaApiKey,
+      klarnaEnvironment,
       klarnaNetworkSessionToken,
       paymentOptionId,
       paymentRequestData,
@@ -465,7 +475,8 @@ app.post("/api/payment-request", async (c) => {
       };
     }
 
-    const requestUrl = `${KLARNA_API_BASE_URL}/v2/payment/requests`;
+    const klarnaBaseUrl = getKlarnaBaseUrl(klarnaEnvironment);
+    const requestUrl = `${klarnaBaseUrl}/v2/payment/requests`;
 
     // Generate unique idempotency key for each payment request
     // This ensures Klarna treats each request as unique, preventing idempotency conflicts

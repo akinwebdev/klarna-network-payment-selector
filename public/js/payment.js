@@ -212,10 +212,12 @@ export async function initiateKlarnaPayment(
 
     const klarnaClientId = getCred("klarna_websdk_client_id");
     const klarnaApiKey = getCred("klarna_api_key");
+    const klarnaEnvironment = getCred("klarna_environment") || "playground";
 
     const requestBody = {
       ...(klarnaClientId && { klarnaClientId }),
       ...(klarnaApiKey && { klarnaApiKey }),
+      klarnaEnvironment,
       klarnaNetworkSessionToken,
       paymentOptionId,
       paymentRequestData,
@@ -341,10 +343,12 @@ export async function initiateApiKlarnaPayment(paymentOptionId) {
 
     const klarnaClientId = getCred("klarna_websdk_client_id");
     const klarnaApiKey = getCred("klarna_api_key");
+    const klarnaEnvironment = getCred("klarna_environment") || "playground";
 
     const requestBody = {
       ...(klarnaClientId && { klarnaClientId }),
       ...(klarnaApiKey && { klarnaApiKey }),
+      klarnaEnvironment,
       paymentOptionId,
       paymentRequestData,
       returnUrl: `${API_BASE}/payment-complete`,

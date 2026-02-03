@@ -168,6 +168,19 @@
           <label for="paytrail-modal-klarna-api-key" style="font-size: 0.85rem; color: #0B051D;">Klarna API Key</label>
           <input type="password" id="paytrail-modal-klarna-api-key" placeholder="Klarna API Key (optional)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
         </div>
+        <div style="margin-bottom: 1rem;">
+          <span style="font-size: 0.85rem; color: #0B051D;">Environment (Klarna API)</span>
+          <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="radio" name="paytrail-modal-klarna-environment-testing" value="playground" id="paytrail-modal-env-playground-testing">
+              Playground
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="radio" name="paytrail-modal-klarna-environment-testing" value="production" id="paytrail-modal-env-production-testing">
+              Production
+            </label>
+          </div>
+        </div>
         <div style="display: flex; gap: 0.5rem;">
         <button type="button" class="btn btn-primary" style="flex: 1;" onclick="savePaytrailCredentialsFromModalTesting()">Save</button>
         <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closePaytrailCredentialsModalTesting()">Close</button>
@@ -201,6 +214,19 @@
       <div class="credentials-row">
         <label for="klarna-api-key">Klarna API Key</label>
         <input type="password" id="klarna-api-key" class="credential-input" placeholder="Klarna API Key (optional)" autocomplete="off">
+      </div>
+      <div class="credentials-row">
+        <span style="font-size: 0.85rem; color: #0B051D;">Environment (Klarna API)</span>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+            <input type="radio" name="klarna-environment-testing" value="playground" id="klarna-env-playground-testing">
+            Playground
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+            <input type="radio" name="klarna-environment-testing" value="production" id="klarna-env-production-testing">
+            Production
+          </label>
+        </div>
       </div>
       <div class="credentials-actions">
         <button type="button" class="btn btn-primary" onclick="saveCredentialsAndCollapse()">Save</button>
@@ -270,6 +296,7 @@
     const STORAGE_SECRET_KEY = 'paytrail_secret_key';
     const STORAGE_KLARNA_CLIENT_ID = 'klarna_websdk_client_id';
     const STORAGE_KLARNA_API_KEY = 'klarna_api_key';
+    const STORAGE_KLARNA_ENVIRONMENT = 'klarna_environment';
     const credentialsHeaderBadge = document.getElementById('credentials-header-badge');
     const klarnaClientIdInput = document.getElementById('klarna-client-id');
     const klarnaApiKeyInput = document.getElementById('klarna-api-key');
@@ -284,10 +311,15 @@
         var sk = getCred(STORAGE_SECRET_KEY);
         var klarnaId = getCred(STORAGE_KLARNA_CLIENT_ID);
         var klarnaKey = getCred(STORAGE_KLARNA_API_KEY);
+        var env = getCred(STORAGE_KLARNA_ENVIRONMENT) || 'playground';
         if (merchantIdInput && mid != null) merchantIdInput.value = mid;
         if (secretKeyInput && sk != null) secretKeyInput.value = sk;
         if (klarnaClientIdInput && klarnaId) klarnaClientIdInput.value = klarnaId;
         if (klarnaApiKeyInput && klarnaKey) klarnaApiKeyInput.value = klarnaKey;
+        var envPlayground = document.getElementById('klarna-env-playground-testing');
+        var envProduction = document.getElementById('klarna-env-production-testing');
+        if (envPlayground) envPlayground.checked = (env !== 'production');
+        if (envProduction) envProduction.checked = (env === 'production');
       } catch (e) { console.warn('Load credentials failed:', e); }
     }
 
@@ -300,10 +332,13 @@
       var sk = (secretKeyInput && secretKeyInput.value || '').trim();
       var klarnaId = (klarnaClientIdInput && klarnaClientIdInput.value) ? klarnaClientIdInput.value.trim() : '';
       var klarnaKey = (klarnaApiKeyInput && klarnaApiKeyInput.value) ? klarnaApiKeyInput.value.trim() : '';
+      var envEl = document.querySelector('input[name="klarna-environment-testing"]:checked');
+      var env = (envEl && envEl.value) || 'playground';
       setCred(STORAGE_MERCHANT_ID, mid || null);
       setCred(STORAGE_SECRET_KEY, sk || null);
       setCred(STORAGE_KLARNA_CLIENT_ID, klarnaId || null);
       setCred(STORAGE_KLARNA_API_KEY, klarnaKey || null);
+      setCred(STORAGE_KLARNA_ENVIRONMENT, env);
     }
 
     function toggleCredentialsSection() {
@@ -341,10 +376,15 @@
         var sk = getCred(STORAGE_SECRET_KEY) || (secretKeyInput ? secretKeyInput.value : '') || '';
         var klarnaId = getCred(STORAGE_KLARNA_CLIENT_ID) || (klarnaClientIdInput ? klarnaClientIdInput.value : '') || '';
         var klarnaKey = getCred(STORAGE_KLARNA_API_KEY) || (klarnaApiKeyInput ? klarnaApiKeyInput.value : '') || '';
+        var env = getCred(STORAGE_KLARNA_ENVIRONMENT) || 'playground';
         modalMid.value = mid;
         modalSk.value = sk;
         if (modalKlarna) modalKlarna.value = klarnaId;
         if (modalKlarnaKey) modalKlarnaKey.value = klarnaKey;
+        var modalEnvPlayground = document.getElementById('paytrail-modal-env-playground-testing');
+        var modalEnvProduction = document.getElementById('paytrail-modal-env-production-testing');
+        if (modalEnvPlayground) modalEnvPlayground.checked = (env !== 'production');
+        if (modalEnvProduction) modalEnvProduction.checked = (env === 'production');
       }
       if (modal) modal.style.display = 'flex';
     }
@@ -365,6 +405,8 @@
       if (!mid || !sk) return;
       const klarnaId = modalKlarna ? modalKlarna.value.trim() : '';
       const klarnaKey = modalKlarnaKey ? modalKlarnaKey.value.trim() : '';
+      const modalEnvChecked = document.querySelector('input[name="paytrail-modal-klarna-environment-testing"]:checked');
+      const env = (modalEnvChecked && modalEnvChecked.value) || 'playground';
       if (!window.CredentialStorage || !window.CredentialStorage.storageAvailable()) {
         alert('Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window.');
         return;
@@ -373,10 +415,15 @@
       setCred(STORAGE_SECRET_KEY, sk);
       setCred(STORAGE_KLARNA_CLIENT_ID, klarnaId || null);
       setCred(STORAGE_KLARNA_API_KEY, klarnaKey || null);
+      setCred(STORAGE_KLARNA_ENVIRONMENT, env);
       if (merchantIdInput) merchantIdInput.value = mid;
       if (secretKeyInput) secretKeyInput.value = sk;
       if (klarnaClientIdInput) klarnaClientIdInput.value = klarnaId;
       if (klarnaApiKeyInput) klarnaApiKeyInput.value = klarnaKey;
+      var envPlayground = document.getElementById('klarna-env-playground-testing');
+      var envProduction = document.getElementById('klarna-env-production-testing');
+      if (envPlayground) envPlayground.checked = (env !== 'production');
+      if (envProduction) envProduction.checked = (env === 'production');
       if (credentialsHeaderBadge) credentialsHeaderBadge.style.display = 'inline-block';
       closePaytrailCredentialsModalTesting();
       updatePaytrailCredentialsBannerTesting();

@@ -1325,6 +1325,19 @@
                         <label for="paytrail-klarna-api-key" style="font-size: 0.85rem; color: #0B051D;">Klarna API Key</label>
                         <input type="password" id="paytrail-klarna-api-key" placeholder="API key for server-side REST API (raw or base64, from Partner Portal)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem;">
                     </div>
+                    <div style="grid-column: 1 / -1;">
+                        <span style="font-size: 0.85rem; color: #0B051D;">Environment (Klarna API)</span>
+                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+                                <input type="radio" name="paytrail-klarna-environment" value="playground" checked>
+                                Playground
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+                                <input type="radio" name="paytrail-klarna-environment" value="production">
+                                Production
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" class="btn btn-create" style="margin-top: 0.75rem; width: auto;" onclick="savePaytrailCredentials()">Save</button>
             </div>
@@ -1355,6 +1368,19 @@
                 <div style="margin-bottom: 1rem;">
                     <label for="paytrail-modal-klarna-api-key" style="font-size: 0.85rem; color: #0B051D;">Klarna API Key</label>
                     <input type="password" id="paytrail-modal-klarna-api-key" placeholder="API key for REST API (raw or base64, from Partner Portal)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <span style="font-size: 0.85rem; color: #0B051D;">Environment (Klarna API)</span>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="radio" name="paytrail-modal-klarna-environment" value="playground" id="paytrail-modal-env-playground">
+                            Playground
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-size: 0.9rem;">
+                            <input type="radio" name="paytrail-modal-klarna-environment" value="production" id="paytrail-modal-env-production">
+                            Production
+                        </label>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
                     <button type="button" class="btn" style="flex: 1; background: #0B051D; color: #fff;" onclick="savePaytrailCredentialsFromModal()">Save</button>
@@ -1909,6 +1935,7 @@
         var PAYTRAIL_STORAGE_SECRET_KEY = 'paytrail_secret_key';
         var KLARNA_WEBSDK_CLIENT_ID_KEY = 'klarna_websdk_client_id';
         var KLARNA_API_KEY_KEY = 'klarna_api_key';
+        var KLARNA_ENVIRONMENT_KEY = 'klarna_environment';
 
         function getCred(key) { return window.CredentialStorage && window.CredentialStorage.get(key); }
         function setCred(key, val) { if (window.CredentialStorage) window.CredentialStorage.set(key, val); }
@@ -1942,6 +1969,7 @@
                     var sk = getCred(PAYTRAIL_STORAGE_SECRET_KEY) || '';
                     var klarnaId = getCred(KLARNA_WEBSDK_CLIENT_ID_KEY) || '';
                     var klarnaKey = getCred(KLARNA_API_KEY_KEY) || '';
+                    var env = getCred(KLARNA_ENVIRONMENT_KEY) || 'playground';
                     const mainMid = document.getElementById('paytrail-merchant-id');
                     const mainSk = document.getElementById('paytrail-secret-key');
                     const mainKlarna = document.getElementById('paytrail-klarna-client-id');
@@ -1950,6 +1978,10 @@
                     modalSk.value = (mainSk && mainSk.value.trim()) || sk;
                     if (modalKlarna) modalKlarna.value = (mainKlarna && mainKlarna.value.trim()) || klarnaId;
                     if (modalKlarnaKey) modalKlarnaKey.value = (mainKlarnaKey && mainKlarnaKey.value.trim()) || klarnaKey;
+                    var modalEnvPlayground = document.getElementById('paytrail-modal-env-playground');
+                    var modalEnvProduction = document.getElementById('paytrail-modal-env-production');
+                    if (modalEnvPlayground) modalEnvPlayground.checked = (env !== 'production');
+                    if (modalEnvProduction) modalEnvProduction.checked = (env === 'production');
                 } catch (e) {}
             }
             if (modal) modal.style.display = 'flex';
@@ -1987,6 +2019,8 @@
             if (!mid || !sk) return;
             const klarnaId = modalKlarna ? modalKlarna.value.trim() : '';
             const klarnaKey = modalKlarnaKey ? modalKlarnaKey.value.trim() : '';
+            const modalEnvChecked = document.querySelector('input[name="paytrail-modal-klarna-environment"]:checked');
+            const env = (modalEnvChecked && modalEnvChecked.value) || 'playground';
             if (!window.CredentialStorage || !window.CredentialStorage.storageAvailable()) {
                 alert('Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window.');
                 return;
@@ -1995,6 +2029,7 @@
             setCred(PAYTRAIL_STORAGE_SECRET_KEY, sk);
             setCred(KLARNA_WEBSDK_CLIENT_ID_KEY, klarnaId || null);
             setCred(KLARNA_API_KEY_KEY, klarnaKey || null);
+            setCred(KLARNA_ENVIRONMENT_KEY, env);
             var mainMid = document.getElementById('paytrail-merchant-id');
             const mainSk = document.getElementById('paytrail-secret-key');
             const mainKlarna = document.getElementById('paytrail-klarna-client-id');
@@ -2003,6 +2038,10 @@
             if (mainSk) mainSk.value = sk;
             if (mainKlarna) mainKlarna.value = klarnaId;
             if (mainKlarnaKey) mainKlarnaKey.value = klarnaKey;
+            var mainEnvPlayground = document.querySelector('input[name="paytrail-klarna-environment"][value="playground"]');
+            var mainEnvProduction = document.querySelector('input[name="paytrail-klarna-environment"][value="production"]');
+            if (mainEnvPlayground) mainEnvPlayground.checked = (env !== 'production');
+            if (mainEnvProduction) mainEnvProduction.checked = (env === 'production');
             const badge = document.getElementById('paytrail-credentials-badge');
             if (badge) badge.style.display = 'inline-block';
             closePaytrailCredentialsModal();
@@ -2022,6 +2061,8 @@
             const klarnaKeyEl = document.getElementById('paytrail-klarna-api-key');
             const klarnaId = klarnaEl ? klarnaEl.value.trim() : '';
             const klarnaKey = klarnaKeyEl ? klarnaKeyEl.value.trim() : '';
+            const envChecked = document.querySelector('input[name="paytrail-klarna-environment"]:checked');
+            const env = (envChecked && envChecked.value) || 'playground';
             if (creds) {
                 if (!window.CredentialStorage || !window.CredentialStorage.storageAvailable()) {
                     alert('Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window.');
@@ -2031,6 +2072,7 @@
                 setCred(PAYTRAIL_STORAGE_SECRET_KEY, creds.secretKey);
                 setCred(KLARNA_WEBSDK_CLIENT_ID_KEY, klarnaId || null);
                 setCred(KLARNA_API_KEY_KEY, klarnaKey || null);
+                setCred(KLARNA_ENVIRONMENT_KEY, env);
                 const content = document.getElementById('paytrail-credentials-content');
                 const chevron = document.getElementById('paytrail-credentials-chevron');
                 if (content && chevron) {
@@ -2042,6 +2084,7 @@
                 removeCred(PAYTRAIL_STORAGE_SECRET_KEY);
                 removeCred(KLARNA_WEBSDK_CLIENT_ID_KEY);
                 removeCred(KLARNA_API_KEY_KEY);
+                removeCred(KLARNA_ENVIRONMENT_KEY);
             }
             const badge = document.getElementById('paytrail-credentials-badge');
             if (badge) badge.style.display = creds ? 'inline-block' : 'none';
@@ -2054,6 +2097,7 @@
                 var sk = getCred(PAYTRAIL_STORAGE_SECRET_KEY);
                 var klarnaId = getCred(KLARNA_WEBSDK_CLIENT_ID_KEY);
                 var klarnaKey = getCred(KLARNA_API_KEY_KEY);
+                var env = getCred(KLARNA_ENVIRONMENT_KEY) || 'playground';
                 var midEl = document.getElementById('paytrail-merchant-id');
                 var skEl = document.getElementById('paytrail-secret-key');
                 var klarnaEl = document.getElementById('paytrail-klarna-client-id');
@@ -2062,6 +2106,10 @@
                 if (skEl && sk != null) skEl.value = sk;
                 if (klarnaEl && klarnaId) klarnaEl.value = klarnaId;
                 if (klarnaKeyEl && klarnaKey) klarnaKeyEl.value = klarnaKey;
+                var envPlayground = document.querySelector('input[name="paytrail-klarna-environment"][value="playground"]');
+                var envProduction = document.querySelector('input[name="paytrail-klarna-environment"][value="production"]');
+                if (envPlayground) envPlayground.checked = (env !== 'production');
+                if (envProduction) envProduction.checked = (env === 'production');
                 var badge = document.getElementById('paytrail-credentials-badge');
                 if (badge) badge.style.display = (mid && sk) ? 'inline-block' : 'none';
             } catch (e) {
