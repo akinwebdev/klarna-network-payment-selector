@@ -312,7 +312,8 @@ async function initializePaymentButton() {
     };
 
     const endpoint = "/api/payment-request";
-    logFlow('request', `POST ${endpoint}`, requestBody);
+    console.log("🔄 KEC: Creating payment request (Klarna environment:", klarnaEnvironment || "playground", ")");
+    logFlow('request', `POST ${endpoint}`, { ...requestBody, _klarnaEnvironment: klarnaEnvironment || "playground" });
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
@@ -323,10 +324,14 @@ async function initializePaymentButton() {
     const res = await response.json();
     logFlow('response', `POST ${endpoint}`, { status: response.status, statusText: response.statusText, data: res });
 
+    // Always log a one-line summary so production failures are visible
+    console.log("🔄 Payment request response: httpStatus=" + response.status + ", res.status=" + (res.status || "n/a") + ", paymentRequestId=" + (res.paymentRequestId || "n/a") + (res.message ? ", message=" + res.message : ""));
+
     if (!response.ok) {
-      console.error("Failed to create payment request:", res);
+      console.error("❌ Payment request failed (HTTP " + response.status + "):", res);
       if (res.validation_errors) console.error("Klarna validation_errors:", res.validation_errors);
       if (res.details) console.error("Klarna response details:", res.details);
+      logFlow('error', 'Payment request failed', { httpStatus: response.status, message: res.message, details: res.details, validation_errors: res.validation_errors, _response: res._response });
       throw new Error(res.message || "Payment request failed");
     }
 
@@ -358,8 +363,10 @@ async function initializePaymentButton() {
         });
         break;
       case "ERROR":
+        logFlow('error', 'Payment request returned ERROR', { message: res.message, details: res.details, _response: res._response });
         throw new Error(res.message || "Payment request error");
       default:
+        logFlow('error', 'Unexpected payment request status', { status: res.status, message: res.message, data: res });
         throw new Error(`Unexpected payment request status: ${res.status}`);
     }
 
@@ -600,16 +607,8 @@ async function initializePaymentButton() {
         const selectedEndpoint = productPaymentEndpointSel.value;
         
         // Build Paytrail payment request.
-        // Paytrail Klarna: send networkSessionToken (Express/Network); also sessionToken for Conversion Boosters compatibility.
-        // Include networkData when present (some production flows require it).
-        const klarnaProviderDetails = {
-          networkSessionToken: klarnaNetworkSessionToken,
-          sessionToken: klarnaNetworkSessionToken
-        };
-        if (klarnaNetworkData && typeof klarnaNetworkData === 'string' && klarnaNetworkData.length > 0) {
-          klarnaProviderDetails.networkData = klarnaNetworkData;
-          klarnaProviderDetails.data = klarnaNetworkData;
-        }
+        // Paytrail Express Checkout / Klarna Network: use only networkSessionToken.
+        // (Sending sessionToken/data or extra keys can trigger Paytrail schema validation errors.)
         const paymentData = {
           stamp: stamp,
           reference: reference,
@@ -624,7 +623,9 @@ async function initializePaymentButton() {
             cancel: `${API_BASE}/product`
           },
           providerDetails: {
-            klarna: klarnaProviderDetails
+            klarna: {
+              networkSessionToken: klarnaNetworkSessionToken
+            }
           }
         };
         // Paytrail credentials (CredentialStorage, localStorage, or sessionStorage)
@@ -963,10 +964,12 @@ async function initializeProductPage() {
   const PRODUCT_AMOUNT_KEY = "product_page_amount";
   try {
     const saved = localStorage.getItem(PRODUCT_AMOUNT_KEY);
-    if (saved != null) {
+    if (saved != null && saved !== "") {
       const num = parseInt(saved, 10);
       if (!isNaN(num) && num >= 0) {
-        productAmountInput.value = String(num);
+        const str = String(num);
+        productAmountInput.value = str;
+        productAmountInput.setAttribute("value", str);
       }
     }
   } catch (e) {
@@ -1004,6 +1007,8 @@ async function initializeProductPage() {
       console.warn("Could not save product amount:", e);
     }
   };
+  // Expose so Settings panel close (in product.html) can save amount when user closes without blur
+  window.saveProductPageAmount = saveProductAmount;
   productAmountInput.addEventListener("input", () => {
     updateProductPriceDisplay();
     saveProductAmount();

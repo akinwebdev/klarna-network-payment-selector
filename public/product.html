@@ -507,12 +507,14 @@
       });
       
       settingsCloseIcon.addEventListener('click', () => {
+        if (window.saveProductPageAmount) window.saveProductPageAmount();
         settingsPanel.classList.remove('open');
       });
       
       // Close settings panel when clicking outside
       document.addEventListener('click', (e) => {
         if (!settingsPanel.contains(e.target) && !settingsIcon.contains(e.target)) {
+          if (window.saveProductPageAmount) window.saveProductPageAmount();
           settingsPanel.classList.remove('open');
         }
       });

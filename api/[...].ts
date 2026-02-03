@@ -477,6 +477,7 @@ app.post("/api/payment-request", async (c) => {
 
     const klarnaBaseUrl = getKlarnaBaseUrl(klarnaEnvironment);
     const requestUrl = `${klarnaBaseUrl}/v2/payment/requests`;
+    console.log("🔄 Payment request: Klarna env=" + (klarnaEnvironment || "playground") + ", baseUrl=" + klarnaBaseUrl);
 
     // Generate unique idempotency key for each payment request
     // This ensures Klarna treats each request as unique, preventing idempotency conflicts
@@ -534,7 +535,8 @@ app.post("/api/payment-request", async (c) => {
       const fullMessage = validationErrors
         ? `${message} ${JSON.stringify(validationErrors)}`
         : message;
-      console.warn("Klarna payment request validation failed:", validationErrors || klarnaData);
+      console.warn("Klarna payment request failed: status=" + klarnaResponse.status + ", env=" + (klarnaEnvironment || "playground") + ", message=" + message);
+      console.warn("Klarna response body:", JSON.stringify(klarnaData, null, 2));
       return c.json({
         status: "ERROR",
         message: fullMessage,
