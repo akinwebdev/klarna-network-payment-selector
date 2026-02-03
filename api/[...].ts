@@ -1016,11 +1016,18 @@ app.post("/api/payments", async (c: Context) => {
     console.log("  Reference in request:", (paymentData as { reference?: string }).reference);
     console.log("  Stamp in request:", (paymentData as { stamp?: string }).stamp);
 
-    if ((paymentData as { providerDetails?: { klarna?: { networkSessionToken?: string } } }).providerDetails?.klarna?.networkSessionToken) {
-      console.log(
-        "  Klarna Network Session Token (interoperability_token):",
-        (paymentData as { providerDetails: { klarna: { networkSessionToken: string } } }).providerDetails.klarna.networkSessionToken,
-      );
+    const klarnaDetails = (paymentData as { providerDetails?: { klarna?: Record<string, unknown> } }).providerDetails?.klarna;
+    if (klarnaDetails) {
+      console.log("  Klarna provider details keys:", Object.keys(klarnaDetails));
+      if (klarnaDetails.networkSessionToken) {
+        console.log("  Klarna networkSessionToken: present (length ", String(klarnaDetails.networkSessionToken).length, ")");
+      }
+      if (klarnaDetails.sessionToken) {
+        console.log("  Klarna sessionToken: present");
+      }
+      if (klarnaDetails.networkData || klarnaDetails.data) {
+        console.log("  Klarna networkData/data: present");
+      }
     }
 
     const response = await makePaytrailRequestWithCreds(

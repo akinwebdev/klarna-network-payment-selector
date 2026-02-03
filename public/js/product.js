@@ -510,6 +510,10 @@ async function initializePaymentButton() {
                                         paymentRequest?.stateContext?.klarnaNetworkSessionToken ||
                                         paymentRequest?.klarnaNetworkSessionToken ||
                                         null;
+      // Paytrail docs also mention sessionToken + data (Conversion Boosters). Include networkData when present (e.g. production).
+      const klarnaNetworkData = paymentRequest?.stateContext?.networkData ||
+                                paymentRequest?.stateContext?.data ||
+                                null;
       
       if (!klarnaNetworkSessionToken) {
         console.error("No Klarna Network Session Token found in paymentRequest");
@@ -595,7 +599,17 @@ async function initializePaymentButton() {
         // Get the selected payment endpoint
         const selectedEndpoint = productPaymentEndpointSel.value;
         
-        // Build Paytrail payment request
+        // Build Paytrail payment request.
+        // Paytrail Klarna: send networkSessionToken (Express/Network); also sessionToken for Conversion Boosters compatibility.
+        // Include networkData when present (some production flows require it).
+        const klarnaProviderDetails = {
+          networkSessionToken: klarnaNetworkSessionToken,
+          sessionToken: klarnaNetworkSessionToken
+        };
+        if (klarnaNetworkData && typeof klarnaNetworkData === 'string' && klarnaNetworkData.length > 0) {
+          klarnaProviderDetails.networkData = klarnaNetworkData;
+          klarnaProviderDetails.data = klarnaNetworkData;
+        }
         const paymentData = {
           stamp: stamp,
           reference: reference,
@@ -610,9 +624,7 @@ async function initializePaymentButton() {
             cancel: `${API_BASE}/product`
           },
           providerDetails: {
-            klarna: {
-              networkSessionToken: klarnaNetworkSessionToken
-            }
+            klarna: klarnaProviderDetails
           }
         };
         // Paytrail credentials (CredentialStorage, localStorage, or sessionStorage)
@@ -719,7 +731,8 @@ async function initializePaymentButton() {
           // Check for successful response (201 is returned for successful payment creation)
           if (!response.ok || (response.status !== 201 && response.status !== 200)) {
             logFlow('error', 'Paytrail Payment Failed (HPP)', { status: response.status, error: data });
-            throw new Error(data.message || data.error || 'Payment creation failed');
+            const paytrailDetail = data.paytrailResponse ? (typeof data.paytrailResponse === 'object' ? (data.paytrailResponse.message || JSON.stringify(data.paytrailResponse)) : String(data.paytrailResponse)) : '';
+            throw new Error(paytrailDetail ? `${data.message || data.error || 'Payment creation failed'}: ${paytrailDetail}` : (data.message || data.error || 'Payment creation failed'));
           }
 
           console.log("Paytrail payment response (HPP):", data);
@@ -751,7 +764,14 @@ async function initializePaymentButton() {
         // Original /api/payments endpoint handling
         if (!response.ok) {
           logFlow('error', 'Paytrail Payment Failed', { status: response.status, error: data });
-          throw new Error(data.message || data.error || 'Payment creation failed');
+          // Include Paytrail's response when present (e.g. production validation errors)
+          const paytrailDetail = data.paytrailResponse
+            ? (typeof data.paytrailResponse === 'object'
+                ? (data.paytrailResponse.message || JSON.stringify(data.paytrailResponse))
+                : String(data.paytrailResponse))
+            : '';
+          const errMsg = data.message || data.error || 'Payment creation failed';
+          throw new Error(paytrailDetail ? `${errMsg}: ${paytrailDetail}` : errMsg);
         }
 
         console.log("Paytrail payment response:", data);
