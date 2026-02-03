@@ -422,10 +422,13 @@
       return {
         stamp: 'test-payment-' + Date.now(),
         reference: 'ref-' + Date.now(),
-        amount: 1590,
+        amount: 3000,
         currency: 'EUR',
         language: 'EN',
-        items: [{ unitPrice: 1590, units: 1, vatPercentage: 24, productCode: 'test-product', description: 'Test Product', stamp: 'item-' + Date.now(), reference: 'item-ref-' + Date.now() }],
+        items: [
+          { unitPrice: 1000, units: 2, vatPercentage: 24, productCode: 'test-product', description: 'Test Product', stamp: 'item-' + Date.now(), reference: 'item-ref-' + Date.now() },
+          { unitPrice: 1000, units: 1, vatPercentage: 24, productCode: 'test-product', description: 'Test Product', stamp: 'item-' + (Date.now() + 1), reference: 'item-ref-' + (Date.now() + 1) }
+        ],
         customer: { email: 'test@example.com', firstName: 'Test', lastName: 'User', phone: '+358441234567' },
         redirectUrls: { success: base + '/payment-complete', cancel: base + '/payment-complete' },
         callbackUrls: { success: base + '/payment-complete', cancel: base + '/payment-complete' },
