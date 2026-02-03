@@ -959,6 +959,20 @@ async function initializeProductPage() {
     return;
   }
 
+  // Restore last amount from localStorage (product page only)
+  const PRODUCT_AMOUNT_KEY = "product_page_amount";
+  try {
+    const saved = localStorage.getItem(PRODUCT_AMOUNT_KEY);
+    if (saved != null) {
+      const num = parseInt(saved, 10);
+      if (!isNaN(num) && num >= 0) {
+        productAmountInput.value = String(num);
+      }
+    }
+  } catch (e) {
+    console.warn("Could not restore product amount:", e);
+  }
+
   // Populate country and locale dropdowns
   populateProductCountries();
 
@@ -978,12 +992,25 @@ async function initializeProductPage() {
     initializePaymentButton();
   });
 
-  // Update price display and re-initialize messaging when amount changes
+  // Update price display and re-initialize messaging when amount changes; persist amount for next load
+  const saveProductAmount = () => {
+    try {
+      const val = productAmountInput.value.trim();
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 0) {
+        localStorage.setItem("product_page_amount", String(num));
+      }
+    } catch (e) {
+      console.warn("Could not save product amount:", e);
+    }
+  };
   productAmountInput.addEventListener("input", () => {
     updateProductPriceDisplay();
+    saveProductAmount();
     // Re-initialize messaging when amount changes (to update the amount in OSM)
     initializePaymentButton();
   });
+  productAmountInput.addEventListener("change", saveProductAmount);
 
   // Initial price display update
   updateProductPriceDisplay();
