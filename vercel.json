@@ -23,6 +23,10 @@
       "destination": "/payment-complete.html"
     },
     {
+      "source": "/payment-cancel",
+      "destination": "/payment-cancel.html"
+    },
+    {
       "source": "/documentation",
       "destination": "/documentation.html"
     }

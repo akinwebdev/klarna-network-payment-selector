@@ -57,6 +57,15 @@
         fill: none;
       }
 
+      .canceled-icon {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+
+      .canceled-icon svg {
+        stroke: white;
+      }
+
       h1 {
         color: #0b051d;
         font-size: 28px;
@@ -348,14 +357,18 @@
   </head>
   <body>
     <div class="container">
-      <div class="success-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <div class="success-icon" id="status-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="icon-check">
           <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="icon-cancel" style="display: none;">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </div>
 
-      <h1>Payment Complete</h1>
-      <p class="message">
+      <h1 id="page-heading">Payment Complete</h1>
+      <p class="message" id="page-message">
         Thank you for your purchase! Your payment has been successfully
         processed.
       </p>
@@ -412,10 +425,28 @@
           params.get("payment_request_id") ||
           sessionStorage.getItem("paytrailTransactionId");
         // Support both our format (status) and Paytrail callback format (checkout-status)
-        const status = params.get("status") || 
+        const statusRaw = params.get("status") || 
           (params.get("checkout-status") === "ok" ? "completed" : params.get("checkout-status"));
+        const status = (statusRaw || "").toLowerCase();
 
-        console.log("Payment-complete page - Final transactionId:", transactionId);
+        console.log("Payment-complete page - Final transactionId:", transactionId, "status:", status);
+
+        // Treat fail/failed/cancel/cancelled/canceled as canceled
+        const isCanceledOrFailed = /^(fail|failed|cancel|cancelled|canceled|error|aborted)$/.test(status);
+
+        if (isCanceledOrFailed) {
+          document.title = "Payment Canceled";
+          const iconEl = document.getElementById("status-icon");
+          const headingEl = document.getElementById("page-heading");
+          const messageEl = document.getElementById("page-message");
+          const checkSvg = document.getElementById("icon-check");
+          const cancelSvg = document.getElementById("icon-cancel");
+          if (iconEl) iconEl.classList.add("canceled-icon");
+          if (headingEl) headingEl.textContent = "Payment Canceled";
+          if (messageEl) messageEl.textContent = "You canceled the payment or the payment could not be completed.";
+          if (checkSvg) checkSvg.style.display = "none";
+          if (cancelSvg) cancelSvg.style.display = "block";
+        }
 
         if (transactionId) {
           document.getElementById("order-info").style.display = "block";
@@ -427,10 +458,11 @@
           console.warn("⚠️ No transaction ID found in URL params or sessionStorage");
         }
 
-        if (status) {
-          document.getElementById("payment-status").textContent =
-            status.charAt(0).toUpperCase() +
-            status.slice(1).toLowerCase();
+        const statusEl = document.getElementById("payment-status");
+        if (statusEl) {
+          statusEl.textContent = isCanceledOrFailed
+            ? "Payment Canceled"
+            : (status ? status.charAt(0).toUpperCase() + status.slice(1) : "Completed");
         }
 
         // Display backend log if available from sessionStorage

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment Canceled</title>
+    <link rel="preconnect" href="https://x.klarnacdn.net" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://x.klarnacdn.net/ui/fonts/v1.5/fonts.css"
+    >
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: "Klarna Text", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: #f9f8f5;
+        padding: 20px;
+      }
+      .container {
+        text-align: center;
+        padding: 48px 40px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        width: 100%;
+      }
+      .canceled-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+      .canceled-icon svg {
+        width: 40px;
+        height: 40px;
+        stroke: white;
+        stroke-width: 3;
+        fill: none;
+      }
+      h1 {
+        color: #0b051d;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 12px;
+        font-family: "Klarna Title", "Klarna Text", system-ui, sans-serif;
+      }
+      .message {
+        color: #6f6b7a;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 0 32px;
+      }
+      .order-info {
+        text-align: left;
+        background: #fcfbf8;
+        border: 1px solid #e6e2da;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+      .order-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+      }
+      .order-info-row:not(:last-child) { border-bottom: 1px solid #e6e2da; }
+      .order-info-label { color: #6f6b7a; font-size: 13px; }
+      .order-info-value {
+        color: #0b051d;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: monospace;
+        word-break: break-word;
+      }
+      .btn {
+        display: inline-block;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        text-decoration: none;
+        background: #0b051d;
+        color: #f9f8f5;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+      }
+      .btn:hover { background: #3d3948; }
+      @media (max-width: 480px) {
+        .container { padding: 32px 24px; }
+        h1 { font-size: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="canceled-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </div>
+      <h1>Payment Canceled</h1>
+      <p class="message">
+        You canceled the payment or the payment could not be completed.
+      </p>
+      <div class="order-info" id="order-info" style="display: none">
+        <div class="order-info-row">
+          <span class="order-info-label">Transaction ID</span>
+          <span class="order-info-value" id="transaction-id">—</span>
+        </div>
+        <div class="order-info-row">
+          <span class="order-info-label">Status</span>
+          <span class="order-info-value">Payment Canceled</span>
+        </div>
+      </div>
+      <a href="/" class="btn">Return to Demo</a>
+    </div>
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search);
+        // Paytrail cancel redirect uses checkout-transaction-id
+        const transactionId = params.get("checkout-transaction-id") ||
+          params.get("transaction_id");
+        if (transactionId) {
+          document.getElementById("order-info").style.display = "block";
+          document.getElementById("transaction-id").textContent = transactionId;
+        }
+      })();
+    </script>
+  </body>
+</html>
