@@ -264,8 +264,19 @@ async function initializePaymentButton() {
       return;
     }
 
-    // Clear button container to unmount any existing button
-    // This ensures we create a fresh button instance on every page load
+    // Unmount previous button instance BEFORE clearing the container so the SDK can clean up (avoids "Element not mounted" warning)
+    if (currentButtonInstance && typeof currentButtonInstance.unmount === 'function') {
+      try {
+        console.log("🔄 Unmounting previous button instance (before clear)");
+        currentButtonInstance.unmount();
+        console.log("✅ Previous button instance unmounted");
+      } catch (error) {
+        console.warn("⚠️ Error unmounting previous button instance:", error);
+      }
+      currentButtonInstance = null;
+    }
+
+    // Clear button container to create a fresh button instance
     buttonContainer.innerHTML = "";
     console.log("🔄 Cleared button container - creating fresh button instance");
 
@@ -384,18 +395,7 @@ async function initializePaymentButton() {
     console.log("🔄 Previous payment_request_id (if any):", previousPaymentRequestId);
     console.log("🔄 Updated currentSessionPaymentRequestId:", currentSessionPaymentRequestId);
     
-    // Unmount previous button instance if it exists
-    if (currentButtonInstance && typeof currentButtonInstance.unmount === 'function') {
-      try {
-        console.log("🔄 Unmounting previous button instance");
-        currentButtonInstance.unmount();
-        console.log("✅ Previous button instance unmounted");
-      } catch (error) {
-        console.warn("⚠️ Error unmounting previous button instance:", error);
-      }
-      currentButtonInstance = null;
-    }
-    
+    // (Unmount already done above before first container clear; container cleared again below for clean state)
     // Clear button container again right before mounting to ensure clean state
     buttonContainer.innerHTML = "";
     
