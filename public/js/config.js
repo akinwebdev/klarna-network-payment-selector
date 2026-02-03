@@ -34,8 +34,56 @@ export function setRenderBothPresentationsCallback(callback) {
 // CONFIGURATION LOADING
 // ============================================================================
 
+/** Keys used for Klarna credentials in Paytrail credentials */
+const KLARNA_CLIENT_ID_KEY = "klarna_websdk_client_id";
+
+function getCredential(key) {
+  if (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get) {
+    return window.CredentialStorage.get(key) || "";
+  }
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key) || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+/**
+ * Build SDK config from Paytrail credentials (localStorage/sessionStorage or CredentialStorage).
+ * Used when not using server env vars (e.g. product page, demo store).
+ */
+function getConfigFromLocalStorage() {
+  const clientId = (getCredential(KLARNA_CLIENT_ID_KEY) || "").trim();
+  if (!clientId) return null;
+  return {
+    clientId,
+    authMode: "SUB_PARTNER",
+    defaultMode: "SUB_PARTNER",
+    availableModes: [{ mode: "SUB_PARTNER", clientId }],
+    customerTokenConfigured: false,
+    customerTokenCountries: [],
+  };
+}
+
 export async function loadConfig() {
   try {
+    const localData = getConfigFromLocalStorage();
+    if (localData) {
+      setSdkConfig(localData);
+      setAvailableAuthModes(localData.availableModes || []);
+      setCurrentAuthMode(localData.defaultMode || localData.authMode);
+      if (configError) {
+        configError.style.display = "none";
+      }
+      if (authModeToggle) {
+        setupAuthModeToggle();
+      }
+      if (authModeBadge) {
+        updateAuthModeUI();
+      }
+      return true;
+    }
+
     const response = await fetch(`${API_BASE}/api/config`);
     const data = await response.json();
 
@@ -82,8 +130,11 @@ export async function loadConfig() {
     return true;
   } catch (error) {
     console.error("Failed to load configuration:", error);
+    const message = !getConfigFromLocalStorage()
+      ? "Set Klarna WebSDK Client ID (and Klarna API Key) in the Paytrail credentials section above."
+      : error.message;
     if (configErrorMessage) {
-      configErrorMessage.textContent = error.message;
+      configErrorMessage.textContent = message;
     }
     if (configError) {
       configError.style.display = "flex";

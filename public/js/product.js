@@ -297,11 +297,16 @@ async function initializePaymentButton() {
     
     const paymentRequestData = buildProductPaymentRequestData();
     
+    const klarnaClientId = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_websdk_client_id") : null) || localStorage.getItem("klarna_websdk_client_id") || sessionStorage.getItem("klarna_websdk_client_id") || undefined;
+    const klarnaApiKey = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_api_key") : null) || localStorage.getItem("klarna_api_key") || sessionStorage.getItem("klarna_api_key") || undefined;
+
     const requestBody = {
       paymentRequestData,
       returnUrl: `${API_BASE}/payment-complete`,
       appReturnUrl: null,
       authMode: "SUB_PARTNER", // Product page only uses SUB_PARTNER mode
+      ...(klarnaClientId && { klarnaClientId }),
+      ...(klarnaApiKey && { klarnaApiKey }),
     };
 
     const endpoint = "/api/payment-request";
@@ -318,6 +323,8 @@ async function initializePaymentButton() {
 
     if (!response.ok) {
       console.error("Failed to create payment request:", res);
+      if (res.validation_errors) console.error("Klarna validation_errors:", res.validation_errors);
+      if (res.details) console.error("Klarna response details:", res.details);
       throw new Error(res.message || "Payment request failed");
     }
 
@@ -606,20 +613,35 @@ async function initializePaymentButton() {
             }
           }
         };
+        // Paytrail credentials (CredentialStorage, localStorage, or sessionStorage)
+        const PAYTRAIL_MERCHANT_ID_KEY = 'paytrail_merchant_id';
+        const PAYTRAIL_SECRET_KEY_KEY = 'paytrail_secret_key';
+        function getCred(key) {
+          if (typeof window !== 'undefined' && window.CredentialStorage && window.CredentialStorage.get) return window.CredentialStorage.get(key) || '';
+          try { return localStorage.getItem(key) || sessionStorage.getItem(key) || ''; } catch (e) { return ''; }
+        }
+        const merchantId = getCred(PAYTRAIL_MERCHANT_ID_KEY);
+        const secretKey = getCred(PAYTRAIL_SECRET_KEY_KEY);
+        if (!merchantId || !secretKey) {
+          alert('Please set your Paytrail credentials on the Demo Store homepage first (Paytrail credentials section, then Save).');
+          return;
+        }
+
         // HPP option uses the same /api/payments endpoint but handles response differently
         const actualEndpoint = selectedEndpoint === '/payments-hpp' ? '/payments' : selectedEndpoint;
         const endpointUrl = `${API_BASE}/api${actualEndpoint}`;
-        
+        const requestBody = { payment: paymentData, merchantId, secretKey };
+
         console.log(`Calling backend API ${endpointUrl} with:`, JSON.stringify(paymentData, null, 2));
         logFlow('request', `POST ${endpointUrl} (Backend API)`, paymentData);
 
-        // Call Paytrail payment endpoint
+        // Call Paytrail payment endpoint (credentials in body for all Paytrail endpoints)
         const response = await fetch(endpointUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(paymentData)
+          body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -844,31 +866,17 @@ async function initializePaymentButton() {
 async function initializeProductPage() {
   console.log("🔄 Product page loading - performing complete cleanup and SDK reinitialization");
   
-  // Step 1: Clear ALL localStorage to ensure fresh start
+  // Do NOT clear localStorage or sessionStorage here - credentials (Paytrail/Klarna)
+  // are stored there by the homepage and must be preserved. Only clear product-page-
+  // specific transient keys if needed.
   try {
-    console.log("🧹 Clearing all localStorage...");
-    localStorage.clear();
-    console.log("✅ localStorage cleared");
+    localStorage.removeItem('paymentRequestId');
+    sessionStorage.removeItem('paymentRequestId');
   } catch (e) {
-    console.warn("⚠️ Error clearing localStorage:", e);
+    console.warn("⚠️ Error clearing payment request id:", e);
   }
   
-  // Step 2: Clear sessionStorage (except for transaction IDs that might be needed)
-  try {
-    console.log("🧹 Clearing sessionStorage (keeping transaction IDs)...");
-    const transactionId = sessionStorage.getItem('paytrailTransactionId');
-    sessionStorage.clear();
-    // Restore transaction ID if it exists (might be needed for payment-complete page)
-    if (transactionId) {
-      sessionStorage.setItem('paytrailTransactionId', transactionId);
-      console.log("✅ Restored transaction ID:", transactionId);
-    }
-    console.log("✅ sessionStorage cleared");
-  } catch (e) {
-    console.warn("⚠️ Error clearing sessionStorage:", e);
-  }
-  
-  // Step 3: Unmount Klarna button if it exists
+  // Unmount Klarna button if it exists
   try {
     console.log("🧹 Unmounting Klarna button if it exists...");
     if (currentButtonInstance && typeof currentButtonInstance.unmount === 'function') {
@@ -887,33 +895,22 @@ async function initializeProductPage() {
     console.warn("⚠️ Error unmounting button:", e);
   }
   
-  // Step 4: Remove Payment event listeners before resetting SDK
+  // Step 4: Remove Payment event listeners (only the specific handler to avoid SDK warning)
   try {
     console.log("🧹 Removing Payment event listeners...");
-    // Try to get klarna instance from ensureSDK (it might return null if not initialized)
     const klarnaInstance = await ensureSDK().catch(() => null);
-    if (klarnaInstance && klarnaInstance.Payment) {
-      // Remove complete event listener if it exists
-      if (productPageCompleteHandler) {
-        klarnaInstance.Payment.off("complete", productPageCompleteHandler);
-        console.log("✅ Removed complete event listener");
-      }
-      // Also remove all listeners as a safety measure
-      klarnaInstance.Payment.off("complete");
-      console.log("✅ Removed all complete event listeners");
+    if (klarnaInstance && klarnaInstance.Payment && productPageCompleteHandler) {
+      klarnaInstance.Payment.off("complete", productPageCompleteHandler);
+      console.log("✅ Removed complete event listener");
     }
   } catch (e) {
     console.warn("⚠️ Error removing event listeners (SDK might not be initialized yet):", e);
   }
   
-  // Step 5: Reset SDK state completely
-  try {
-    console.log("🧹 Resetting SDK state completely...");
-    resetSDKState();
-    console.log("✅ SDK state reset");
-  } catch (e) {
-    console.warn("⚠️ Error resetting SDK state:", e);
-  }
+  // Do NOT call resetSDKState() here - it clears the Klarna instance and causes ensureSDK()
+  // to re-import the SDK, which triggers "test-drive-badge has already been used" (duplicate
+  // custom element registration). We only need to clear our module-level state and unmount
+  // the button; the SDK can stay loaded.
   
   // Step 5: Reset all module-level state
   console.log("🧹 Resetting module-level state...");

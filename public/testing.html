@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing – Paytrail /payments JSON editor</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="stylesheet" href="/fonts/klarna-fonts.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Klarna Text', 'Inter', system-ui, sans-serif;
+      background: #F9F8F5;
+      color: #0B051D;
+      line-height: 1.6;
+      padding: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      color: #0B051D;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .editor-section, .payment-response-section { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #E4E3DF; }
+    .payment-response-section { display: none; }
+    .payment-response-section.visible { display: block; }
+    .editor-section.hidden { display: none; }
+    label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0B051D; }
+    .payload-editor {
+      width: 100%;
+      min-height: 320px;
+      font-family: 'Klarna Mono', 'Monaco', 'Menlo', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      padding: 1rem;
+      border: 1px solid #E4E3DF;
+      border-radius: 8px;
+      background: #F9F8F5;
+      resize: vertical;
+    }
+    .payload-editor:focus { outline: none; border-color: #0B051D; }
+    .payload-editor.error { border-color: #DC2626; background: #FEF2F2; }
+    .editor-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+    .btn {
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #E6FFA9; color: #0B051D; border-color: #E6FFA9; }
+    .btn-primary:hover { background: #D4F595; transform: translateY(-1px); }
+    .btn-secondary { background: #E4E3DF; color: #0B051D; border-color: #E4E3DF; }
+    .btn-secondary:hover { background: #d0cfcb; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    /* Payment response (same as section 2) */
+    .payment-selection-ui { max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; padding: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .payment-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; border-bottom: 1px solid #E4E3DF; }
+    .payment-header h2 { font-size: 1rem; margin: 0; }
+    .close-btn { background: transparent; border: none; padding: 0.5rem; cursor: pointer; color: #0B051D; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+    .close-btn:hover { background: #F9F8F5; }
+    .amount-display { padding: 1.25rem 1.5rem; text-align: center; }
+    .amount-value { font-size: 1.75rem; font-weight: 700; color: #0B051D; }
+    .payment-heading { padding: 0 1.5rem 0.5rem; font-size: 1.125rem; font-weight: 600; }
+    .hosted-payment-option { padding: 0 1.5rem 1.5rem; text-align: center; }
+    .hosted-payment-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+      padding: 0.75rem 1.5rem; background: #E6FFA9; border: 2px solid #E6FFA9; border-radius: 8px;
+      font-size: 0.8rem; font-weight: 600; color: #0B051D; cursor: pointer; transition: all 0.3s;
+    }
+    .hosted-payment-btn:hover { background: #D4F595; transform: translateY(-1px); }
+    .hosted-payment-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .hosted-payment-note { margin-top: 0.75rem; font-size: 0.875rem; color: #2C2242; }
+    .payment-providers { padding: 0 1.5rem 1.5rem; }
+    .payment-category { background: #F5F5F5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+    .category-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem 0; }
+    .category-description { font-size: 0.875rem; color: #2C2242; margin-bottom: 1rem; }
+    .category-providers { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .category-provider-card {
+      background: white; border: 1px solid #E4E3DF; border-radius: 8px; padding: 0.75rem 1rem;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; min-width: 100px;
+    }
+    .category-provider-card:hover { border-color: #E60094; box-shadow: 0 2px 8px rgba(230,0,148,0.1); }
+    .category-provider-card img { max-height: 32px; max-width: 100px; object-fit: contain; }
+    .provider-form { margin: 0; }
+    .payment-footer { padding: 1rem 1.5rem; font-size: 0.75rem; color: #2C2242; border-top: 1px solid #E4E3DF; }
+    .error { background: #FEE2E2; color: #991B1B; padding: 0.75rem; border-radius: 8px; margin: 0.5rem 0; }
+    .loading { color: #2C2242; padding: 0.5rem 0; }
+    .new-payment-btn { margin-top: 1rem; }
+    .credentials-section { margin-bottom: 1.5rem; }
+    .credentials-section.hidden { display: none; }
+    .credentials-section.collapsed { padding: 0.5rem 1rem; }
+    .credentials-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      padding: 0.75rem 0; cursor: pointer; user-select: none;
+      font-size: 1.1rem; font-weight: 600; color: #0B051D;
+    }
+    .credentials-section.collapsed .credentials-header { padding: 0.25rem 0; font-size: 0.95rem; }
+    .credentials-header:hover { color: #2C2242; }
+    .credentials-header .chevron { transition: transform 0.2s; }
+    .credentials-section.collapsed .credentials-header .chevron { transform: rotate(180deg); }
+    .credentials-content { overflow: hidden; }
+    .credentials-section.collapsed .credentials-content { display: none; }
+    .credentials-header-title-row { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+    .credentials-saved-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #166534;
+      background: #dcfce7;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .credentials-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .credentials-row label { flex: 0 0 140px; margin-bottom: 0; }
+    .credential-input { flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border: 1px solid #E4E3DF; border-radius: 6px; font-family: inherit; font-size: 0.875rem; }
+    .credential-input:focus { outline: none; border-color: #0B051D; }
+    .credentials-note { font-size: 0.8rem; color: #2C2242; margin-top: 0.5rem; }
+    .credentials-actions { margin-top: 1rem; }
+    .paytrail-banner { display: none; width: 100vw; margin-left: calc(-50vw + 50%); position: sticky; top: 0; left: 0; right: 0; z-index: 1500; background: #FEF3C7; border-bottom: 1px solid #F59E0B; padding: 0.5rem 1.5rem; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 1.5rem; box-sizing: border-box; }
+    .paytrail-banner-btn { padding: 0.4rem 0.75rem; font-size: 0.85rem; background: #0B051D; color: #fff; border: 2px solid #0B051D; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .paytrail-banner-btn:hover { background: #1a1a2e; }
+  </style>
+</head>
+<body>
+  <!-- Sticky banner when no Paytrail credentials -->
+  <div id="paytrail-credentials-banner" class="paytrail-banner">
+    <span style="font-size: 0.9rem; color: #92400E;">No Paytrail API credentials are set. Provide them to test the API.</span>
+    <button type="button" class="paytrail-banner-btn" onclick="showPaytrailCredentialsModalTesting()">Enter credentials</button>
+  </div>
+  <a href="/" class="back-link">← Back to Demo Store</a>
+  <h1>Testing – Paytrail /payments</h1>
+  <p style="margin-bottom: 1.5rem; color: #2C2242;">Edit the request payload as JSON and create a payment. After creating a payment session, either use the hosted payment page or choose a provider from the payment selector</p>
+
+  <!-- Credentials modal (triggered by banner) -->
+  <div id="paytrail-credentials-modal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.4); align-items: center; justify-content: center;" onclick="if(event.target===this)closePaytrailCredentialsModalTesting()">
+    <div style="background: #fff; border-radius: 8px; padding: 1.5rem; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+        <p style="font-weight: 600; margin: 0; color: #0B051D;">Paytrail credentials</p>
+        <button type="button" style="background: none; border: none; cursor: pointer; padding: 0.25rem;" onclick="closePaytrailCredentialsModalTesting()" title="Close" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <p style="font-size: 0.9rem; color: #2C2242; margin-bottom: 1rem;">Enter your Paytrail credentials. They're stored only in your browser.</p>
+      <div style="margin-bottom: 0.75rem;">
+        <label for="paytrail-modal-merchant-id" style="font-size: 0.85rem; color: #0B051D;">Merchant ID</label>
+        <input type="text" id="paytrail-modal-merchant-id" placeholder="PAYTRAIL_MERCHANT_ID" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
+      </div>
+        <div style="margin-bottom: 0.75rem;">
+          <label for="paytrail-modal-secret-key" style="font-size: 0.85rem; color: #0B051D;">Secret key</label>
+          <input type="password" id="paytrail-modal-secret-key" placeholder="PAYTRAIL_SECRET_KEY" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 0.75rem;">
+          <label for="paytrail-modal-klarna-client-id" style="font-size: 0.85rem; color: #0B051D;">Klarna WebSDK Client ID</label>
+          <input type="text" id="paytrail-modal-klarna-client-id" placeholder="Klarna WebSDK Client ID (optional)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="paytrail-modal-klarna-api-key" style="font-size: 0.85rem; color: #0B051D;">Klarna API Key</label>
+          <input type="password" id="paytrail-modal-klarna-api-key" placeholder="Klarna API Key (optional)" autocomplete="off" style="width: 100%; padding: 0.5rem; border: 1px solid #E4E3DF; border-radius: 4px; margin-top: 0.25rem; font-size: 0.9rem; box-sizing: border-box;">
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-primary" style="flex: 1;" onclick="savePaytrailCredentialsFromModalTesting()">Save</button>
+        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closePaytrailCredentialsModalTesting()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credentials (stored in localStorage) – collapsible -->
+  <div id="credentials-section" class="editor-section credentials-section">
+    <div class="credentials-header" onclick="toggleCredentialsSection()" title="Click to expand or collapse">
+      <span class="credentials-header-title-row">
+        <span>Paytrail credentials</span>
+        <span id="credentials-header-badge" class="credentials-saved-badge" style="display: none;">Saved</span>
+      </span>
+      <svg class="chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 15 12 9 18 15"></polyline></svg>
+    </div>
+    <div class="credentials-content">
+      <p class="credentials-note" style="margin-bottom: 1rem;">Provide your credentials here. They are stored in your browser only (localStorage) when you click Save, and are not sent to any server except when creating a payment.</p>
+      <div class="credentials-row">
+        <label for="merchant-id">Merchant ID</label>
+        <input type="text" id="merchant-id" class="credential-input" placeholder="PAYTRAIL_MERCHANT_ID" autocomplete="off">
+      </div>
+      <div class="credentials-row">
+        <label for="secret-key">Secret key</label>
+        <input type="password" id="secret-key" class="credential-input" placeholder="PAYTRAIL_SECRET_KEY" autocomplete="off">
+      </div>
+      <div class="credentials-row">
+        <label for="klarna-client-id">Klarna WebSDK Client ID</label>
+        <input type="text" id="klarna-client-id" class="credential-input" placeholder="Klarna WebSDK Client ID (optional)" autocomplete="off">
+      </div>
+      <div class="credentials-row">
+        <label for="klarna-api-key">Klarna API Key</label>
+        <input type="password" id="klarna-api-key" class="credential-input" placeholder="Klarna API Key (optional)" autocomplete="off">
+      </div>
+      <div class="credentials-actions">
+        <button type="button" class="btn btn-primary" onclick="saveCredentialsAndCollapse()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editor section -->
+  <div id="editor-section" class="editor-section">
+    <label for="payload-editor">Request payload (JSON)</label>
+    <textarea id="payload-editor" class="payload-editor" spellcheck="false" placeholder='{"stamp":"...","reference":"...","amount":1590,...}'></textarea>
+    <div class="editor-actions">
+      <button type="button" class="btn btn-secondary" onclick="loadMinimumPayload()">Load minimum payload</button>
+      <button type="button" class="btn btn-secondary" onclick="loadFullPayload()">Load full payload</button>
+      <button type="button" class="btn btn-secondary" onclick="formatPayload()">Format JSON</button>
+      <button type="button" class="btn btn-primary" id="create-btn" onclick="createPayment()">💳 Create Paytrail Payment</button>
+    </div>
+  </div>
+
+  <!-- Payment response section (same behaviour as section 2) -->
+  <div id="payment-response-section" class="payment-response-section">
+    <div class="payment-selection-ui">
+      <div class="payment-header">
+        <h2>Choose how you want to pay</h2>
+        <button type="button" class="close-btn" onclick="backToEditor()" title="Back to editor">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="amount-display">
+        <div class="amount-value" id="payment-amount">€0.00</div>
+      </div>
+      <h2 class="payment-heading">Choose how you want to pay</h2>
+      <div class="hosted-payment-option">
+        <button type="button" id="hosted-payment-btn" class="hosted-payment-btn" disabled>Use Paytrail Hosted Payment Page</button>
+        <p class="hosted-payment-note">Or select a payment method below</p>
+      </div>
+      <div id="providers-container" class="payment-providers">
+        <div class="loading">Loading payment providers...</div>
+      </div>
+      <div class="payment-footer">
+        <p id="payment-terms">By selecting a payment method, you agree to our payment service terms.</p>
+      </div>
+      <div style="padding: 0 1.5rem 1.5rem;">
+        <button type="button" class="btn btn-secondary new-payment-btn" onclick="backToEditor()">🔄 New payment (back to editor)</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/credentials-storage.js"></script>
+  <script>
+    var getCred = function(key) { return window.CredentialStorage && window.CredentialStorage.get(key); };
+    var setCred = function(key, val) { if (window.CredentialStorage) window.CredentialStorage.set(key, val); };
+    var removeCred = function(key) { if (window.CredentialStorage) window.CredentialStorage.remove(key); };
+    const editor = document.getElementById('payload-editor');
+    const editorSection = document.getElementById('editor-section');
+    const responseSection = document.getElementById('payment-response-section');
+    const createBtn = document.getElementById('create-btn');
+    const hostedBtn = document.getElementById('hosted-payment-btn');
+    const providersContainer = document.getElementById('providers-container');
+    const amountEl = document.getElementById('payment-amount');
+    const termsEl = document.getElementById('payment-terms');
+    const merchantIdInput = document.getElementById('merchant-id');
+    const secretKeyInput = document.getElementById('secret-key');
+    const credentialsSection = document.getElementById('credentials-section');
+
+    const STORAGE_MERCHANT_ID = 'paytrail_merchant_id';
+    const STORAGE_SECRET_KEY = 'paytrail_secret_key';
+    const STORAGE_KLARNA_CLIENT_ID = 'klarna_websdk_client_id';
+    const STORAGE_KLARNA_API_KEY = 'klarna_api_key';
+    const credentialsHeaderBadge = document.getElementById('credentials-header-badge');
+    const klarnaClientIdInput = document.getElementById('klarna-client-id');
+    const klarnaApiKeyInput = document.getElementById('klarna-api-key');
+
+    function hasCredentialsSaved() {
+      return !!(window.CredentialStorage && window.CredentialStorage.hasPaytrailCredentials());
+    }
+
+    function loadCredentialsFromStorage() {
+      try {
+        var mid = getCred(STORAGE_MERCHANT_ID);
+        var sk = getCred(STORAGE_SECRET_KEY);
+        var klarnaId = getCred(STORAGE_KLARNA_CLIENT_ID);
+        var klarnaKey = getCred(STORAGE_KLARNA_API_KEY);
+        if (merchantIdInput && mid != null) merchantIdInput.value = mid;
+        if (secretKeyInput && sk != null) secretKeyInput.value = sk;
+        if (klarnaClientIdInput && klarnaId) klarnaClientIdInput.value = klarnaId;
+        if (klarnaApiKeyInput && klarnaKey) klarnaApiKeyInput.value = klarnaKey;
+      } catch (e) { console.warn('Load credentials failed:', e); }
+    }
+
+    function saveCredentialsToStorage() {
+      if (!window.CredentialStorage || !window.CredentialStorage.storageAvailable()) {
+        alert('Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window.');
+        return;
+      }
+      var mid = (merchantIdInput && merchantIdInput.value || '').trim();
+      var sk = (secretKeyInput && secretKeyInput.value || '').trim();
+      var klarnaId = (klarnaClientIdInput && klarnaClientIdInput.value) ? klarnaClientIdInput.value.trim() : '';
+      var klarnaKey = (klarnaApiKeyInput && klarnaApiKeyInput.value) ? klarnaApiKeyInput.value.trim() : '';
+      setCred(STORAGE_MERCHANT_ID, mid || null);
+      setCred(STORAGE_SECRET_KEY, sk || null);
+      setCred(STORAGE_KLARNA_CLIENT_ID, klarnaId || null);
+      setCred(STORAGE_KLARNA_API_KEY, klarnaKey || null);
+    }
+
+    function toggleCredentialsSection() {
+      credentialsSection.classList.toggle('collapsed');
+    }
+
+    function saveCredentialsAndCollapse() {
+      saveCredentialsToStorage();
+      credentialsSection.classList.add('collapsed');
+      if (credentialsHeaderBadge) credentialsHeaderBadge.style.display = 'inline-block';
+      updatePaytrailCredentialsBannerTesting();
+    }
+
+    function updatePaytrailCredentialsBannerTesting() {
+      var banner = document.getElementById('paytrail-credentials-banner');
+      if (!banner) return;
+      var storageOk = window.CredentialStorage && window.CredentialStorage.storageAvailable();
+      var span = banner.querySelector('span');
+      if (!storageOk && span) {
+        span.textContent = 'Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window to save credentials.';
+      } else if (span) {
+        span.textContent = 'No Paytrail API credentials are set. Provide them to test the API.';
+      }
+      banner.style.display = (storageOk && hasCredentialsSaved()) ? 'none' : 'flex';
+    }
+
+    function showPaytrailCredentialsModalTesting() {
+      var modal = document.getElementById('paytrail-credentials-modal');
+      var modalMid = document.getElementById('paytrail-modal-merchant-id');
+      var modalSk = document.getElementById('paytrail-modal-secret-key');
+      var modalKlarna = document.getElementById('paytrail-modal-klarna-client-id');
+      var modalKlarnaKey = document.getElementById('paytrail-modal-klarna-api-key');
+      if (modalMid && modalSk) {
+        var mid = getCred(STORAGE_MERCHANT_ID) || (merchantIdInput ? merchantIdInput.value : '') || '';
+        var sk = getCred(STORAGE_SECRET_KEY) || (secretKeyInput ? secretKeyInput.value : '') || '';
+        var klarnaId = getCred(STORAGE_KLARNA_CLIENT_ID) || (klarnaClientIdInput ? klarnaClientIdInput.value : '') || '';
+        var klarnaKey = getCred(STORAGE_KLARNA_API_KEY) || (klarnaApiKeyInput ? klarnaApiKeyInput.value : '') || '';
+        modalMid.value = mid;
+        modalSk.value = sk;
+        if (modalKlarna) modalKlarna.value = klarnaId;
+        if (modalKlarnaKey) modalKlarnaKey.value = klarnaKey;
+      }
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closePaytrailCredentialsModalTesting() {
+      const modal = document.getElementById('paytrail-credentials-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function savePaytrailCredentialsFromModalTesting() {
+      const modalMid = document.getElementById('paytrail-modal-merchant-id');
+      const modalSk = document.getElementById('paytrail-modal-secret-key');
+      const modalKlarna = document.getElementById('paytrail-modal-klarna-client-id');
+      const modalKlarnaKey = document.getElementById('paytrail-modal-klarna-api-key');
+      if (!modalMid || !modalSk) return;
+      const mid = modalMid.value.trim();
+      const sk = modalSk.value.trim();
+      if (!mid || !sk) return;
+      const klarnaId = modalKlarna ? modalKlarna.value.trim() : '';
+      const klarnaKey = modalKlarnaKey ? modalKlarnaKey.value.trim() : '';
+      if (!window.CredentialStorage || !window.CredentialStorage.storageAvailable()) {
+        alert('Browser storage is disabled or not persisting. Enable cookies/storage for this site or use a normal (non-private) window.');
+        return;
+      }
+      setCred(STORAGE_MERCHANT_ID, mid);
+      setCred(STORAGE_SECRET_KEY, sk);
+      setCred(STORAGE_KLARNA_CLIENT_ID, klarnaId || null);
+      setCred(STORAGE_KLARNA_API_KEY, klarnaKey || null);
+      if (merchantIdInput) merchantIdInput.value = mid;
+      if (secretKeyInput) secretKeyInput.value = sk;
+      if (klarnaClientIdInput) klarnaClientIdInput.value = klarnaId;
+      if (klarnaApiKeyInput) klarnaApiKeyInput.value = klarnaKey;
+      if (credentialsHeaderBadge) credentialsHeaderBadge.style.display = 'inline-block';
+      closePaytrailCredentialsModalTesting();
+      updatePaytrailCredentialsBannerTesting();
+    }
+
+    function updateCredentialsSectionState() {
+      if (hasCredentialsSaved()) {
+        credentialsSection.classList.add('collapsed');
+        if (credentialsHeaderBadge) credentialsHeaderBadge.style.display = 'inline-block';
+      } else {
+        credentialsSection.classList.remove('collapsed');
+        if (credentialsHeaderBadge) credentialsHeaderBadge.style.display = 'none';
+      }
+    }
+
+    let currentPaymentUrl = null;
+    let currentPaymentData = null;
+
+    // Paytrail requires HTTPS and no IPs in redirect/callback URLs. Use a safe base for localhost/http.
+    function getRedirectBaseUrl() {
+      const origin = window.location.origin || '';
+      if (origin.startsWith('https://') && !origin.includes('localhost') && !/^\d+\.\d+\.\d+\.\d+/.test(new URL(origin).hostname)) {
+        return origin;
+      }
+      return 'https://example.com';
+    }
+
+    function getMinimumPayload() {
+      const base = getRedirectBaseUrl();
+      return {
+        stamp: 'test-payment-' + Date.now(),
+        reference: 'ref-' + Date.now(),
+        amount: 1590,
+        currency: 'EUR',
+        language: 'EN',
+        items: [
+          { unitPrice: 1590, units: 1, vatPercentage: 24, productCode: 'test-product' }
+        ],
+        customer: { email: 'test@example.com' },
+        redirectUrls: { success: base + '/payment-complete', cancel: base + '/payment-complete' }
+      };
+    }
+
+    function getFullPayload() {
+      const base = getRedirectBaseUrl();
+      return {
+        stamp: 'test-payment-' + Date.now(),
+        reference: 'ref-' + Date.now(),
+        amount: 1590,
+        currency: 'EUR',
+        language: 'EN',
+        items: [{ unitPrice: 1590, units: 1, vatPercentage: 24, productCode: 'test-product', description: 'Test Product', stamp: 'item-' + Date.now(), reference: 'item-ref-' + Date.now() }],
+        customer: { email: 'test@example.com', firstName: 'Test', lastName: 'User', phone: '+358441234567' },
+        redirectUrls: { success: base + '/payment-complete', cancel: base + '/payment-complete' },
+        callbackUrls: { success: base + '/payment-complete', cancel: base + '/payment-complete' },
+        deliveryAddress: { streetAddress: 'Mannerheimintie 34', postalCode: '00100', city: 'Helsinki', country: 'FI' },
+        invoicingAddress: { streetAddress: 'Mannerheimintie 34', postalCode: '00100', city: 'Helsinki', country: 'FI' },
+        manualInvoiceActivation: false,
+        groups: ['mobile', 'bank', 'creditcard', 'credit', 'other'],
+        usePricesWithoutVat: false,
+        providerDetails: {
+          klarna: {
+            networkSessionToken: '',
+            networkData: ''
+          }
+        }
+      };
+    }
+
+    function loadMinimumPayload() {
+      editor.value = JSON.stringify(getMinimumPayload(), null, 2);
+      editor.classList.remove('error');
+    }
+
+    function loadFullPayload() {
+      editor.value = JSON.stringify(getFullPayload(), null, 2);
+      editor.classList.remove('error');
+    }
+
+    function formatPayload() {
+      try {
+        const parsed = JSON.parse(editor.value);
+        editor.value = JSON.stringify(parsed, null, 2);
+        editor.classList.remove('error');
+      } catch (e) {
+        editor.classList.add('error');
+        alert('Invalid JSON: ' + (e.message || String(e)));
+      }
+    }
+
+    async function createPayment() {
+      const merchantId = (merchantIdInput.value || '').trim();
+      const secretKey = (secretKeyInput.value || '').trim();
+      if (!merchantId || !secretKey) {
+        alert('Please enter Paytrail Merchant ID and Secret key above. They are stored in your browser (localStorage).');
+        return;
+      }
+      saveCredentialsToStorage();
+
+      let payload;
+      try {
+        payload = JSON.parse(editor.value);
+      } catch (e) {
+        editor.classList.add('error');
+        alert('Invalid JSON: ' + (e.message || String(e)));
+        return;
+      }
+      editor.classList.remove('error');
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating...';
+      try {
+        const res = await fetch('/api/testing/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payment: payload, merchantId, secretKey })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          let msg = data.error || 'Payment creation failed';
+          if (data.message) msg += ': ' + data.message;
+          throw new Error(msg);
+        }
+        currentPaymentData = data;
+        currentPaymentUrl = data.href || null;
+        showPaymentResponse(data, payload.amount);
+      } catch (err) {
+        alert('Error: ' + (err.message || String(err)));
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = '💳 Create Paytrail Payment';
+      }
+    }
+
+    function showPaymentResponse(paymentData, requestAmount) {
+      credentialsSection.classList.add('hidden');
+      editorSection.classList.add('hidden');
+      responseSection.classList.add('visible');
+      // Use amount from request payload; API response may omit or return 0
+      const amountMinor = requestAmount != null ? requestAmount : (paymentData.amount != null ? paymentData.amount : 0);
+      const amount = (amountMinor / 100).toFixed(2);
+      amountEl.textContent = '€' + amount;
+      if (hostedBtn) {
+        if (currentPaymentUrl) {
+          hostedBtn.disabled = false;
+          hostedBtn.onclick = () => window.location.href = currentPaymentUrl;
+        } else {
+          hostedBtn.disabled = true;
+        }
+      }
+      const providers = paymentData.providers || [];
+      displayProviders(providers);
+      if (paymentData.terms) termsEl.innerHTML = paymentData.terms;
+    }
+
+    function displayProviders(providers) {
+      if (!providers || providers.length === 0) {
+        providersContainer.innerHTML = '<div class="error">No payment providers available</div>';
+        return;
+      }
+      const groups = (providers).reduce((acc, p) => {
+        const g = p.group || 'other';
+        if (!acc[g]) acc[g] = [];
+        acc[g].push(p);
+        return acc;
+      }, {});
+      const categoryInfo = {
+        bank: { name: 'Bank payment', description: 'Directly from your bank account' },
+        mobile: { name: 'Mobile payment', description: 'Conveniently with your mobile device' },
+        creditcard: { name: 'Card payment', description: 'Easily with a debit or credit card' },
+        credit: { name: 'Invoice & Installment', description: 'Pay later with flexible payment options' },
+        other: { name: 'Other payment methods', description: 'Additional payment options' }
+      };
+      const order = ['bank', 'mobile', 'creditcard', 'credit', 'other'];
+      let html = '';
+      order.forEach(catId => {
+        const list = groups[catId];
+        if (!list || list.length === 0) return;
+        const cat = categoryInfo[catId] || categoryInfo.other;
+        html += '<div class="payment-category"><h3 class="category-title">' + cat.name + '</h3><p class="category-description">' + cat.description + '</p><div class="category-providers">';
+        list.forEach(provider => {
+          let inputs = '';
+          if (provider.parameters && Array.isArray(provider.parameters)) {
+            provider.parameters.forEach(param => {
+              const v = String(param.value || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              inputs += '<input type="hidden" name="' + param.name + '" value="' + v + '">';
+            });
+          }
+          html += '<form method="POST" action="' + provider.url + '" target="_blank" class="provider-form" style="margin:0">' + inputs +
+            '<button type="submit" class="category-provider-card"><img src="' + (provider.icon || provider.svg) + '" alt="' + provider.name + '" onerror="this.style.display=\'none\'"></button></form>';
+        });
+        html += '</div></div>';
+      });
+      if (!html) html = '<div class="error">No payment methods available</div>';
+      providersContainer.innerHTML = html;
+    }
+
+    function refreshPayloadReferences() {
+      try {
+        const payload = JSON.parse(editor.value);
+        payload.stamp = 'test-payment-' + Date.now();
+        payload.reference = 'ref-' + Date.now();
+        editor.value = JSON.stringify(payload, null, 2);
+        editor.classList.remove('error');
+      } catch (e) {
+        loadMinimumPayload();
+      }
+    }
+
+    function backToEditor() {
+      responseSection.classList.remove('visible');
+      credentialsSection.classList.remove('hidden');
+      editorSection.classList.remove('hidden');
+      currentPaymentUrl = null;
+      currentPaymentData = null;
+      refreshPayloadReferences();
+    }
+
+    // Initial: load credentials from localStorage, set expand/collapse, banner, then minimum payload
+    function initCredentialsUI() {
+      loadCredentialsFromStorage();
+      updateCredentialsSectionState();
+      updatePaytrailCredentialsBannerTesting();
+    }
+    initCredentialsUI();
+    loadMinimumPayload();
+    document.addEventListener('DOMContentLoaded', initCredentialsUI);
+    window.addEventListener('pageshow', function(ev) { if (ev.persisted) initCredentialsUI(); });
+  </script>
+</body>
+</html>

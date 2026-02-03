@@ -23,6 +23,11 @@ import {
 } from "./config.js";
 import { logBackendCall, logBackendError } from "./logging.js";
 
+function getCred(key) {
+  if (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get) return window.CredentialStorage.get(key) || undefined;
+  try { return localStorage.getItem(key) || sessionStorage.getItem(key) || undefined; } catch (e) { return undefined; }
+}
+
 // ============================================================================
 // PAYMENT REQUEST DATA BUILDING
 // ============================================================================
@@ -205,7 +210,12 @@ export async function initiateKlarnaPayment(
     const useCustomerToken = isTokenizedPaymentsFlow() &&
       hasCustomerTokenForCurrentCountry();
 
+    const klarnaClientId = getCred("klarna_websdk_client_id");
+    const klarnaApiKey = getCred("klarna_api_key");
+
     const requestBody = {
+      ...(klarnaClientId && { klarnaClientId }),
+      ...(klarnaApiKey && { klarnaApiKey }),
       klarnaNetworkSessionToken,
       paymentOptionId,
       paymentRequestData,
@@ -329,7 +339,12 @@ export async function initiateApiKlarnaPayment(paymentOptionId) {
     const useInteroperability = isInteroperabilityFlow() &&
       interoperabilityToken;
 
+    const klarnaClientId = getCred("klarna_websdk_client_id");
+    const klarnaApiKey = getCred("klarna_api_key");
+
     const requestBody = {
+      ...(klarnaClientId && { klarnaClientId }),
+      ...(klarnaApiKey && { klarnaApiKey }),
       paymentOptionId,
       paymentRequestData,
       returnUrl: `${API_BASE}/payment-complete`,

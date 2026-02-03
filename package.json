@@ -4,14 +4,19 @@
   "description": "Klarna Payment Selector Demo - Vercel Deployment",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "echo 'No framework dev server - Vercel serves static + API'",
+    "start": "npx tsx server.ts",
+    "start:vercel": "vercel dev --yes",
     "build": "echo 'No build step required'"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "hono": "^4.0.0"
   },
   "devDependencies": {
+    "@hono/node-server": "^1.13.0",
     "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.0.0",
     "vercel": "^34.0.0"
   }

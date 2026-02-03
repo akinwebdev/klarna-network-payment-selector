@@ -384,10 +384,16 @@ app.get("/api/presentation", async (c) => {
 });
 
 // Payment Request endpoint (for SUB_PARTNER mode)
+// Klarna docs: "The API key should be included in the Authorization header in the following format:
+//   Authorization: Basic <API key>
+// The API key can be in its raw form or base64-encoded."
+// https://docs.klarna.com/klarna-network-distribution/setup-your-integration/connection-configuration/manage-your-api-credentials/
 app.post("/api/payment-request", async (c) => {
   try {
     const body = await c.req.json();
     const {
+      klarnaClientId,
+      klarnaApiKey,
       klarnaNetworkSessionToken,
       paymentOptionId,
       paymentRequestData,
@@ -397,15 +403,15 @@ app.post("/api/payment-request", async (c) => {
       country,
     } = body;
 
-    let auth: AuthConfig;
-    try {
-      auth = resolveAuthConfig();
-    } catch (error) {
+    const apiKeyRaw = typeof klarnaApiKey === "string" ? klarnaApiKey.trim() : "";
+    if (!apiKeyRaw) {
       return c.json({
         status: "ERROR",
-        message: "Server configuration error: No authentication configured",
-      }, 500);
+        message: "Klarna API Key is required for server-side REST API calls. Use the API key from the Klarna Partner Portal (raw or base64-encoded). Set it in the Paytrail credentials section on the website.",
+      }, 400);
     }
+    // Use API key as-is: raw form or base64-encoded per Klarna docs. Strip "Basic " if user pasted full header.
+    const basicAuth = apiKeyRaw.replace(/^Basic\s+/i, "");
 
     if (!paymentRequestData) {
       return c.json({
@@ -466,7 +472,7 @@ app.post("/api/payment-request", async (c) => {
     const idempotencyKey = `idemp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 9)}`;
     
     const headers: Record<string, string> = {
-      "Authorization": `Basic ${auth.apiKey}`,
+      "Authorization": `Basic ${basicAuth}`,
       "Content-Type": "application/json",
       "Idempotency-Key": idempotencyKey,
     };
@@ -512,10 +518,17 @@ app.post("/api/payment-request", async (c) => {
     };
 
     if (!klarnaResponse.ok) {
+      const validationErrors = (klarnaData as { validation_errors?: unknown }).validation_errors;
+      const message = klarnaData.error_message || "Payment request creation failed";
+      const fullMessage = validationErrors
+        ? `${message} ${JSON.stringify(validationErrors)}`
+        : message;
+      console.warn("Klarna payment request validation failed:", validationErrors || klarnaData);
       return c.json({
         status: "ERROR",
-        message: klarnaData.error_message || "Payment request creation failed",
+        message: fullMessage,
         details: klarnaData,
+        validation_errors: validationErrors,
         _request: requestMeta,
         _response: responseMeta,
       }, klarnaResponse.status);
@@ -576,6 +589,13 @@ function transformSupplementaryPurchaseData(
 
   if (data.purchaseReference) {
     transformed.purchase_reference = data.purchaseReference;
+  }
+
+  if (data.customer && typeof data.customer === "object") {
+    const cust = data.customer as Record<string, unknown>;
+    const customerObj: Record<string, unknown> = {};
+    if (cust.email != null) customerObj.email = cust.email;
+    if (Object.keys(customerObj).length) transformed.customer = customerObj;
   }
 
   if (data.lineItems && Array.isArray(data.lineItems)) {
@@ -678,6 +698,79 @@ function createPaytrailSignature(
 }
 
 /**
+ * Create HMAC signature with explicit credentials (for testing page)
+ */
+function createPaytrailSignatureWithCreds(
+  method: string,
+  uri: string,
+  headers: Record<string, string>,
+  body: string,
+  merchantId: string,
+  secretKey: string,
+): { headers: Record<string, string>; signature: string } {
+  const timestamp = new Date().toISOString();
+  const nonce = crypto.randomUUID();
+  const signatureHeaders: Record<string, string> = {
+    "checkout-account": merchantId,
+    "checkout-algorithm": "sha256",
+    "checkout-method": method,
+    "checkout-nonce": nonce,
+    "checkout-timestamp": timestamp,
+  };
+  Object.assign(signatureHeaders, headers);
+  const signatureString = Object.keys(signatureHeaders)
+    .sort()
+    .map((key) => `${key}:${signatureHeaders[key]}`)
+    .join("\n") + "\n" + body;
+  const signature = crypto
+    .createHmac("sha256", secretKey)
+    .update(signatureString)
+    .digest("hex");
+  return { headers: signatureHeaders, signature };
+}
+
+/**
+ * Make authenticated request to Paytrail API with explicit credentials (for testing page)
+ */
+async function makePaytrailRequestWithCreds(
+  method: string,
+  endpoint: string,
+  body: unknown,
+  merchantId: string,
+  secretKey: string,
+): Promise<unknown> {
+  const bodyString = body ? JSON.stringify(body) : "";
+  const { headers, signature } = createPaytrailSignatureWithCreds(
+    method,
+    endpoint,
+    {},
+    bodyString,
+    merchantId,
+    secretKey,
+  );
+  const requestHeaders: Record<string, string> = {
+    ...headers,
+    signature,
+    "content-type": "application/json; charset=utf-8",
+  };
+  const response = await fetch(`${PAYTRAIL_API_URL}${endpoint}`, {
+    method,
+    headers: requestHeaders,
+    body: bodyString || undefined,
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const err = new Error(
+      errorData.message || `Paytrail API error: ${response.statusText}`,
+    ) as Error & { status?: number; errorData?: unknown };
+    err.status = response.status;
+    err.errorData = errorData;
+    throw err;
+  }
+  return response.json();
+}
+
+/**
  * Make authenticated request to Paytrail API
  */
 async function makePaytrailRequest(
@@ -749,26 +842,31 @@ async function makePaytrailRequest(
 // PAYTRAIL API ENDPOINTS
 // ============================================================================
 
-// GET /api/merchants/payment-providers
+// GET /api/merchants/payment-providers (credentials via X-Paytrail-Merchant-Id, X-Paytrail-Secret-Key headers)
 app.get("/api/merchants/payment-providers", async (c: Context) => {
   try {
-    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+    const merchantId = c.req.header("X-Paytrail-Merchant-Id")?.trim() || "";
+    const secretKey = c.req.header("X-Paytrail-Secret-Key")?.trim() || "";
+    if (!merchantId || !secretKey) {
       return c.json(
         {
-          error: "Paytrail credentials not configured",
+          error: "Paytrail credentials required",
           message:
-            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+            "Send X-Paytrail-Merchant-Id and X-Paytrail-Secret-Key headers (or set credentials on the Demo Store homepage)",
           timestamp: new Date().toISOString(),
         },
-        500,
+        400,
       );
     }
 
     console.log("🔄 Fetching payment providers from Paytrail API...");
 
-    const response = await makePaytrailRequest(
+    const response = await makePaytrailRequestWithCreds(
       "GET",
       "/merchants/payment-providers",
+      null,
+      merchantId,
+      secretKey,
     );
 
     console.log("✅ Payment providers fetched successfully from Paytrail");
@@ -790,18 +888,20 @@ app.get("/api/merchants/payment-providers", async (c: Context) => {
   }
 });
 
-// GET /api/merchants/grouped-payment-providers
+// GET /api/merchants/grouped-payment-providers (credentials via X-Paytrail-Merchant-Id, X-Paytrail-Secret-Key headers)
 app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
   try {
-    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+    const merchantId = c.req.header("X-Paytrail-Merchant-Id")?.trim() || "";
+    const secretKey = c.req.header("X-Paytrail-Secret-Key")?.trim() || "";
+    if (!merchantId || !secretKey) {
       return c.json(
         {
-          error: "Paytrail credentials not configured",
+          error: "Paytrail credentials required",
           message:
-            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+            "Send X-Paytrail-Merchant-Id and X-Paytrail-Secret-Key headers (or set credentials on the Demo Store homepage)",
           timestamp: new Date().toISOString(),
         },
-        500,
+        400,
       );
     }
 
@@ -809,9 +909,12 @@ app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
       "🔄 Fetching grouped payment providers from Paytrail API...",
     );
 
-    const response = await makePaytrailRequest(
+    const response = await makePaytrailRequestWithCreds(
       "GET",
       "/merchants/grouped-payment-providers",
+      null,
+      merchantId,
+      secretKey,
     );
 
     console.log(
@@ -835,30 +938,46 @@ app.get("/api/merchants/grouped-payment-providers", async (c: Context) => {
   }
 });
 
-// POST /api/payments
+// POST /api/payments (body: { payment, merchantId, secretKey })
 app.post("/api/payments", async (c: Context) => {
   try {
-    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+    const body = await c.req.json();
+    const paymentData =
+      body && typeof body === "object" && "payment" in body
+        ? (body as { payment: unknown }).payment
+        : null;
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
       return c.json(
         {
-          error: "Paytrail credentials not configured",
+          error: "Paytrail credentials required",
           message:
-            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+            "Request body must include merchantId and secretKey (set credentials on the Demo Store homepage and click Save)",
           timestamp: new Date().toISOString(),
         },
-        500,
+        400,
+      );
+    }
+
+    if (!paymentData || typeof paymentData !== "object") {
+      return c.json(
+        {
+          error: "Missing payment payload",
+          message: "Request body must include a payment object",
+          timestamp: new Date().toISOString(),
+        },
+        400,
       );
     }
 
     console.log("🔄 Creating payment with Paytrail API...");
-    const paymentData = await c.req.json();
     console.log(
       "Payment data received:",
       JSON.stringify(paymentData, null, 2),
     );
 
-    // Validate required fields for Paytrail API
-    // Note: items are optional when providerDetails.klarna.networkSessionToken is provided
     const requiredFields = [
       "stamp",
       "reference",
@@ -868,7 +987,7 @@ app.post("/api/payments", async (c: Context) => {
       "redirectUrls",
     ];
     const missingFields = requiredFields.filter(
-      (field) => !paymentData[field],
+      (field) => !(paymentData as Record<string, unknown>)[field],
     );
 
     if (missingFields.length > 0) {
@@ -882,21 +1001,24 @@ app.post("/api/payments", async (c: Context) => {
       );
     }
 
-    // Log the reference being sent
     console.log("📤 Sending to Paytrail API:");
-    console.log("  Reference in request:", paymentData.reference);
-    console.log("  Stamp in request:", paymentData.stamp);
+    console.log("  Reference in request:", (paymentData as { reference?: string }).reference);
+    console.log("  Stamp in request:", (paymentData as { stamp?: string }).stamp);
 
-    // Log Klarna interoperability token if present
-    if (paymentData.providerDetails?.klarna?.networkSessionToken) {
+    if ((paymentData as { providerDetails?: { klarna?: { networkSessionToken?: string } } }).providerDetails?.klarna?.networkSessionToken) {
       console.log(
         "  Klarna Network Session Token (interoperability_token):",
-        paymentData.providerDetails.klarna.networkSessionToken,
+        (paymentData as { providerDetails: { klarna: { networkSessionToken: string } } }).providerDetails.klarna.networkSessionToken,
       );
     }
 
-    // Make real API call to Paytrail
-    const response = await makePaytrailRequest("POST", "/payments", paymentData);
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      "/payments",
+      paymentData,
+      merchantId,
+      secretKey,
+    );
 
     // Log the reference received
     console.log("📥 Received from Paytrail API:");
@@ -941,31 +1063,117 @@ app.post("/api/payments", async (c: Context) => {
   }
 });
 
-// POST /api/payments/klarna/charge (auto-capture)
-app.post("/api/payments/klarna/charge", async (c: Context) => {
+// POST /api/testing/payments – create payment using credentials from request body (testing page only)
+app.post("/api/testing/payments", async (c: Context) => {
   try {
-    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+    const body = await c.req.json();
+    const { payment, merchantId, secretKey } = body;
+
+    if (!merchantId || !secretKey) {
       return c.json(
         {
-          error: "Paytrail credentials not configured",
-          message:
-            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+          error: "Missing credentials",
+          message: "merchantId and secretKey are required in the request body",
           timestamp: new Date().toISOString(),
         },
-        500,
+        400,
+      );
+    }
+
+    if (!payment || typeof payment !== "object") {
+      return c.json(
+        {
+          error: "Missing payment payload",
+          message: "payment object is required in the request body",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const requiredFields = [
+      "stamp",
+      "reference",
+      "amount",
+      "currency",
+      "customer",
+      "redirectUrls",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !payment[field],
+    );
+    if (missingFields.length > 0) {
+      return c.json(
+        {
+          error: "Missing required fields in payment",
+          missing: missingFields,
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      "/payments",
+      payment,
+      merchantId,
+      secretKey,
+    );
+    return c.json(response, 201);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    const errorResponse = {
+      error: "Failed to create payment with Paytrail API",
+      message: err.message || String(error),
+      ...(paytrailStatus && { paytrailStatus }),
+      ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+      timestamp: new Date().toISOString(),
+    };
+    const statusCode =
+      paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(errorResponse, statusCode);
+  }
+});
+
+// POST /api/payments/klarna/charge (auto-capture) – body: { payment, merchantId, secretKey }
+app.post("/api/payments/klarna/charge", async (c: Context) => {
+  try {
+    const body = await c.req.json();
+    const paymentData = body?.payment ?? body;
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    if (!paymentData || typeof paymentData !== "object") {
+      return c.json(
+        {
+          error: "Missing payment payload",
+          message: "Request body must include a payment object",
+          timestamp: new Date().toISOString(),
+        },
+        400,
       );
     }
 
     console.log("🔄 Creating Klarna charge payment (auto-capture) with Paytrail API...");
-    const paymentData = await c.req.json();
     console.log(
       "Payment data received:",
       JSON.stringify(paymentData, null, 2),
     );
 
-    // Validate required fields
-    // Note: redirectUrls is not required for Klarna Express endpoints
-    // as they return 201 with transactionId instead of redirecting
     const requiredFields = [
       "stamp",
       "reference",
@@ -974,7 +1182,7 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
       "customer",
     ];
     const missingFields = requiredFields.filter(
-      (field) => !paymentData[field],
+      (field) => !(paymentData as Record<string, unknown>)[field],
     );
 
     if (missingFields.length > 0) {
@@ -988,26 +1196,25 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
       );
     }
 
-    // Log Klarna network session token if present
-    if (paymentData.providerDetails?.klarna?.networkSessionToken) {
+    if ((paymentData as { providerDetails?: { klarna?: { networkSessionToken?: string } } }).providerDetails?.klarna?.networkSessionToken) {
       console.log(
         "  Klarna Network Session Token:",
-        paymentData.providerDetails.klarna.networkSessionToken,
+        (paymentData as { providerDetails: { klarna: { networkSessionToken: string } } }).providerDetails.klarna.networkSessionToken,
       );
     }
 
-    // Make API call directly to handle 403 responses
     const bodyString = JSON.stringify(paymentData);
-    const { headers, signature } = createPaytrailSignature(
+    const { headers, signature } = createPaytrailSignatureWithCreds(
       "POST",
       "/payments/klarna/charge",
       {},
       bodyString,
+      merchantId,
+      secretKey,
     );
-
     const requestHeaders: Record<string, string> = {
       ...headers,
-      signature: signature,
+      signature,
       "content-type": "application/json; charset=utf-8",
     };
 
@@ -1016,7 +1223,7 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
     );
 
     const paytrailResponse = await fetch(
-      "https://services.paytrail.com/payments/klarna/charge",
+      `${PAYTRAIL_API_URL}/payments/klarna/charge`,
       {
         method: "POST",
         headers: requestHeaders,
@@ -1024,11 +1231,11 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
       },
     );
 
-    let responseData: any;
+    let responseData: { transactionId?: string; stepUpUrl?: string; error?: string; message?: string; [key: string]: unknown };
     try {
       const responseText = await paytrailResponse.text();
       console.log("📥 Raw Paytrail response text:", responseText);
-      responseData = responseText ? JSON.parse(responseText) : {};
+      responseData = (responseText ? JSON.parse(responseText) : {}) as typeof responseData;
     } catch (parseError) {
       console.error("❌ Failed to parse Paytrail response as JSON:", parseError);
       return c.json(
@@ -1154,31 +1361,42 @@ app.post("/api/payments/klarna/charge", async (c: Context) => {
   }
 });
 
-// POST /api/payments/klarna/authorization-hold (manual capture)
+// POST /api/payments/klarna/authorization-hold (manual capture) – body: { payment, merchantId, secretKey }
 app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
   try {
-    if (!PAYTRAIL_MERCHANT_ID || !PAYTRAIL_SECRET_KEY) {
+    const body = await c.req.json();
+    const paymentData = body?.payment ?? body;
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
       return c.json(
         {
-          error: "Paytrail credentials not configured",
-          message:
-            "Please set PAYTRAIL_MERCHANT_ID and PAYTRAIL_SECRET_KEY environment variables",
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
           timestamp: new Date().toISOString(),
         },
-        500,
+        400,
+      );
+    }
+
+    if (!paymentData || typeof paymentData !== "object") {
+      return c.json(
+        {
+          error: "Missing payment payload",
+          message: "Request body must include a payment object",
+          timestamp: new Date().toISOString(),
+        },
+        400,
       );
     }
 
     console.log("🔄 Creating Klarna authorization hold (manual capture) with Paytrail API...");
-    const paymentData = await c.req.json();
     console.log(
       "Payment data received:",
       JSON.stringify(paymentData, null, 2),
     );
 
-    // Validate required fields
-    // Note: redirectUrls is not required for Klarna Express endpoints
-    // as they return 201 with transactionId instead of redirecting
     const requiredFields = [
       "stamp",
       "reference",
@@ -1187,7 +1405,7 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
       "customer",
     ];
     const missingFields = requiredFields.filter(
-      (field) => !paymentData[field],
+      (field) => !(paymentData as Record<string, unknown>)[field],
     );
 
     if (missingFields.length > 0) {
@@ -1201,26 +1419,25 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
       );
     }
 
-    // Log Klarna network session token if present
-    if (paymentData.providerDetails?.klarna?.networkSessionToken) {
+    if ((paymentData as { providerDetails?: { klarna?: { networkSessionToken?: string } } }).providerDetails?.klarna?.networkSessionToken) {
       console.log(
         "  Klarna Network Session Token:",
-        paymentData.providerDetails.klarna.networkSessionToken,
+        (paymentData as { providerDetails: { klarna: { networkSessionToken: string } } }).providerDetails.klarna.networkSessionToken,
       );
     }
 
-    // Make API call directly to handle 403 responses
     const bodyString = JSON.stringify(paymentData);
-    const { headers, signature } = createPaytrailSignature(
+    const { headers, signature } = createPaytrailSignatureWithCreds(
       "POST",
       "/payments/klarna/authorization-hold",
       {},
       bodyString,
+      merchantId,
+      secretKey,
     );
-
     const requestHeaders: Record<string, string> = {
       ...headers,
-      signature: signature,
+      signature,
       "content-type": "application/json; charset=utf-8",
     };
 
@@ -1229,7 +1446,7 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
     );
 
     const paytrailResponse = await fetch(
-      "https://services.paytrail.com/payments/klarna/authorization-hold",
+      `${PAYTRAIL_API_URL}/payments/klarna/authorization-hold`,
       {
         method: "POST",
         headers: requestHeaders,
