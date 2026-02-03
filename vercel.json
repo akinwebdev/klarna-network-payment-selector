@@ -15,6 +15,10 @@
       "destination": "/product.html"
     },
     {
+      "source": "/testing",
+      "destination": "/testing.html"
+    },
+    {
       "source": "/payment-complete",
       "destination": "/payment-complete.html"
     },
