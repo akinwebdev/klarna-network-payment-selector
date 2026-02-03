@@ -639,7 +639,8 @@ async function initializePaymentButton() {
         const secretKey = getCred(PAYTRAIL_SECRET_KEY_KEY);
         if (!merchantId || !secretKey) {
           alert('Please set your Paytrail credentials on the Demo Store homepage first (Paytrail credentials section, then Save).');
-          return;
+          isProcessingComplete = false;
+          return false;
         }
 
         // HPP option uses the same /api/payments endpoint but handles response differently
