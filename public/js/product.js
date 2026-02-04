@@ -83,7 +83,7 @@ function updateProductPriceDisplay() {
 }
 
 function formatPrice(amountInMinorUnits, currency) {
-  // Convert minor units to major units (e.g., 15900 -> 159.00)
+  // Convert minor units to major units (e.g., 100 -> 1.00)
   const majorUnits = amountInMinorUnits / 100;
   
   // Use Intl.NumberFormat for proper currency formatting
@@ -113,7 +113,7 @@ export function getProductSelectedIntents() {
 function buildProductPaymentRequestData() {
   const country = productCountrySel.value;
   const currency = COUNTRY_MAPPING[country].currency;
-  const amount = parseInt(productAmountInput.value, 10) || 15900;
+  const amount = parseInt(productAmountInput.value, 10) || 100;
   const intents = getProductSelectedIntents(); // ["PAY"]
 
   // Generate unique references to prevent Klarna idempotency conflicts
@@ -245,7 +245,7 @@ async function initializePaymentButton() {
     // Get pre-selected values
     const country = productCountrySel.value; // FI
     const currency = COUNTRY_MAPPING[country].currency; // EUR
-    const amount = parseInt(productAmountInput.value, 10) || 15900;
+    const amount = parseInt(productAmountInput.value, 10) || 100;
     const intents = getProductSelectedIntents(); // ["PAY"]
 
     // Store currency and amount for use in complete event
@@ -568,7 +568,7 @@ async function initializePaymentButton() {
         // This ensures consistency - if Klarna payment was created with GBP 15900,
         // Paytrail should receive the same currency and amount
         const currency = buttonInitCurrency || COUNTRY_MAPPING[productCountrySel.value].currency;
-        const amount = buttonInitAmount || parseInt(productAmountInput.value, 10) || 15900;
+        const amount = buttonInitAmount || parseInt(productAmountInput.value, 10) || 100;
         
         console.log("🟢 Paytrail payment request - Currency:", currency, "Amount:", amount);
         console.log("🟢 Using stored values from button init - Currency:", buttonInitCurrency, "Amount:", buttonInitAmount);
