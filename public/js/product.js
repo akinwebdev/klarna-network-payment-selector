@@ -21,6 +21,9 @@ let productPaymentEndpointSel;
 // Track current session's payment_request_id to validate tokens are from current session
 let currentSessionPaymentRequestId = null;
 
+// Same reference used for Klarna purchaseReference and Paytrail reference in this session
+let currentSessionPurchaseReference = null;
+
 // Store button instance reference so we can unmount it if needed
 let currentButtonInstance = null;
 
@@ -110,37 +113,40 @@ export function getProductSelectedIntents() {
 // PAYMENT REQUEST DATA BUILDING (Product Page)
 // ============================================================================
 
-function buildProductPaymentRequestData() {
+/**
+ * Build payment request data for Klarna. Uses sessionPurchaseReference if provided
+ * so the same reference can be sent to Paytrail in the complete handler.
+ */
+function buildProductPaymentRequestData(sessionPurchaseReference) {
   const country = productCountrySel.value;
   const currency = COUNTRY_MAPPING[country].currency;
   const amount = parseInt(productAmountInput.value, 10) || 100;
   const intents = getProductSelectedIntents(); // ["PAY"]
 
-  // Generate unique references to prevent Klarna idempotency conflicts
-  // Use high-resolution timestamp + multiple random components for uniqueness
-  const timestamp = Date.now();
-  const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
-  const randomStr1 = Math.random().toString(36).substr(2, 9);
-  const randomStr2 = Math.random().toString(36).substr(2, 9);
-  const uniqueId = `${timestamp}_${performanceNow}_${randomStr1}_${randomStr2}`;
-  
+  const ref = sessionPurchaseReference || (() => {
+    const timestamp = Date.now();
+    const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
+    const randomStr1 = Math.random().toString(36).substr(2, 9);
+    const randomStr2 = Math.random().toString(36).substr(2, 9);
+    return `purchase_ref_Product_${timestamp}_${performanceNow}_${randomStr1}_${randomStr2}`;
+  })();
+
   const paymentRequestData = {
     currency,
-    paymentRequestReference: `pay_req_ref_Product_${uniqueId}`,
+    paymentRequestReference: ref,
     intents: intents || undefined,
     amount,
     supplementaryPurchaseData: {
-      purchaseReference: `purchase_ref_Product_${uniqueId}`,
+      purchaseReference: ref,
       customer: {
         email: sessionCustomerEmail
       },
     },
   };
 
-  console.log("🔄 Generated Klarna payment request data:", {
+  console.log("🔄 Generated Klarna payment request data (session reference):", {
     paymentRequestReference: paymentRequestData.paymentRequestReference,
     purchaseReference: paymentRequestData.supplementaryPurchaseData.purchaseReference,
-    uniqueId
   });
 
   return paymentRequestData;
@@ -306,7 +312,9 @@ async function initializePaymentButton() {
     console.log("🔄 Page load timestamp:", new Date().toISOString());
     console.log("🔄 Session ID check - customer email:", sessionCustomerEmail);
     
-    const paymentRequestData = buildProductPaymentRequestData();
+    // One reference per session: same value for Klarna purchaseReference and Paytrail reference
+    currentSessionPurchaseReference = `purchase_ref_Product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 9)}`;
+    const paymentRequestData = buildProductPaymentRequestData(currentSessionPurchaseReference);
     
     const klarnaClientId = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_websdk_client_id") : null) || localStorage.getItem("klarna_websdk_client_id") || sessionStorage.getItem("klarna_websdk_client_id") || undefined;
     const klarnaApiKey = (typeof window !== "undefined" && window.CredentialStorage && window.CredentialStorage.get ? window.CredentialStorage.get("klarna_api_key") : null) || localStorage.getItem("klarna_api_key") || sessionStorage.getItem("klarna_api_key") || undefined;
@@ -581,18 +589,11 @@ async function initializePaymentButton() {
           console.warn("⚠️ This may cause Klarna to not recognize the completed payment.");
         }
         
-        // Generate unique references for each payment attempt
-        // Use high-resolution timestamp + multiple random components to ensure uniqueness
-        // This prevents idempotency conflicts when user tries again after returning to page
-        const timestamp = Date.now();
-        const performanceNow = typeof performance !== 'undefined' ? performance.now() : Math.random() * 1000;
-        const randomStr1 = Math.random().toString(36).substr(2, 9);
-        const randomStr2 = Math.random().toString(36).substr(2, 9);
-        const uniqueId = `${timestamp}_${performanceNow}_${randomStr1}_${randomStr2}`;
-        const stamp = `stamp_${uniqueId}`;
-        const reference = `ref_${uniqueId}`;
+        // Use same session reference as Klarna's purchaseReference for Paytrail reference (and stamp)
+        const reference = currentSessionPurchaseReference || `purchase_ref_Product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const stamp = reference;
         
-        console.log("🔄 Generated new payment references:", { stamp, reference, uniqueId });
+        console.log("🔄 Using session reference for Paytrail (same as Klarna purchaseReference):", { stamp, reference });
 
         // Map locale to Paytrail language code (must be uppercase: FI, SV, or EN)
         const localeCode = productLocaleSel.value.split('-')[0] || 'en';
