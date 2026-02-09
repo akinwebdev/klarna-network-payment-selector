@@ -64,10 +64,17 @@ function servePublic(c: import("hono").Context): Response {
 
 const app = new Hono();
 
-// Forward /api/* to the API app
+// Forward /api/* to the API app (preserve path so parametric routes like /api/payments/:id/cancel-order match)
 app.all("/api/*", async (c) => {
   const apiApp = await getApiApp();
-  return apiApp.fetch(c.req.raw);
+  const url = new URL(c.req.url);
+  const apiUrl = `${url.origin}${url.pathname}${url.search}`;
+  const apiRequest = new Request(apiUrl, {
+    method: c.req.method,
+    headers: c.req.raw.headers,
+    body: c.req.method !== "GET" && c.req.method !== "HEAD" ? c.req.raw.body : undefined,
+  });
+  return apiApp.fetch(apiRequest);
 });
 
 // Serve static files from public/

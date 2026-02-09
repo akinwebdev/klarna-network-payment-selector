@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manage Transactions - Paytrail API Demo</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://x.klarnacdn.net" crossorigin>
+    <link rel="stylesheet" href="https://x.klarnacdn.net/ui/fonts/v1.5/fonts.css">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      body {
+        font-family: "Klarna Text", system-ui, sans-serif;
+        background: #f9f8f5;
+        color: #0b051d;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+      }
+      .manage-container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .page-header h1 {
+        font-family: "Klarna Title", "Klarna Text", system-ui, sans-serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: #0b051d;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid #e6e2da;
+        border-radius: 8px;
+        color: #0b051d;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+      }
+      .back-link:hover {
+        background: #f5f4f0;
+        border-color: #0b051d;
+      }
+      .section-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e6e2da;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+      }
+      .section-card h2 {
+        font-family: "Klarna Title", "Klarna Text", system-ui, sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0b051d;
+        margin: 0 0 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e6e2da;
+      }
+      .section-placeholder {
+        color: #6f6b7a;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0b051d;
+        margin-bottom: 0.35rem;
+      }
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #e6e2da;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+      }
+      .form-group textarea {
+        min-height: 220px;
+        font-family: ui-monospace, monospace;
+        resize: vertical;
+      }
+      .btn-submit {
+        padding: 0.6rem 1.25rem;
+        background: #FFA8CD;
+        color: #0b051d;
+        border: 2px solid #FFA8CD;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .btn-submit:hover {
+        background: #FF8FB8;
+        transform: translateY(-1px);
+      }
+      .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .refund-response {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .refund-response.success {
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        color: #1b5e20;
+      }
+      .refund-response.error {
+        background: #ffebee;
+        border: 1px solid #ffcdd2;
+        color: #b71c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="manage-container">
+      <div class="page-header">
+        <h1>Manage Transactions</h1>
+        <a href="/" class="back-link">← Back to Demo</a>
+      </div>
+
+      <div class="section-card" id="manual-capture-section">
+        <h2>Manual Capture</h2>
+        <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/activate-invoice</code>.</p>
+        <div class="form-group">
+          <label for="capture-transaction-id">Transaction ID</label>
+          <input type="text" id="capture-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
+        </div>
+        <button type="button" class="btn-submit" id="capture-submit">Capture (activate-invoice)</button>
+        <div id="capture-response" class="refund-response" style="display: none;"></div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e6e2da;">
+          <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; color: #0b051d;">Klarna commit</h3>
+          <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/klarna/commit</code>. For transactions created by <code>/payments/klarna/authorization-hold</code>.</p>
+          <div class="form-group">
+            <label for="commit-transaction-id">Transaction ID</label>
+            <input type="text" id="commit-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
+          </div>
+          <button type="button" class="btn-submit" id="commit-submit">Klarna commit</button>
+          <div id="commit-response" class="refund-response" style="display: none;"></div>
+        </div>
+      </div>
+
+      <div class="section-card" id="refunds-section">
+        <h2>Refunds</h2>
+        <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/refund</code>.</p>
+        <div class="form-group">
+          <label for="refund-transaction-id">Transaction ID</label>
+          <input type="text" id="refund-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="refund-json-editor">Request body (JSON)</label>
+          <textarea id="refund-json-editor" placeholder="{}"></textarea>
+        </div>
+        <button type="button" class="btn-submit" id="refund-submit">Send refund request</button>
+        <div id="refund-response" class="refund-response" style="display: none;"></div>
+      </div>
+
+      <div class="section-card" id="cancellations-section">
+        <h2>Cancellations</h2>
+        <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/cancel-order</code>.</p>
+        <div class="form-group">
+          <label for="cancel-transaction-id">Transaction ID</label>
+          <input type="text" id="cancel-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
+        </div>
+        <button type="button" class="btn-submit" id="cancel-submit">Cancel order</button>
+        <div id="cancel-response" class="refund-response" style="display: none;"></div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e6e2da;">
+          <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; color: #0b051d;">Klarna revert</h3>
+          <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/klarna/revert</code>. For transactions created by <code>/payments/klarna/authorization-hold</code>.</p>
+          <div class="form-group">
+            <label for="revert-transaction-id">Transaction ID</label>
+            <input type="text" id="revert-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
+          </div>
+          <button type="button" class="btn-submit" id="revert-submit">Klarna revert</button>
+          <div id="revert-response" class="refund-response" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/credentials-storage.js"></script>
+    <script>
+      (function () {
+        var REFUND_EXAMPLE = {
+          amount: 1590,
+          refundStamp: "88907910-7b85-4940-8563-202b93d5ca79",
+          refundReference: "your reference",
+          callbackUrls: {
+            success: "https://ecom.example.org/refund/success",
+            cancel: "https://ecom.example.org/refund/cancel"
+          }
+        };
+
+        var editor = document.getElementById("refund-json-editor");
+        if (editor) editor.value = JSON.stringify(REFUND_EXAMPLE, null, 2);
+
+        function getCred(key) {
+          return (window.CredentialStorage && window.CredentialStorage.get && window.CredentialStorage.get(key)) || localStorage.getItem(key) || sessionStorage.getItem(key) || "";
+        }
+
+        document.getElementById("refund-submit").addEventListener("click", function () {
+          var transactionIdEl = document.getElementById("refund-transaction-id");
+          var transactionId = transactionIdEl && transactionIdEl.value.trim();
+          if (!transactionId) {
+            alert("Please enter a Transaction ID.");
+            return;
+          }
+
+          var rawJson = editor.value.trim();
+          var payload;
+          try {
+            payload = JSON.parse(rawJson);
+          } catch (e) {
+            alert("Invalid JSON in request body: " + e.message);
+            return;
+          }
+
+          var merchantId = getCred("paytrail_merchant_id");
+          var secretKey = getCred("paytrail_secret_key");
+          if (!merchantId || !secretKey) {
+            alert("Paytrail credentials not found. Set merchant ID and secret key on the Demo Store homepage and save.");
+            return;
+          }
+
+          var body = Object.assign({}, payload, { merchantId: merchantId, secretKey: secretKey });
+          var btn = document.getElementById("refund-submit");
+          var responseEl = document.getElementById("refund-response");
+          btn.disabled = true;
+          responseEl.style.display = "none";
+
+          var apiBase = window.location.origin;
+          fetch(apiBase + "/api/payments/" + encodeURIComponent(transactionId) + "/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+              });
+            })
+            .then(function (result) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response " + (result.ok ? "success" : "error");
+              responseEl.textContent = JSON.stringify(result.data, null, 2);
+            })
+            .catch(function (err) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response error";
+              responseEl.textContent = "Request failed: " + err.message;
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+
+        document.getElementById("capture-submit").addEventListener("click", function () {
+          var transactionIdEl = document.getElementById("capture-transaction-id");
+          var transactionId = transactionIdEl && transactionIdEl.value.trim();
+          if (!transactionId) {
+            alert("Please enter a Transaction ID.");
+            return;
+          }
+
+          var merchantId = getCred("paytrail_merchant_id");
+          var secretKey = getCred("paytrail_secret_key");
+          if (!merchantId || !secretKey) {
+            alert("Paytrail credentials not found. Set merchant ID and secret key on the Demo Store homepage and save.");
+            return;
+          }
+
+          var btn = document.getElementById("capture-submit");
+          var responseEl = document.getElementById("capture-response");
+          btn.disabled = true;
+          responseEl.style.display = "none";
+
+          var apiBase = window.location.origin;
+          fetch(apiBase + "/api/payments/" + encodeURIComponent(transactionId) + "/activate-invoice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ merchantId: merchantId, secretKey: secretKey })
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+              });
+            })
+            .then(function (result) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response " + (result.ok ? "success" : "error");
+              responseEl.textContent = JSON.stringify(result.data, null, 2);
+            })
+            .catch(function (err) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response error";
+              responseEl.textContent = "Request failed: " + err.message;
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+
+        document.getElementById("commit-submit").addEventListener("click", function () {
+          var transactionIdEl = document.getElementById("commit-transaction-id");
+          var transactionId = transactionIdEl && transactionIdEl.value.trim();
+          if (!transactionId) {
+            alert("Please enter a Transaction ID.");
+            return;
+          }
+
+          var merchantId = getCred("paytrail_merchant_id");
+          var secretKey = getCred("paytrail_secret_key");
+          if (!merchantId || !secretKey) {
+            alert("Paytrail credentials not found. Set merchant ID and secret key on the Demo Store homepage and save.");
+            return;
+          }
+
+          var btn = document.getElementById("commit-submit");
+          var responseEl = document.getElementById("commit-response");
+          btn.disabled = true;
+          responseEl.style.display = "none";
+
+          var apiBase = window.location.origin;
+          fetch(apiBase + "/api/payments/" + encodeURIComponent(transactionId) + "/klarna/commit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ merchantId: merchantId, secretKey: secretKey })
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+              });
+            })
+            .then(function (result) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response " + (result.ok ? "success" : "error");
+              responseEl.textContent = JSON.stringify(result.data, null, 2);
+            })
+            .catch(function (err) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response error";
+              responseEl.textContent = "Request failed: " + err.message;
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+
+        document.getElementById("cancel-submit").addEventListener("click", function () {
+          var transactionIdEl = document.getElementById("cancel-transaction-id");
+          var transactionId = transactionIdEl && transactionIdEl.value.trim();
+          if (!transactionId) {
+            alert("Please enter a Transaction ID.");
+            return;
+          }
+
+          var merchantId = getCred("paytrail_merchant_id");
+          var secretKey = getCred("paytrail_secret_key");
+          if (!merchantId || !secretKey) {
+            alert("Paytrail credentials not found. Set merchant ID and secret key on the Demo Store homepage and save.");
+            return;
+          }
+
+          var btn = document.getElementById("cancel-submit");
+          var responseEl = document.getElementById("cancel-response");
+          btn.disabled = true;
+          responseEl.style.display = "none";
+
+          var apiBase = window.location.origin;
+          fetch(apiBase + "/api/payments/" + encodeURIComponent(transactionId) + "/cancel-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ merchantId: merchantId, secretKey: secretKey })
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+              });
+            })
+            .then(function (result) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response " + (result.ok ? "success" : "error");
+              responseEl.textContent = JSON.stringify(result.data, null, 2);
+            })
+            .catch(function (err) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response error";
+              responseEl.textContent = "Request failed: " + err.message;
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+
+        document.getElementById("revert-submit").addEventListener("click", function () {
+          var transactionIdEl = document.getElementById("revert-transaction-id");
+          var transactionId = transactionIdEl && transactionIdEl.value.trim();
+          if (!transactionId) {
+            alert("Please enter a Transaction ID.");
+            return;
+          }
+
+          var merchantId = getCred("paytrail_merchant_id");
+          var secretKey = getCred("paytrail_secret_key");
+          if (!merchantId || !secretKey) {
+            alert("Paytrail credentials not found. Set merchant ID and secret key on the Demo Store homepage and save.");
+            return;
+          }
+
+          var btn = document.getElementById("revert-submit");
+          var responseEl = document.getElementById("revert-response");
+          btn.disabled = true;
+          responseEl.style.display = "none";
+
+          var apiBase = window.location.origin;
+          fetch(apiBase + "/api/payments/" + encodeURIComponent(transactionId) + "/klarna/revert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ merchantId: merchantId, secretKey: secretKey })
+          })
+            .then(function (res) {
+              return res.json().then(function (data) {
+                return { ok: res.ok, status: res.status, data: data };
+              });
+            })
+            .then(function (result) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response " + (result.ok ? "success" : "error");
+              responseEl.textContent = JSON.stringify(result.data, null, 2);
+            })
+            .catch(function (err) {
+              responseEl.style.display = "block";
+              responseEl.className = "refund-response error";
+              responseEl.textContent = "Request failed: " + err.message;
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>

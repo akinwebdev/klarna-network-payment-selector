@@ -743,7 +743,8 @@ function createPaytrailSignatureWithCreds(
 }
 
 /**
- * Make authenticated request to Paytrail API with explicit credentials (for testing page)
+ * Make authenticated request to Paytrail API with explicit credentials (for testing page).
+ * Optional extraHeaders (e.g. checkout-transaction-id for refund) are included in signature and request.
  */
 async function makePaytrailRequestWithCreds(
   method: string,
@@ -751,21 +752,24 @@ async function makePaytrailRequestWithCreds(
   body: unknown,
   merchantId: string,
   secretKey: string,
+  extraHeaders: Record<string, string> = {},
 ): Promise<unknown> {
   const bodyString = body ? JSON.stringify(body) : "";
   const { headers, signature } = createPaytrailSignatureWithCreds(
     method,
     endpoint,
-    {},
+    extraHeaders,
     bodyString,
     merchantId,
     secretKey,
   );
-  const requestHeaders: Record<string, string> = {
-    ...headers,
-    signature,
-    "content-type": "application/json; charset=utf-8",
-  };
+  // Build request headers: all checkout-* (incl. checkout-transaction-id) + signature + content-type
+  const requestHeaders = new Headers();
+  requestHeaders.set("content-type", "application/json; charset=utf-8");
+  for (const [key, value] of Object.entries(headers)) {
+    if (value !== undefined && value !== null) requestHeaders.set(key, String(value));
+  }
+  requestHeaders.set("signature", signature);
   const response = await fetch(`${PAYTRAIL_API_URL}${endpoint}`, {
     method,
     headers: requestHeaders,
@@ -780,7 +784,13 @@ async function makePaytrailRequestWithCreds(
     err.errorData = errorData;
     throw err;
   }
-  return response.json();
+  const text = await response.text();
+  if (!text || !text.trim()) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -1080,6 +1090,308 @@ app.post("/api/payments", async (c: Context) => {
     // Return appropriate status code (use Paytrail's status if available, otherwise 500)
     const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
     return c.json(errorResponse, statusCode);
+  }
+});
+
+// POST /api/payments/:transactionId/refund – Paytrail refund (body: { merchantId, secretKey, amount, refundStamp, refundReference, callbackUrls })
+app.post("/api/payments/:transactionId/refund", async (c: Context) => {
+  const transactionIdRaw = c.req.param("transactionId");
+  const transactionId = transactionIdRaw ? String(transactionIdRaw).trim() : "";
+  if (!transactionId) {
+    return c.json(
+      { error: "Missing transactionId", message: "URL must include transaction ID", timestamp: new Date().toISOString() },
+      400,
+    );
+  }
+  try {
+    const body = await c.req.json();
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const { merchantId: _m, secretKey: _s, ...refundPayload } = body as { merchantId?: string; secretKey?: string; [key: string]: unknown };
+    const endpoint = `/payments/${encodeURIComponent(transactionId)}/refund`;
+    // Paytrail requires checkout-transaction-id header (same value as in path) and it must be included in HMAC signature
+    const extraHeaders: Record<string, string> = { "checkout-transaction-id": transactionId };
+
+    console.log("🔄 Refund request:", endpoint, "checkout-transaction-id:", transactionId, JSON.stringify(refundPayload, null, 2));
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      endpoint,
+      refundPayload,
+      merchantId,
+      secretKey,
+      extraHeaders,
+    );
+
+    return c.json(response);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    console.error("❌ Refund failed:", err.message);
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(
+      {
+        error: "Refund failed",
+        message: err.message,
+        ...(paytrailStatus && { paytrailStatus }),
+        ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+        timestamp: new Date().toISOString(),
+      },
+      statusCode,
+    );
+  }
+});
+
+// POST /api/payments/:transactionId/activate-invoice – Paytrail manual capture (body: { merchantId, secretKey }, no other body)
+app.post("/api/payments/:transactionId/activate-invoice", async (c: Context) => {
+  const transactionIdRaw = c.req.param("transactionId");
+  const transactionId = transactionIdRaw ? String(transactionIdRaw).trim() : "";
+  if (!transactionId) {
+    return c.json(
+      { error: "Missing transactionId", message: "URL must include transaction ID", timestamp: new Date().toISOString() },
+      400,
+    );
+  }
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const endpoint = `/payments/${encodeURIComponent(transactionId)}/activate-invoice`;
+    const extraHeaders: Record<string, string> = { "checkout-transaction-id": transactionId };
+
+    console.log("🔄 Manual capture (activate-invoice):", endpoint);
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      endpoint,
+      null,
+      merchantId,
+      secretKey,
+      extraHeaders,
+    );
+
+    return c.json(response);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    console.error("❌ Activate-invoice failed:", err.message);
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(
+      {
+        error: "Capture failed",
+        message: err.message,
+        ...(paytrailStatus && { paytrailStatus }),
+        ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+        timestamp: new Date().toISOString(),
+      },
+      statusCode,
+    );
+  }
+});
+
+// POST /api/payments/:transactionId/klarna/commit – Paytrail Klarna commit (body: { merchantId, secretKey }, no other body). For transactions created by /payments/klarna/authorization-hold.
+app.post("/api/payments/:transactionId/klarna/commit", async (c: Context) => {
+  const transactionIdRaw = c.req.param("transactionId");
+  const transactionId = transactionIdRaw ? String(transactionIdRaw).trim() : "";
+  if (!transactionId) {
+    return c.json(
+      { error: "Missing transactionId", message: "URL must include transaction ID", timestamp: new Date().toISOString() },
+      400,
+    );
+  }
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const endpoint = `/payments/${encodeURIComponent(transactionId)}/klarna/commit`;
+    const extraHeaders: Record<string, string> = { "checkout-transaction-id": transactionId };
+
+    console.log("🔄 Klarna commit:", endpoint);
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      endpoint,
+      null,
+      merchantId,
+      secretKey,
+      extraHeaders,
+    );
+
+    return c.json(response);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    console.error("❌ Klarna commit failed:", err.message);
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(
+      {
+        error: "Commit failed",
+        message: err.message,
+        ...(paytrailStatus && { paytrailStatus }),
+        ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+        timestamp: new Date().toISOString(),
+      },
+      statusCode,
+    );
+  }
+});
+
+// POST /api/payments/:transactionId/cancel-order – Paytrail cancel order (body: { merchantId, secretKey }, no other body)
+app.post("/api/payments/:transactionId/cancel-order", async (c: Context) => {
+  const transactionIdRaw = c.req.param("transactionId");
+  const transactionId = transactionIdRaw ? String(transactionIdRaw).trim() : "";
+  if (!transactionId) {
+    return c.json(
+      { error: "Missing transactionId", message: "URL must include transaction ID", timestamp: new Date().toISOString() },
+      400,
+    );
+  }
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const endpoint = `/payments/${encodeURIComponent(transactionId)}/cancel-order`;
+    const extraHeaders: Record<string, string> = { "checkout-transaction-id": transactionId };
+
+    console.log("🔄 Cancel order:", endpoint);
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      endpoint,
+      null,
+      merchantId,
+      secretKey,
+      extraHeaders,
+    );
+
+    return c.json(response);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    console.error("❌ Cancel-order failed:", err.message);
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(
+      {
+        error: "Cancel failed",
+        message: err.message,
+        ...(paytrailStatus && { paytrailStatus }),
+        ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+        timestamp: new Date().toISOString(),
+      },
+      statusCode,
+    );
+  }
+});
+
+// POST /api/payments/:transactionId/klarna/revert – Paytrail Klarna revert (body: { merchantId, secretKey }, no other body). For transactions created by /payments/klarna/authorization-hold.
+app.post("/api/payments/:transactionId/klarna/revert", async (c: Context) => {
+  const transactionIdRaw = c.req.param("transactionId");
+  const transactionId = transactionIdRaw ? String(transactionIdRaw).trim() : "";
+  if (!transactionId) {
+    return c.json(
+      { error: "Missing transactionId", message: "URL must include transaction ID", timestamp: new Date().toISOString() },
+      400,
+    );
+  }
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const merchantId = body?.merchantId ? String(body.merchantId).trim() : "";
+    const secretKey = body?.secretKey ? String(body.secretKey).trim() : "";
+
+    if (!merchantId || !secretKey) {
+      return c.json(
+        {
+          error: "Paytrail credentials required",
+          message: "Request body must include merchantId and secretKey",
+          timestamp: new Date().toISOString(),
+        },
+        400,
+      );
+    }
+
+    const endpoint = `/payments/${encodeURIComponent(transactionId)}/klarna/revert`;
+    const extraHeaders: Record<string, string> = { "checkout-transaction-id": transactionId };
+
+    console.log("🔄 Klarna revert:", endpoint);
+
+    const response = await makePaytrailRequestWithCreds(
+      "POST",
+      endpoint,
+      null,
+      merchantId,
+      secretKey,
+      extraHeaders,
+    );
+
+    return c.json(response);
+  } catch (error) {
+    const err = error as Error & { status?: number; errorData?: unknown };
+    const paytrailStatus = err.status;
+    const paytrailErrorData = err.errorData;
+    console.error("❌ Klarna revert failed:", err.message);
+    const statusCode = paytrailStatus && paytrailStatus >= 400 ? paytrailStatus : 500;
+    return c.json(
+      {
+        error: "Revert failed",
+        message: err.message,
+        ...(paytrailStatus && { paytrailStatus }),
+        ...(paytrailErrorData && { paytrailResponse: paytrailErrorData }),
+        timestamp: new Date().toISOString(),
+      },
+      statusCode,
+    );
   }
 });
 
@@ -1601,6 +1913,19 @@ app.post("/api/payments/klarna/authorization-hold", async (c: Context) => {
       500,
     );
   }
+});
+
+// 404 when no route matches (return JSON with path for debugging)
+app.all("*", (c) => {
+  return c.json(
+    {
+      error: "Not found",
+      message: "No route matched the request",
+      path: c.req.path,
+      method: c.req.method,
+    },
+    404,
+  );
 });
 
 // Export the handler for Vercel

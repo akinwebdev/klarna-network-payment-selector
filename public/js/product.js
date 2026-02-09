@@ -27,6 +27,13 @@ let currentSessionPurchaseReference = null;
 // Store button instance reference so we can unmount it if needed
 let currentButtonInstance = null;
 
+/** Store Klarna/Paytrail session data for display on payment-complete page when arriving from product flow */
+function storeProductFlowDataForPaymentComplete(paymentRequestId, interoperabilityToken, reference) {
+  if (paymentRequestId) sessionStorage.setItem("productFlowPaymentRequestId", paymentRequestId);
+  if (interoperabilityToken) sessionStorage.setItem("productFlowInteroperabilityToken", interoperabilityToken);
+  if (reference) sessionStorage.setItem("productFlowReference", reference);
+}
+
 // ============================================================================
 // COUNTRY & LOCALE FUNCTIONS
 // ============================================================================
@@ -688,7 +695,8 @@ async function initializePaymentButton() {
             
             // Store transaction ID in sessionStorage as backup
             sessionStorage.setItem('paytrailTransactionId', data.transactionId);
-            
+            storeProductFlowDataForPaymentComplete(currentSessionPaymentRequestId, klarnaNetworkSessionToken, currentSessionPurchaseReference);
+
             // Redirect to payment-complete page with transaction ID
             const redirectUrl = `${API_BASE}/payment-complete?transaction_id=${encodeURIComponent(data.transactionId)}&status=completed`;
             console.log("Redirecting to:", redirectUrl);
@@ -751,7 +759,8 @@ async function initializePaymentButton() {
               sessionStorage.setItem('paytrailTransactionId', data.transactionId);
               console.log("Stored transaction ID for payment-complete page:", data.transactionId);
             }
-            
+            storeProductFlowDataForPaymentComplete(currentSessionPaymentRequestId, klarnaNetworkSessionToken, currentSessionPurchaseReference);
+
             // For HPP, redirect immediately using GET request (window.location.href uses GET)
             // Stop all further execution by redirecting immediately
             window.location.replace(data.href);
@@ -802,6 +811,7 @@ async function initializePaymentButton() {
             sessionStorage.setItem('paytrailTransactionId', data.transactionId);
             console.log("Stored transaction ID for payment-complete page:", data.transactionId);
           }
+          storeProductFlowDataForPaymentComplete(currentSessionPaymentRequestId, klarnaNetworkSessionToken, currentSessionPurchaseReference);
 
           // Create a form to POST to the provider URL with all parameters
           // This matches how the homepage handles provider redirects

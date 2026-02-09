@@ -384,6 +384,25 @@
         </div>
       </div>
 
+      <div class="order-info" id="product-flow-info" style="display: none">
+        <div class="order-info-row" style="border-bottom: 1px solid #e6e2da; padding-bottom: 8px; margin-bottom: 4px;">
+          <span class="order-info-label" style="font-weight: 700;">From product page flow</span>
+          <span class="order-info-value"></span>
+        </div>
+        <div class="order-info-row">
+          <span class="order-info-label">Klarna payment_request_id</span>
+          <span class="order-info-value" id="product-flow-payment-request-id">—</span>
+        </div>
+        <div class="order-info-row">
+          <span class="order-info-label">interoperability_token</span>
+          <span class="order-info-value" id="product-flow-interoperability-token">—</span>
+        </div>
+        <div class="order-info-row">
+          <span class="order-info-label">reference</span>
+          <span class="order-info-value" id="product-flow-reference">—</span>
+        </div>
+      </div>
+
       <div class="actions">
         <a href="/" class="btn btn-primary">Return to Demo</a>
       </div>
@@ -456,6 +475,23 @@
           sessionStorage.removeItem("paytrailTransactionId");
         } else {
           console.warn("⚠️ No transaction ID found in URL params or sessionStorage");
+        }
+
+        // Show product flow values when arriving from product page flow
+        const productFlowPaymentRequestId = sessionStorage.getItem("productFlowPaymentRequestId");
+        const productFlowInteroperabilityToken = sessionStorage.getItem("productFlowInteroperabilityToken");
+        const productFlowReference = sessionStorage.getItem("productFlowReference");
+        if (productFlowPaymentRequestId || productFlowInteroperabilityToken || productFlowReference) {
+          const productFlowPanel = document.getElementById("product-flow-info");
+          if (productFlowPanel) {
+            productFlowPanel.style.display = "block";
+            document.getElementById("product-flow-payment-request-id").textContent = productFlowPaymentRequestId || "—";
+            document.getElementById("product-flow-interoperability-token").textContent = productFlowInteroperabilityToken || "—";
+            document.getElementById("product-flow-reference").textContent = productFlowReference || "—";
+          }
+          sessionStorage.removeItem("productFlowPaymentRequestId");
+          sessionStorage.removeItem("productFlowInteroperabilityToken");
+          sessionStorage.removeItem("productFlowReference");
         }
 
         const statusEl = document.getElementById("payment-status");

@@ -2,33 +2,13 @@
   "version": 2,
   "outputDirectory": "public",
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/[...]"
-    },
-    {
-      "source": "/klarna-network-payment-selector",
-      "destination": "/klarna-network-payment-selector.html"
-    },
-    {
-      "source": "/product",
-      "destination": "/product.html"
-    },
-    {
-      "source": "/testing",
-      "destination": "/testing.html"
-    },
-    {
-      "source": "/payment-complete",
-      "destination": "/payment-complete.html"
-    },
-    {
-      "source": "/payment-cancel",
-      "destination": "/payment-cancel.html"
-    },
-    {
-      "source": "/documentation",
-      "destination": "/documentation.html"
-    }
+    {"source": "/api/(.*)", "destination": "/api/[...]"},
+    {"source": "/klarna-network-payment-selector", "destination": "/klarna-network-payment-selector.html"},
+    {"source": "/product", "destination": "/product.html"},
+    {"source": "/testing", "destination": "/testing.html"},
+    {"source": "/payment-complete", "destination": "/payment-complete.html"},
+    {"source": "/payment-cancel", "destination": "/payment-cancel.html"},
+    {"source": "/documentation", "destination": "/documentation.html"},
+    {"source": "/manage-transactions", "destination": "/manage-transactions.html"}
   ]
 }
