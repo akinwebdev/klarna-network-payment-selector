@@ -151,7 +151,7 @@
         maxLevel: 3,
         subMaxLevel: 3,
         themeColor: '#e60094',
-        logo: 'images/paytrail-logo.svg',
+        logo: '/api-documentation_rev1/docs/images/paytrail-logo.svg',
         basePath: '/api-documentation_rev1/docs/',
         loadSidebar: false,
         markdown: {
@@ -259,19 +259,30 @@
         }
       }
       
-      // Fix logo path after Docsify loads to prevent basePath duplication
+      var LOGO_URL = '/api-documentation_rev1/docs/images/paytrail-logo.svg';
+      var LOGO_FALLBACK = '/images/paytrail-logo.svg';
+      function fixLogoSrc() {
+        var logoImg = document.querySelector('.app-name img');
+        if (logoImg) {
+          logoImg.src = LOGO_URL;
+          logoImg.onerror = function() {
+            this.onerror = null;
+            this.src = LOGO_FALLBACK;
+          };
+        }
+      }
+      // Fix logo path: Docsify can resolve it wrong when page is at /documentation
       window.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          const logoImg = document.querySelector('.app-name img');
-          if (logoImg && logoImg.src.includes('/api-documentation_rev1/docs/api-documentation_rev1')) {
-            logoImg.src = '/api-documentation_rev1/docs/images/paytrail-logo.svg';
-          }
-        }, 100);
-        
+        setTimeout(fixLogoSrc, 100);
+        setTimeout(fixLogoSrc, 500);
         // Fallback: Try to inject banner after DOM is ready
         setTimeout(function() {
           injectInfoBanner();
         }, 500);
+      });
+      window.addEventListener('load', function() {
+        setTimeout(fixLogoSrc, 0);
+        setTimeout(fixLogoSrc, 200);
       });
       
       // Also try when window loads completely

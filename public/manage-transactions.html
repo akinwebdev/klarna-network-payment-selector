@@ -161,7 +161,7 @@
 
         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e6e2da;">
           <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; color: #0b051d;">Klarna commit</h3>
-          <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/klarna/commit</code>. For transactions created by <code>/payments/klarna/authorization-hold</code>.</p>
+          <p class="section-placeholder" style="margin-bottom: 1rem;">Paytrail <code>POST /payments/{transactionId}/klarna/commit</code>. For transactions created by <code>/payments/klarna/authorization-hold</code> only. If you see &quot;Error capturing Klarna Express payment&quot;, the transaction may be from a different flow, already committed/reverted, or expired.</p>
           <div class="form-group">
             <label for="commit-transaction-id">Transaction ID</label>
             <input type="text" id="commit-transaction-id" placeholder="e.g. 88907910-7b85-4940-8563-202b93d5ca79" autocomplete="off">
