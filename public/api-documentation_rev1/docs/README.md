@@ -504,18 +504,51 @@ Refer to the Klarna documentation for:
 - [Checkout form overview](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/overview/)
 - [Implementing Klarna's Web SDK](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/klarna-websdk/)
 
-#### Customer Data and Supplementary Purchase Data
+#### Supplementary Purchase Data & Interoperability Data
 
 It's highly recommended to share as much payment information as possible when using Klarna. This improves session continuity, personalization, and conversion rates, speeds up customer authentication, ensures consistent information across touchpoints, and supports reconciliation and dispute management.
 
 - Customer first and last name
-- Email address
+- Customer email address
 - Reference
-- Order line items
+- Items
 - Invoicing address
 - Delivery address
 - Klarna Network Session Token
 - Klarna Network Data
+
+**Klarna Network Session Token:** When your customers interact with Klarna's Conversion Boosters, Klarna's Web SDK will return a **Klarna Network Session Token** that needs to be shared with the Paytrail Payment API when creating the payment session.
+
+To do so, include Klarna provider details in the payment request `providerDetails` object. Sharing the `klarna.networkSessionToken` is required with the Conversion Boosters.
+
+Using Klarna Conversion Boosters requires you to obtain and handle `klarna.networkSessionToken` on your own. Paytrail only provides a way to pass it along with your payments.
+
+**Klarna Network Data:** You can also send `klarna.networkData` under the `providerDetails` object as a serialized JSON. This enriched data can help increase approval rates and reduce false declines, boosting your sales by enabling Klarna to make smarter decisions.
+
+Example:
+
+```json
+{
+  "stamp": "29858472953",
+  "reference": "9187445",
+  "amount": 1590,
+  "...",
+  "providerDetails": {
+    "klarna": {
+      "networkSessionToken": "",
+      "networkData": ""
+    }
+  }
+}
+```
+
+#### Klarna provider details
+
+| Field               | Type   | Required           | Example / constraints         | Description                                                                 |
+| ------------------- | ------ | ------------------ | ----------------------------- | --------------------------------------------------------------------------- |
+| networkSessionToken | string | <center>x</center> | Min length 1, max length 8192 | Klarna Network Session Token from the Web SDK (Conversion Boosters).        |
+| networkData         | string |                    | Min length 1, max length 10240 | Optional serialized JSON; enriched data to improve approval rates.         |
+
 
 Providing complete and correct data improves acceptance rates for Klarna. For more information, check Klarna's documentation for: 
 - [Perfect Customer Journey](https://docs.klarna.com/acquirer/paytrail/get-started/maximize-sales-with-klarna/perfect-customer-journey/)
@@ -541,37 +574,6 @@ You can optionally use Klarna's Conversion Boosters with your payments. These fe
 - [On-site Messaging](https://docs.klarna.com/acquirer/paytrail/on-site-messaging/integration-prerequisites/)
 - [Sign in with Klarna](https://docs.klarna.com/acquirer/paytrail/sign-in-with-klarna/integration-prerequisites/)
 
-When your customers interact with Klarna's Conversion Boosters, Klarna's Web SDK will return a **Klarna Network Session Token** that needs to be shared with the Paytrail Payment API when creating the payment session.
-
-To do so, include Klarna provider details in the payment request `providerDetails` object. Sharing the `klarna.networkSessionToken` is required with the Conversion Boosters.
-
-Using Klarna Conversion Boosters requires you to obtain and handle `klarna.networkSessionToken` on your own. Paytrail only provides a way to pass it along with your payments.
-
-You can also send `klarna.networkData` under the `providerDetails` object as a serialized JSON. This enriched data can help increase approval rates and reduce false declines, boosting your sales by enabling Klarna to make smarter decisions.
-
-Example:
-
-```json
-{
-  "stamp": "29858472953",
-  "reference": "9187445",
-  "amount": 1590,
-  "...",
-  "providerDetails": {
-    "klarna": {
-      "networkSessionToken": "",
-      "networkData": ""
-    }
-  }
-}
-```
-
-#### Klarna provider details
-
-| Field               | Type   | Required           | Example / constraints         | Description                                                                 |
-| ------------------- | ------ | ------------------ | ----------------------------- | --------------------------------------------------------------------------- |
-| networkSessionToken | string | <center>x</center> | Min length 1, max length 8192 | Klarna Network Session Token from the Web SDK (Conversion Boosters).        |
-| networkData         | string |                    | Min length 1, max length 10240 | Optional serialized JSON; enriched data to improve approval rates.         |
 
 ### Refunds & Cancellations
 
