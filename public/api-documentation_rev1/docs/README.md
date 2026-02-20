@@ -592,8 +592,8 @@ If the customer still needs to get redirected to take further action about the p
 
 ```json
 {
-  "transactionId": "8772e75a-7439-451f-8f85-c0b5a7184fc4",
-  "stepUpUrl": "https://pay.klarna.com/eu/requests/53bc0e65-e3e8-964f-90d3-48cd2378031f/start",
+  "transactionId": "8772e75a-7439-....-....-c0b5a7184fc4",
+  "stepUpUrl": "https://pay.klarna.com/eu/requests/53bc0e65-....-....-90d3-48cd2378031f/start",
   "error": "Step-up required"
 }
 ```
