@@ -582,11 +582,11 @@ Alternative to the /payments endpoint, you can also utilize two other dedicated 
 - `/payments/klarna/charge` (for auto-capture)
 - `/payments/klarna/authorization-hold` (for manual capture)
 
-Using one of these endpoints helps create a faster checkout experience for your customers by shortening API response times and eliminating unnecessary redirection to a payment link when it’s not required.
+Using one of these endpoints instead of the `/payments` endpoint helps create a faster checkout experience for your customers by shortening API response times and eliminating unnecessary redirection to a payment link when it’s not required.
 
 With these endpoints, you can use the exact same request body you already have for the `/payments` endpoint, however, their response would be different than `/payments`.
 
-If `/payments/klarna/charge` or `/payments/klarna/authorization-hold` is successful, `HTTP 201` and the `transactionId` of the payment is directly returned. 
+If `/payments/klarna/charge` or `/payments/klarna/authorization-hold` is successful, `HTTP 201` and the `transactionId` of the payment is directly returned. This means that the information provided with the klarna.networkSessionToken was sufficient to finalize the payment, so no further action is needed from the customer. You can then proceed to create the order in your system.
 
 If the customer still needs to get redirected to take further action about the payment, `HTTP 403` along with the `transactionId` and `stepUpUrl` is returned. In this case, redirect the customer to the `stepUpUrl`, so that they can complete their purchase: 
 
