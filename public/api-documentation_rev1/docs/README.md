@@ -576,7 +576,7 @@ You can implement Klarna’s [Conversion features](https://docs.klarna.com/acqui
 - [On-site Messaging](https://docs.klarna.com/acquirer/paytrail/on-site-messaging/integration-prerequisites/?utm_source=docs-portal)
 - [Sign in with Klarna](https://docs.klarna.com/acquirer/paytrail/sign-in-with-klarna/integration-prerequisites/?utm_source=docs-portal)
 
-For Conversion features, make sure to add the klarna_network_session_token returned by Klarna Web SDK to the providerDetails.klarna.networkSessionToken field of Paytrail's `/payments` call.
+For Conversion features, make sure to add the `klarna_network_session_token` returned by the Klarna Web SDK to the `providerDetails.klarna.networkSessionToken` field in Paytrail's `/payments` call.
 
 Alternative to the `/payments` endpoint, you can also utilize two other dedicated endpoints for Klarna: 
 - `/payments/klarna/charge` (for auto-capture)
