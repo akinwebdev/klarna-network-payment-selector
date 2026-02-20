@@ -524,19 +524,19 @@ Sharing the `klarna.networkSessionToken` is required with the Conversion feature
 Example:
 
 ```json
-{
-  "stamp": "29858472953",
-  "reference": "9187445",
-  "amount": 1590,
-  "...",
-  "providerDetails": {
-
-"klarna": {
-      "networkSessionToken": "",
-      "networkData": ""
-    }
+{ 
+  "stamp": "29858472953", 
+  "reference": "9187445", 
+  "amount": 1590, 
+  "...", 
+  "providerDetails": { 
+    "klarna": { 
+      "networkSessionToken": "krn:network:eu1:live:session-token:eyJhbGciOiJFU...",
+      "networkData": "{\"content_type\": \"application/vnd.klarna.example+json\",\"content\": ...}", 
+      } 
   }
 }
+
 ```
 
 #### Klarna provider details
