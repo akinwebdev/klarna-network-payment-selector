@@ -465,7 +465,7 @@ _**Note:** The callback given to `mount()` is called on a successful payment, an
 
 ## Klarna
 
-For a comprehensive guide on optimizing your integration and boosting sales, please refer to [Klarna's dedicated Paytrail documentation](https://docs.klarna.com/acquirer/paytrail/get-started/ecosystem-overview/?utm_source=docs-portal).
+For a comprehensive guide on optimizing your integration and boosting sales, please refer to [Klarna's dedicated Paytrail documentation](https://docs.klarna.com/acquirer/paytrail/get-started/ecosystem-overview/?utm_source=paytrail-docs).
 
 ### Prerequisites
 
@@ -477,7 +477,7 @@ For a comprehensive guide on optimizing your integration and boosting sales, ple
    - **Standard Integration:** Offer Klarna with your existing integration, either through the hosted payment page or webshop-rendered payment buttons. See the [Payments](#payments-1) section below for more details.
    - **Highest-converting Klarna Integration:** Integrate Klarna’s Web SDK into your checkout to present Klarna payment options and activate Conversion features for increased sales. For more information, refer to the [Native Klarna Integration](#native-klarna-integration) section below.
 
-4. **Conversion features:** You can utilize Klarna’s [Conversion features](#conversion-features) with your payments. These features should be implemented directly on your online store using the guidelines provided in [Klarna Docs](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/conversion-boosters/?utm_source=docs-portal) and the Klarna Partner Portal. 
+4. **Conversion features:** You can utilize Klarna’s [Conversion features](#conversion-features) with your payments. These features should be implemented directly on your online store using the guidelines provided in [Klarna Docs](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/conversion-boosters/?utm_source=paytrail-docs) and the Klarna Partner Portal. 
 
 ### Payments
 
@@ -518,7 +518,7 @@ You must collect this token and share it in [Klarna provider details](#klarna-pr
 
 Sharing the `klarna.networkSessionToken` is required with the Conversion features.
 
-**Klarna Network Data:** You can also send `klarna.networkData` in the `providerDetails` object as a serialized JSON. This enriched data helps increase approval rates and reduce false declines by enabling Klarna to make smarter decisions. Providing complete and accurate data improves acceptance rates. For more details, refer to Klarna’s [Optimize Conversion Rate](https://docs.klarna.com/acquirer/paytrail/get-started/maximize-sales-with-klarna/optimize-conversion-rate/?utm_source=docs-portal) documentation and also check [Klarna Network Data Schema](https://docs.klarna.com/acquirer/paytrail/api/klarna-network-data-schema/?utm_source=docs-portal).
+**Klarna Network Data:** You can also send `klarna.networkData` in the `providerDetails` object as a serialized JSON. This enriched data helps increase approval rates and reduce false declines by enabling Klarna to make smarter decisions. Providing complete and accurate data improves acceptance rates. For more details, refer to Klarna’s [Optimize Conversion Rate](https://docs.klarna.com/acquirer/paytrail/get-started/maximize-sales-with-klarna/optimize-conversion-rate/?utm_source=paytrail-docs) documentation and also check [Klarna Network Data Schema](https://docs.klarna.com/acquirer/paytrail/api/klarna-network-data-schema/?utm_source=paytrail-docs).
 
 
 Example:
@@ -549,13 +549,13 @@ Example:
 
 #### Native Klarna Integration
 Integrate Klarna’s Web SDK to deliver a seamless, optimized checkout experience on your site. Initialize the SDK, present Klarna in the payment selector, and finalize the flow with Klarna’s payment button. You will also utilize the same Klarna Web SDK for [Conversion features](#conversion-features).
-Refer to the Klarna documentation for [Implementing Klarna Web SDK](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/klarna-websdk/?utm_source=docs-portal).
+Refer to the Klarna documentation for [Implementing Klarna Web SDK](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/klarna-websdk/?utm_source=paytrail-docs).
 
 ### Presenting Klarna
 
 Integrate Klarna into your checkout by following Klarna’s branding and messaging guidelines to optimize the customer journey and maximize conversions.
 
-Refer to the Klarna documentation for [Presenting Klarna in your checkout](https://docs.klarna.com/acquirer/paytrail/recommended-integration/klarna-in-your-checkout/?utm_source=docs-portal) and [Checkout form overview](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/overview/?utm_source=docs-portal).
+Refer to the Klarna documentation for [Presenting Klarna in your checkout](https://docs.klarna.com/acquirer/paytrail/recommended-integration/klarna-in-your-checkout/?utm_source=paytrail-docs) and [Checkout form overview](https://docs.klarna.com/acquirer/paytrail/recommended-integration/build-the-checkout/overview/?utm_source=paytrail-docs).
 
 ### Portal Access
 
@@ -566,15 +566,15 @@ When you enable Klarna, the admin user assigned to the Klarna payment method in 
 - Invite other users to Klarna Partner Portal
 - Manage branding assets like logo and social media links
 
-Check Klarna’s documentation for [Partner Portal](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/homepage/?utm_source=docs-portal) for more information.
+Check Klarna’s documentation for [Partner Portal](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/homepage/?utm_source=paytrail-docs) for more information.
 
 ### Conversion features
 
-You can implement Klarna’s [Conversion features](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/conversion-boosters/?utm_source=docs-portal) with your payments. These features should be implemented directly on your online store using the guidelines provided in Klarna Docs and the Klarna Partner Portal:
+You can implement Klarna’s [Conversion features](https://docs.klarna.com/acquirer/paytrail/additional-features/partner-portal/conversion-boosters/?utm_source=paytrail-docs) with your payments. These features should be implemented directly on your online store using the guidelines provided in Klarna Docs and the Klarna Partner Portal:
 
-- [Klarna Express Checkout](https://docs.klarna.com/acquirer/paytrail/express-checkout/integration-prerequisites/?utm_source=docs-portal)
-- [On-site Messaging](https://docs.klarna.com/acquirer/paytrail/on-site-messaging/integration-prerequisites/?utm_source=docs-portal)
-- [Sign in with Klarna](https://docs.klarna.com/acquirer/paytrail/sign-in-with-klarna/integration-prerequisites/?utm_source=docs-portal)
+- [Klarna Express Checkout](https://docs.klarna.com/acquirer/paytrail/express-checkout/integration-prerequisites/?utm_source=paytrail-docs)
+- [On-site Messaging](https://docs.klarna.com/acquirer/paytrail/on-site-messaging/integration-prerequisites/?utm_source=paytrail-docs)
+- [Sign in with Klarna](https://docs.klarna.com/acquirer/paytrail/sign-in-with-klarna/integration-prerequisites/?utm_source=paytrail-docs)
 
 For Conversion features, make sure to add the `klarna_network_session_token` returned by the Klarna Web SDK to the `providerDetails.klarna.networkSessionToken` field in Paytrail's `/payments` call.
 
