@@ -578,7 +578,7 @@ You can implement Klarna’s [Conversion features](https://docs.klarna.com/acqui
 
 For Conversion features, make sure to add the klarna_network_session_token returned by Klarna Web SDK to the providerDetails.klarna.networkSessionToken field of Paytrail's [/payments](#create) call.
 
-Alternative to the /payments endpoint, you can also utilize two other dedicated endpoints for Klarna: 
+Alternative to the `/payments` endpoint, you can also utilize two other dedicated endpoints for Klarna: 
 - `/payments/klarna/charge` (for auto-capture)
 - `/payments/klarna/authorization-hold` (for manual capture)
 
