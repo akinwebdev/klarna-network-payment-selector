@@ -582,6 +582,8 @@ Alternative to the /payments endpoint, you can also utilize two other dedicated 
 - `/payments/klarna/charge` (for auto-capture)
 - `/payments/klarna/authorization-hold` (for manual capture)
 
+Using one of these endpoints helps create a faster checkout experience for your customers by shortening API response times and eliminating unnecessary redirection to a payment link when it’s not required.
+
 With these endpoints, you can use the exact same request body you already have for the `/payments` endpoint, however, their response would be different than `/payments`.
 
 If `/payments/klarna/charge` or `/payments/klarna/authorization-hold` is successful, `HTTP 201` and the `transactionId` of the payment is directly returned. 
