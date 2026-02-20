@@ -474,7 +474,7 @@ For a comprehensive guide on optimizing your integration and boosting sales, ple
 2. **Klarna Partner Portal Access:** When you enable Klarna, the admin user assigned to the Klarna payment method in the Paytrail Merchant Panel will also receive an invitation to Klarna's Partner Portal. See details in the [Portal Access](#portal-access) section below.
 
 3. **Payments:** You can offer Klarna in your payment flow in two ways:
-   - **Standard Integration:** Offer Klarna with your existing integration, either through the hosted payment page or webshop-rendered payment buttons. See the [Payments](#payments) section below for more details.
+   - **Standard Integration:** Offer Klarna with your existing integration, either through the hosted payment page or webshop-rendered payment buttons. See the [Payments](#payments-1) section below for more details.
    - **Highest-converting Klarna Integration::** Integrate Klarna’s Web SDK into your checkout to present Klarna payment options and activate Conversion features for increased sales. For more information, refer to the [Native Klarna Integration](#native-klarna-integration) section below.
 
 4. **Conversion features:** You can utilize Klarna’s [Conversion features](#conversion-features) with your payments. These features should be implemented directly on your online store using the guidelines provided in Klarna Docs and the Klarna Partner Portal. 
