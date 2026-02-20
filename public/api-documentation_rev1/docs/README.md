@@ -576,6 +576,29 @@ You can implement Klarna’s [Conversion features](https://docs.klarna.com/acqui
 - [On-site Messaging](https://docs.klarna.com/acquirer/paytrail/on-site-messaging/integration-prerequisites/?utm_source=docs-portal)
 - [Sign in with Klarna](https://docs.klarna.com/acquirer/paytrail/sign-in-with-klarna/integration-prerequisites/?utm_source=docs-portal)
 
+For Conversion features, make sure to add the klarna_network_session_token returned by Klarna Web SDK to the providerDetails.klarna.networkSessionToken field of Paytrail's [/payments](#create) call.
+
+Alternative to the /payments endpoint, you can also utilize two other dedicated endpoints for Klarna: 
+- `/payments/klarna/charge` (for auto-capture)
+- `/payments/klarna/authorization-hold` (for manual capture)
+
+With these endpoints, you can use the exact same request body you already have for the `/payments` endpoint, however, their response would be different than `/payments`.
+
+If `/payments/klarna/charge` or `/payments/klarna/authorization-hold` is successful, `HTTP 201` and the `transactionId` of the payment is directly returned. 
+
+If the customer still needs to get redirected to take further action about the payment, `HTTP 403` along with the `transactionId` and `stepUpUrl` is returned. In this case, redirect the customer to the `stepUpUrl`, so that they can complete their purchase: 
+
+```json
+{
+  "transactionId": "8772e75a-7439-451f-8f85-c0b5a7184fc4",
+  "stepUpUrl": "https://pay.klarna.com/eu/requests/53bc0e65-e3e8-964f-90d3-48cd2378031f/start",
+  "error": "Step-up required"
+}
+```
+
+If you prefer to use `/payments/klarna/authorization-hold`;
+- to capture the authorization, you need to call `/payments/{transactionId}/klarna/commit` 
+- to void (cancel) the authorization, you need to call `/payments/{transactionId}/klarna/revert`
 
 ### Refunds & Cancellations
 
